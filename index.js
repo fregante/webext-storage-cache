@@ -56,10 +56,11 @@ if (isBackgroundPage()) {
 	setTimeout(purge, 60000); // Purge cache on launch, but wait a bit
 	setInterval(purge, 1000 * 3600 * 24);
 }
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default =  {
+
+Object.defineProperty(exports, '__esModule', {value: true});
+
+exports.default = {
 	has,
 	get,
 	set
 };
-
