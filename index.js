@@ -57,6 +57,12 @@ if (isBackgroundPage()) {
 	setInterval(purge, 1000 * 3600 * 24);
 }
 
+module.exports = {
+	has,
+	get,
+	set
+};
+
 Object.defineProperty(exports, '__esModule', {value: true});
 
 exports.default = {
