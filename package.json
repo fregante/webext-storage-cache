@@ -1,9 +1,9 @@
 {
-  "name": "webext-cache",
+  "name": "webext-storage-cache",
   "version": "1.0.1",
   "description": "Storage Cache for Web Extensions",
   "main": "index.js",
-  "repository": "https://github.com/dotconnor/webext-cache",
+  "repository": "https://github.com/dotconnor/webext-storage-cache",
   "author": "Connor Love",
   "license": "MIT",
   "scripts": {

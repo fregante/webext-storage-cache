@@ -1,10 +1,10 @@
-# webext-cache
+# webext-storage-cache
 Externalized from https://github.com/sindresorhus/refined-github/pull/2109
 
 ## Install
 
 ```shell
-$ yarn add webext-cache
+$ yarn add webext-storage-cache
 ```
 
 ## Requirements
@@ -34,7 +34,7 @@ This module requires [`webextension-polyfill`](https://github.com/mozilla/webext
 ## Usage
 
 ```js
-import cache from 'webext-cache';
+import cache from 'webext-storage-cache';
 
 (async () => {
   let cachableItem = await cache.get('unique');
