@@ -1,0 +1,30 @@
+{
+  "name": "webext-cache",
+  "version": "1.0.0",
+  "description": "Storage Cache for Web Extensions",
+  "main": "index.js",
+  "repository": "https://github.com/dotconnor/webext-cache",
+  "author": "Connor Love",
+  "license": "MIT",
+  "scripts": {
+    "test": "xo"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "dependencies": {
+    "webext-detect-page": "^0.9.1"
+  },
+  "devDependencies": {
+    "xo": "^0.24.0"
+  },
+  "xo": {
+		"envs": [
+			"browser"
+    ],
+    "globals": [
+      "browser"
+    ]
+	}
+}
