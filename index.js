@@ -5,7 +5,7 @@ const storage = browser.storage.local;
 async function has(key) {
 	const cachedKey = `cache:${key}`;
 	const values = await storage.get(cachedKey);
-	return values[cachedKey] !== undefined;
+	return values[cachedKey] !== undefined && Date.now() > values[cachedKey].expiration;
 }
 
 async function get(key) {
