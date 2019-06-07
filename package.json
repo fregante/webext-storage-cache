@@ -1,6 +1,6 @@
 {
   "name": "webext-cache",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Storage Cache for Web Extensions",
   "main": "index.js",
   "repository": "https://github.com/dotconnor/webext-cache",
@@ -20,11 +20,11 @@
     "xo": "^0.24.0"
   },
   "xo": {
-		"envs": [
-			"browser"
+    "envs": [
+      "browser"
     ],
     "globals": [
       "browser"
     ]
-	}
+  }
 }
