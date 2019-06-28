@@ -1,3 +1,5 @@
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
 import typescript from 'rollup-plugin-typescript';
 
 export default {
@@ -5,12 +7,11 @@ export default {
 	output: {
 		file: 'webext-storage-cache.js',
 		format: 'iife',
-
-		// Add globals to `window`
-		name: 'window',
-		extend: true
+		name: 'storageCache'
 	},
 	plugins: [
-		typescript()
+		resolve(),
+		typescript(),
+		commonjs()
 	]
 };
