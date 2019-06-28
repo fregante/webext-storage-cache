@@ -9,7 +9,7 @@ This module works on content scripts, background pages and option pages.
 
 ## Install
 
-You can just download the [standalone bundle](https://packd.bfred-it.now.sh/webext-storage-cache) (it might take a minute to download) and include the file in your `manifest.json`, or:
+You can just download the [standalone bundle](https://packd.bfred-it.now.sh/webext-storage-cache@latest?name=storageCache) (it might take a minute to download) and include the file in your `manifest.json`, or:
 
 ```sh
 npm install --save webext-storage-cache
@@ -99,7 +99,7 @@ Type: `string`
 ## Related
 
 * [webext-options-sync](https://github.com/bfred-it/webext-options-sync) - Helps you manage and autosave your extension's options.
-* [webext-domain-permission-toggle](https://github.com/bfred-it/webext-domain-permission-toggle) - Browser-action context menu to request permission for the current tab. 
+* [webext-domain-permission-toggle](https://github.com/bfred-it/webext-domain-permission-toggle) - Browser-action context menu to request permission for the current tab.
 * [webext-dynamic-content-scripts](https://github.com/bfred-it/webext-dynamic-content-scripts) - Automatically inject your `content_scripts` on custom domains.
 * [webext-detect-page](https://github.com/bfred-it/webext-detect-page) - Detects where the current browser extension code is being run.
 * [webext-content-script-ping](https://github.com/bfred-it/webext-content-script-ping) - One-file interface to detect whether your content script have loaded.
