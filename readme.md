@@ -57,7 +57,7 @@ Similar to a `Map()`, but all methods a return a `Promise`.
 
 Checks if the given key is in the cache, returns a `boolean`.
 
-### key
+#### key
 
 Type: `string`
 
@@ -65,7 +65,7 @@ Type: `string`
 
 Returns the cached value of key if it exists and hasn't expired, returns `undefined` otherwise.
 
-### key
+#### key
 
 Type: `string`
 
@@ -73,17 +73,15 @@ Type: `string`
 
 Caches the given key and value for a given amount of days.
 
-### key
+#### key
 
 Type: `string`
 
-### value
+#### value
 
-Type: `string | number | array | regex | object | date`
+Type: `string | number | boolean` or `array | object` of those three types
 
-Any value allowed by [`StorageArea#set`](https://developer.chrome.com/extensions/storage#method-StorageArea-set)
-
-### expiration
+#### expiration
 
 The number of days after which the cache item will expire.
 
@@ -94,7 +92,7 @@ Default: 30
 
 Deletes the requested item from the cache.
 
-### key
+#### key
 
 Type: `string`
 

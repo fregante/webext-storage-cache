@@ -16,12 +16,17 @@ async function p<T>(fn, ...args): Promise<T> {
 	});
 }
 
+type Primitive = boolean | number | string;
+type Value = Primitive | Primitive[] | Record<string, unknown>;
+// No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
+// No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
+
 interface CacheItem<TValue> {
 	data: TValue;
 	expiration: number;
 }
 
-type Cache<TValue extends unknown = unknown> = Record<string, CacheItem<TValue>>;
+type Cache<TValue extends Value = Value> = Record<string, CacheItem<TValue>>;
 
 const _get = chrome.storage.local.get.bind(chrome.storage.local);
 const _set = chrome.storage.local.set.bind(chrome.storage.local);
@@ -33,7 +38,7 @@ async function has(key: string): Promise<boolean> {
 	return values[cachedKey] !== undefined;
 }
 
-async function get<TValue extends unknown = unknown>(key: string): Promise<TValue | undefined> {
+async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
 	const cachedKey = `cache:${key}`;
 	const values = await p<Cache<TValue>>(_get, cachedKey);
 	const value = values[cachedKey];
@@ -50,7 +55,7 @@ async function get<TValue extends unknown = unknown>(key: string): Promise<TValu
 	return value.data;
 }
 
-async function set<TValue extends unknown = unknown>(key: string, value: TValue, expiration: number = 30 /* days */): Promise<void> {
+async function set<TValue extends Value>(key: string, value: TValue, expiration: number = 30 /* days */): Promise<void> {
 	const cachedKey = `cache:${key}`;
 	return p(_set, {
 		[cachedKey]: {
