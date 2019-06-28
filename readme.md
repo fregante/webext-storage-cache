@@ -9,7 +9,7 @@ This module works on content scripts, background pages and option pages.
 
 ## Install
 
-You can just include the file `webext-storage-cache.js` in your `manifest.json`, or:
+You can just download the [standalone bundle](https://packd.bfred-it.now.sh/webext-storage-cache) (it might take a minute to download) and include the file in your `manifest.json`, or:
 
 ```sh
 npm install --save webext-storage-cache
