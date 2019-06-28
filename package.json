@@ -1,30 +1,69 @@
 {
   "name": "webext-storage-cache",
-  "version": "1.0.1",
-  "description": "Storage Cache for Web Extensions",
-  "main": "index.js",
-  "repository": "https://github.com/dotconnor/webext-storage-cache",
-  "author": "Connor Love",
+  "version": "0.0.0",
+  "description": "Cache storage with expiration for WebExtensions.",
   "license": "MIT",
-  "scripts": {
-    "test": "xo"
-  },
+  "repository": "bfred-it/webext-storage-cache",
+  "author": "Connor Love",
+  "contributors": [
+    "Federico Brigante <github@bfred.it> (bfred.it)"
+  ],
+  "keywords": [
+    "cache",
+    "temporary",
+    "expirating",
+    "self-cleaning",
+    "background page",
+    "content script",
+    "options page",
+    "browser",
+    "extension",
+    "webext",
+    "web-ext",
+    "chrome",
+    "firefox"
+  ],
   "files": [
     "index.js",
     "index.d.ts"
   ],
-  "dependencies": {
-    "webext-detect-page": "^0.9.1"
-  },
-  "devDependencies": {
-    "xo": "^0.24.0"
+  "scripts": {
+    "test": "run-p --silent build test:*",
+    "test:lint": "xo",
+    "prepublish-only": "run-p --silent build",
+    "build": "tsc && rollup -c",
+    "watch": "tsc --watch"
   },
   "xo": {
-    "envs": [
-      "browser"
+    "ignores": [
+      "webext-storage-cache.js"
     ],
-    "globals": [
-      "browser"
+    "extensions": [
+      "ts"
+    ],
+    "envs": [
+      "browser",
+      "webextensions"
+    ],
+    "overrides": [
+      {
+        "files": "**/*.ts",
+        "extends": "xo-typescript"
+      }
     ]
+  },
+  "devDependencies": {
+    "@sindresorhus/tsconfig": "^0.4.0",
+    "@types/chrome": "0.0.86",
+    "@typescript-eslint/eslint-plugin": "^1.9.0",
+    "eslint-config-xo-typescript": "^0.15.0",
+    "npm-run-all": "^4.1.5",
+    "rollup": "^1.12.5",
+    "rollup-plugin-typescript": "^1.0.1",
+    "typescript": "^3.5.0",
+    "xo": "*"
+  },
+  "dependencies": {
+    "webext-detect-page": "^0.9.1"
   }
 }

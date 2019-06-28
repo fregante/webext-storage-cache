@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 .DS_Store
 Desktop.ini
 ._*
@@ -8,3 +8,5 @@ Thumbs.db
 *.log
 logs
 *.map
+index.js
+index.d.ts
