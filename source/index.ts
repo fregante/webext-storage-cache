@@ -60,6 +60,11 @@ async function set<TValue extends unknown = unknown>(key: string, value: TValue,
 	});
 }
 
+async function delete_(key: string): Promise<void> {
+	const cachedKey = `cache:${key}`;
+	return p(_remove, cachedKey);
+}
+
 async function purge(): Promise<void> {
 	const values = await p<Cache>(_get,);
 	const removableItems = [];
@@ -84,4 +89,5 @@ export default {
 	has,
 	get,
 	set,
+	delete: delete_
 };
