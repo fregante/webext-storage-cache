@@ -34,7 +34,7 @@
   "module": "module/index.js",
   "scripts": {
     "test": "xo && tsc --noEmit",
-    "prepublish-only": "npm run build --silent",
+    "prepublishOnly": "npm run build --silent",
     "build": "tsc && tsc --module es2015 --outDir module --declaration false",
     "watch": "tsc --watch"
   },
