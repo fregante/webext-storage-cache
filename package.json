@@ -2,29 +2,29 @@
   "name": "webext-storage-cache",
   "version": "1.0.2",
   "description": "WebExtensions module: Map-like promised cache storage with expiration. Chrome and Firefox.",
-  "license": "MIT",
-  "repository": "bfred-it/webext-storage-cache",
-  "author": "Connor Love",
-  "contributors": [
-    "Federico Brigante <github@bfred.it> (bfred.it)"
-  ],
   "keywords": [
-    "cache",
-    "map",
-    "temporary",
-    "expirating",
-    "self-cleaning",
+    "await",
     "background page",
+    "browser",
+    "cache",
+    "chrome",
     "content script",
+    "expirating",
+    "extension",
+    "firefox",
+    "map",
     "options page",
     "promises",
-    "await",
-    "browser",
-    "extension",
-    "webext",
+    "self-cleaning",
+    "temporary",
     "web-ext",
-    "chrome",
-    "firefox"
+    "webext"
+  ],
+  "repository": "fregante/webext-storage-cache",
+  "license": "MIT",
+  "author": "Connor Love",
+  "contributors": [
+    "Federico Brigante <opensource@bfred.it> (bfred.it)"
   ],
   "files": [
     "index.js",
@@ -33,18 +33,18 @@
   ],
   "module": "module/index.js",
   "scripts": {
-    "test": "xo && tsc --noEmit",
-    "prepublishOnly": "npm run build --silent",
     "build": "tsc && tsc --module es2015 --outDir module --declaration false",
+    "prepublishOnly": "npm run build --silent",
+    "test": "xo && tsc --noEmit",
     "watch": "tsc --watch"
   },
   "xo": {
-    "extensions": [
-      "ts"
-    ],
     "envs": [
       "browser",
       "webextensions"
+    ],
+    "extensions": [
+      "ts"
     ],
     "overrides": [
       {
@@ -52,6 +52,9 @@
         "extends": "xo-typescript"
       }
     ]
+  },
+  "dependencies": {
+    "webext-detect-page": "^1.0.1"
   },
   "devDependencies": {
     "@sindresorhus/tsconfig": "^0.4.0",
@@ -61,8 +64,5 @@
     "eslint-config-xo-typescript": "^0.15.0",
     "typescript": "^3.5.0",
     "xo": "*"
-  },
-  "dependencies": {
-    "webext-detect-page": "^1.0.1"
   }
 }

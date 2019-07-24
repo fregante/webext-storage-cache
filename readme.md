@@ -2,14 +2,14 @@
 
 > WebExtensions module: Map-like promised cache storage with expiration. Chrome and Firefox.
 
-[![Travis build status](https://api.travis-ci.com/bfred-it/webext-storage-cache.svg?branch=master)](https://travis-ci.com/bfred-it/webext-storage-cache)
+[![Travis build status](https://api.travis-ci.com/fregante/webext-storage-cache.svg?branch=master)](https://travis-ci.com/fregante/webext-storage-cache)
 [![npm version](https://img.shields.io/npm/v/webext-storage-cache.svg)](https://www.npmjs.com/package/webext-storage-cache)
 
 This module works on content scripts, background pages and option pages.
 
 ## Install
 
-You can just download the [standalone bundle](https://packd.bfred-it.now.sh/webext-storage-cache@latest?name=storageCache) (it might take a minute to download) and include the file in your `manifest.json`, or:
+You can just download the [standalone bundle](https://packd.fregante.now.sh/webext-storage-cache@latest?name=storageCache) (it might take a minute to download) and include the file in your `manifest.json`, or:
 
 ```sh
 npm install --save webext-storage-cache
@@ -98,13 +98,13 @@ Type: `string`
 
 ## Related
 
-* [webext-options-sync](https://github.com/bfred-it/webext-options-sync) - Helps you manage and autosave your extension's options.
-* [webext-domain-permission-toggle](https://github.com/bfred-it/webext-domain-permission-toggle) - Browser-action context menu to request permission for the current tab.
-* [webext-dynamic-content-scripts](https://github.com/bfred-it/webext-dynamic-content-scripts) - Automatically inject your `content_scripts` on custom domains.
-* [webext-detect-page](https://github.com/bfred-it/webext-detect-page) - Detects where the current browser extension code is being run.
-* [webext-content-script-ping](https://github.com/bfred-it/webext-content-script-ping) - One-file interface to detect whether your content script have loaded.
-* [`Awesome WebExtensions`](https://github.com/bfred-it/Awesome-WebExtensions): A curated list of awesome resources for Web Extensions development.
+* [webext-options-sync](https://github.com/fregante/webext-options-sync) - Helps you manage and autosave your extension's options.
+* [webext-domain-permission-toggle](https://github.com/fregante/webext-domain-permission-toggle) - Browser-action context menu to request permission for the current tab.
+* [webext-dynamic-content-scripts](https://github.com/fregante/webext-dynamic-content-scripts) - Automatically inject your `content_scripts` on custom domains.
+* [webext-detect-page](https://github.com/fregante/webext-detect-page) - Detects where the current browser extension code is being run.
+* [webext-content-script-ping](https://github.com/fregante/webext-content-script-ping) - One-file interface to detect whether your content script have loaded.
+* [`Awesome WebExtensions`](https://github.com/fregante/Awesome-WebExtensions): A curated list of awesome resources for Web Extensions development.
 
 ## License
 
-MIT © Federico Brigante — [Twitter](http://twitter.com/bfred_it), Connor Love
+MIT © [Federico Brigante](https://bfred.it)

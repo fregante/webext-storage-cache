@@ -1,5 +1,3 @@
-// https://github.com/bfred-it/webext-storage-cache
-
 import {isBackgroundPage} from 'webext-detect-page';
 
 // @ts-ignore
