@@ -90,7 +90,7 @@ type Unpromise<MaybePromise> = MaybePromise extends Promise<infer Type> ? Type :
 type AsyncReturnType<T extends AnyFunction> = Unpromise<ReturnType<T>>
 type PromisedFunction<T extends AnyFunction> = (...args: Parameters<T>) => Promise<AsyncReturnType<T>>;
 
-interface MemoizedFunctionOptions<TFunction extends (...args: any[]) => any> {
+interface MemoizedFunctionOptions<TFunction extends AnyFunction> {
 	expiration?: number;
 	cacheKey?: (args: Parameters<TFunction>) => string;
 }
