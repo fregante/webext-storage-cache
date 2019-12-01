@@ -48,7 +48,7 @@ import cache from 'webext-storage-cache';
 
 ## API
 
-Similar to a `Map()`, but all methods a return a `Promise`.
+Similar to a `Map()`, but **all methods a return a `Promise`.**
 
 ### cache.has(key)
 
@@ -68,7 +68,7 @@ Type: `string`
 
 ### cache.set(key, value, expiration /* in days */)
 
-Caches the given key and value for a given amount of days.
+Caches the given key and value for a given amount of days. It returns the value itself.
 
 #### key
 

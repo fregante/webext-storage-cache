@@ -56,14 +56,16 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	return value.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, expiration: number = defaultExpiration /* days */): Promise<void> {
+async function set<TValue extends Value>(key: string, value: TValue, expiration: number = defaultExpiration /* days */): Promise<TValue> {
 	const cachedKey = `cache:${key}`;
-	return p(_set, {
+	await p(_set, {
 		[cachedKey]: {
 			data: value,
 			expiration: Date.now() + (1000 * 3600 * 24 * expiration)
 		}
 	});
+
+	return value;
 }
 
 async function delete_(key: string): Promise<void> {
