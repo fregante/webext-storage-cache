@@ -85,23 +85,17 @@ async function purge(): Promise<void> {
 	}
 }
 
-// Automatically clear cache every day
-if (isBackgroundPage()) {
-	setTimeout(purge, 60000); // Purge cache on launch, but wait a bit
-	setInterval(purge, 1000 * 3600 * 24);
-}
+type AnyFunction = (...args: any[]) => any;
+type Unpromise<MaybePromise> = MaybePromise extends Promise<infer Type> ? Type : MaybePromise;
+type AsyncReturnType<T extends AnyFunction> = Unpromise<ReturnType<T>>
+type PromisedFunction<T extends AnyFunction> = (...args: Parameters<T>) => Promise<AsyncReturnType<T>>;
 
 interface MemoizedFunctionOptions<TFunction extends (...args: any[]) => any> {
 	expiration?: number;
 	cacheKey?: (args: Parameters<TFunction>) => string;
 }
 
-type Unpromise<MaybePromise> = MaybePromise extends Promise<infer Type> ? Type : MaybePromise;
-type AsyncReturnType<T extends (...args: any) => any> = Unpromise<ReturnType<T>>
-type PromisedFunction<T extends (...args: any[]) => any> =
-	(...args: Parameters<T>) => Promise<AsyncReturnType<T>>;
-
-function function_<TFunction extends(...args: any[]) => any>(
+function function_<TFunction extends AnyFunction>(
 	function_: TFunction,
 	{
 		cacheKey = defaultCacheKey,
@@ -120,6 +114,16 @@ function function_<TFunction extends(...args: any[]) => any>(
 		return freshValue;
 	};
 }
+
+function init(): void {
+	// Automatically clear cache every day
+	if (isBackgroundPage()) {
+		setTimeout(purge, 60000); // Purge cache on launch, but wait a bit
+		setInterval(purge, 1000 * 3600 * 24);
+	}
+}
+
+init();
 
 export default {
 	has,
