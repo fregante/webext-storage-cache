@@ -1,4 +1,4 @@
-import {expectType, expectNotAssignable} from 'tsd';
+import {expectType, expectNotAssignable, expectAssignable} from 'tsd';
 import cache from '.';
 
 type Primitive = boolean | number | string;
@@ -11,8 +11,8 @@ expectType<Promise<Value | undefined>>(cache.get('key'));
 expectType<Promise<string | undefined>>(cache.get<string>('key'));
 expectNotAssignable<Promise<number | undefined>>(cache.get<string>('key'));
 
-expectType<Promise<void>>(cache.set('key', 1));
-expectType<Promise<void>>(cache.set('key', true));
-expectType<Promise<void>>(cache.set('key', [true, 'string']));
-expectType<Promise<void>>(cache.set('key', {wow: [true, 'string']}));
-expectType<Promise<void>>(cache.set('key', 1, 1));
+expectAssignable<Promise<number>>(cache.set('key', 1));
+expectAssignable<Promise<boolean>>(cache.set('key', true));
+expectAssignable<Promise<[boolean, string]>>(cache.set('key', [true, 'string']));
+expectAssignable<Promise<Record<string, any[]>>>(cache.set('key', {wow: [true, 'string']}));
+expectAssignable<Promise<number>>(cache.set('key', 1, 1));

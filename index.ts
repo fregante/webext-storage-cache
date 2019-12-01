@@ -53,14 +53,16 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	return value.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, expiration: number = 30 /* days */): Promise<void> {
+async function set<TValue extends Value>(key: string, value: TValue, expiration = 30 /* days */): Promise<TValue> {
 	const cachedKey = `cache:${key}`;
-	return p(_set, {
+	await p(_set, {
 		[cachedKey]: {
 			data: value,
 			expiration: Date.now() + (1000 * 3600 * 24 * expiration)
 		}
 	});
+
+	return value;
 }
 
 async function delete_(key: string): Promise<void> {
@@ -69,7 +71,7 @@ async function delete_(key: string): Promise<void> {
 }
 
 async function purge(): Promise<void> {
-	const values = await p<Cache>(_get,);
+	const values = await p<Cache>(_get);
 	const removableItems = [];
 	for (const [key, value] of Object.entries(values)) {
 		if (key.startsWith('cache:') && Date.now() > value.expiration) {
