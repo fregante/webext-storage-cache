@@ -96,8 +96,10 @@ interface MemoizedFunctionOptions<TFunction extends (...args: any[]) => any> {
 	cacheKey?: (args: Parameters<TFunction>) => string;
 }
 
+type Unpromise<MaybePromise> = MaybePromise extends Promise<infer Type> ? Type : MaybePromise;
+type AsyncReturnType<T extends (...args: any) => any> = Unpromise<ReturnType<T>>
 type PromisedFunction<T extends (...args: any[]) => any> =
-	(...args: Parameters<T>) => Promise<ReturnType<T>>;
+	(...args: Parameters<T>) => Promise<AsyncReturnType<T>>;
 
 function function_<TFunction extends(...args: any[]) => any>(
 	function_: TFunction,
