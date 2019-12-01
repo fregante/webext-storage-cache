@@ -85,32 +85,30 @@ async function purge(): Promise<void> {
 	}
 }
 
-type AnyFunction = (...args: any[]) => any;
-type Unpromise<MaybePromise> = MaybePromise extends Promise<infer Type> ? Type : MaybePromise;
-type AsyncReturnType<T extends AnyFunction> = Unpromise<ReturnType<T>>
-type PromisedFunction<T extends AnyFunction> = (...args: Parameters<T>) => Promise<AsyncReturnType<T>>;
-
-interface MemoizedFunctionOptions<TFunction extends AnyFunction> {
+interface MemoizedFunctionOptions<TArgs extends any[]> {
 	expiration?: number;
-	cacheKey?: (args: Parameters<TFunction>) => string;
+	cacheKey?: (args: TArgs) => string;
 }
 
-function function_<TFunction extends AnyFunction>(
-	function_: TFunction,
+function function_<
+	TValue extends Value,
+	TArgs extends any[],
+>(
+	function_: (...args: TArgs) => Promise<TValue> | TValue,
 	{
 		cacheKey = defaultCacheKey,
 		expiration = defaultExpiration
-	}: MemoizedFunctionOptions<TFunction> = {}
-): PromisedFunction<TFunction> {
+	}: MemoizedFunctionOptions<TArgs> = {}
+): (...args: TArgs) => Promise<TValue> {
 	return async (...args) => {
 		const key = cacheKey(args);
-		const cachedValue = await get(key);
+		const cachedValue = await get<TValue>(key);
 		if (cachedValue) {
 			return cachedValue;
 		}
 
 		const freshValue = await function_(...args);
-		await set(cacheKey(args), freshValue, expiration);
+		await set<TValue>(key, freshValue, expiration);
 		return freshValue;
 	};
 }
