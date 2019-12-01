@@ -16,11 +16,8 @@ npm install --save webext-storage-cache
 ```
 
 ```js
+// This module is only offered as a ES Module
 import storageCache from 'webext-storage-cache';
-```
-
-```js
-const storageCache = require('webext-storage-cache');
 ```
 
 ## Usage

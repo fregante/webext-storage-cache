@@ -31,9 +31,9 @@
     "index.d.ts",
     "module/index.js"
   ],
-  "module": "module/index.js",
+  "module": "index.js",
   "scripts": {
-    "build": "tsc && tsc --module es2015 --outDir module --declaration false",
+    "build": "tsc",
     "prepublishOnly": "npm run build --silent",
     "test": "xo && tsc --noEmit",
     "watch": "tsc --watch"
@@ -57,12 +57,13 @@
     "webext-detect-page": "^1.0.1"
   },
   "devDependencies": {
-    "@sindresorhus/tsconfig": "^0.4.0",
-    "@types/chrome": "0.0.86",
-    "@typescript-eslint/eslint-plugin": "^1.9.0",
-    "@typescript-eslint/parser": "^1.11.0",
-    "eslint-config-xo-typescript": "^0.15.0",
+    "@sindresorhus/tsconfig": "^0.6.0",
+    "@types/chrome": "0.0.91",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
+    "eslint-config-xo-typescript": "^0.23.0",
     "typescript": "^3.5.0",
     "xo": "*"
-  }
+  },
+  "type": "module"
 }
