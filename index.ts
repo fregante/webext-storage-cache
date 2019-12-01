@@ -19,6 +19,9 @@ type Value = Primitive | Primitive[] | Record<string, unknown>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
+const defaultCacheKey = (args: string[]): string => args[0];
+const defaultExpiration = 30; /* Days */
+
 interface CacheItem<TValue> {
 	data: TValue;
 	expiration: number;
@@ -53,7 +56,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	return value.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, expiration: number = 30 /* days */): Promise<void> {
+async function set<TValue extends Value>(key: string, value: TValue, expiration: number = defaultExpiration /* days */): Promise<void> {
 	const cachedKey = `cache:${key}`;
 	return p(_set, {
 		[cachedKey]: {
@@ -69,7 +72,7 @@ async function delete_(key: string): Promise<void> {
 }
 
 async function purge(): Promise<void> {
-	const values = await p<Cache>(_get,);
+	const values = await p<Cache>(_get);
 	const removableItems = [];
 	for (const [key, value] of Object.entries(values)) {
 		if (key.startsWith('cache:') && Date.now() > value.expiration) {
@@ -88,9 +91,38 @@ if (isBackgroundPage()) {
 	setInterval(purge, 1000 * 3600 * 24);
 }
 
+interface MemoizedFunctionOptions<TFunction extends (...args: any[]) => any> {
+	expiration?: number;
+	cacheKey?: (args: Parameters<TFunction>) => string;
+}
+
+type PromisedFunction<T extends (...args: any[]) => any> =
+	(...args: Parameters<T>) => Promise<ReturnType<T>>;
+
+function function_<TFunction extends(...args: any[]) => any>(
+	function_: TFunction,
+	{
+		cacheKey = defaultCacheKey,
+		expiration = defaultExpiration
+	}: MemoizedFunctionOptions<TFunction> = {}
+): PromisedFunction<TFunction> {
+	return async (...args) => {
+		const key = cacheKey(args);
+		const cachedValue = await get(key);
+		if (cachedValue) {
+			return cachedValue;
+		}
+
+		const freshValue = await function_(...args);
+		await set(cacheKey(args), freshValue, expiration);
+		return freshValue;
+	};
+}
+
 export default {
 	has,
 	get,
 	set,
+	function: function_,
 	delete: delete_
 };
