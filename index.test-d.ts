@@ -27,13 +27,13 @@ expectType<(n: string) => Promise<number>>(cache.function(
 
 expectType<(n: string) => Promise<number>>(cache.function(
 	(n: string) => Number(n)
-, {
-	expiration: 20
-}));
+	, {
+		expiration: 20
+	}));
 
 expectType<(date: Date) => Promise<string>>(cache.function(
 	(date: Date) => String(date.getHours())
-, {
-	cacheKey: ([date]) => date.toLocaleString()
-}));
+	, {
+		cacheKey: ([date]) => date.toLocaleString()
+	}));
 
