@@ -29,6 +29,18 @@ expectType<(n: string) => Promise<number>>(
 	cache.function(async (n: string) => Number(n))
 );
 
+function identity(x: string): string;
+function identity(x: number): number;
+function identity(x: number | string): number | string {
+	return x;
+}
+
+// TODO: Overloads are failing
+expectType<Promise<number>>(cache.function(identity)(1));
+/// expectType<Promise<string>>(cache.function(identity)('1'));
+expectNotAssignable<Promise<string>>(cache.function(identity)(1));
+/// expectNotAssignable<Promise<number>>(cache.function(identity)('1'));
+
 expectType<(n: string) => Promise<number>>(
 	cache.function((n: string) => Number(n), {
 		expiration: 20
