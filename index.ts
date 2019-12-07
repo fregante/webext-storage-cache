@@ -19,9 +19,6 @@ type Value = Primitive | Primitive[] | Record<string, unknown>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
-const defaultCacheKey = (args: string[]): string => args[0];
-const defaultExpiration = 30; /* Days */
-
 interface CacheItem<TValue> {
 	data: TValue;
 	expiration: number;
@@ -35,28 +32,27 @@ const _remove = chrome.storage.local.remove.bind(chrome.storage.local);
 
 async function has(key: string): Promise<boolean> {
 	const cachedKey = `cache:${key}`;
-	const values = await p<Cache>(_get, cachedKey);
-	return values[cachedKey] !== undefined;
+	return cachedKey in await p<Cache>(_get, cachedKey);
 }
 
 async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
 	const cachedKey = `cache:${key}`;
 	const values = await p<Cache<TValue>>(_get, cachedKey);
 	const value = values[cachedKey];
-	// If it's not in the cache, it's best to return "undefined"
 	if (value === undefined) {
-		return undefined;
+		// `undefined` means not in cache
+		return;
 	}
 
 	if (Date.now() > value.expiration) {
 		await p(_remove, cachedKey);
-		return undefined;
+		return;
 	}
 
 	return value.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, expiration: number = defaultExpiration /* days */): Promise<TValue> {
+async function set<TValue extends Value>(key: string, value: TValue, expiration = 30 /* days */): Promise<TValue> {
 	const cachedKey = `cache:${key}`;
 	await p(_set, {
 		[cachedKey]: {
@@ -97,20 +93,17 @@ function function_<
 	TArgs extends any[],
 >(
 	function_: (...args: TArgs) => Promise<TValue> | TValue,
-	{
-		cacheKey = defaultCacheKey,
-		expiration = defaultExpiration
-	}: MemoizedFunctionOptions<TArgs> = {}
+	options: MemoizedFunctionOptions<TArgs> = {}
 ): (...args: TArgs) => Promise<TValue> {
 	return async (...args) => {
-		const key = cacheKey(args);
+		const key = options.cacheKey ? options.cacheKey(args) : args[0];
 		const cachedValue = await get<TValue>(key);
-		if (cachedValue) {
+		if (cachedValue !== undefined) {
 			return cachedValue;
 		}
 
 		const freshValue = await function_(...args);
-		await set<TValue>(key, freshValue, expiration);
+		await set<TValue>(key, freshValue, options.expiration);
 		return freshValue;
 	};
 }

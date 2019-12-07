@@ -21,19 +21,22 @@ const cachedPower = cache.function((n: number) => n ** 1000);
 expectType<(n: number) => Promise<number>>(cachedPower);
 expectType<number>(await cachedPower(1));
 
-expectType<(n: string) => Promise<number>>(cache.function(
-	(n: string) => Number(n)
-));
+expectType<(n: string) => Promise<number>>(
+	cache.function((n: string) => Number(n))
+);
 
-expectType<(n: string) => Promise<number>>(cache.function(
-	(n: string) => Number(n)
-	, {
+expectType<(n: string) => Promise<number>>(
+	cache.function(async (n: string) => Number(n))
+);
+
+expectType<(n: string) => Promise<number>>(
+	cache.function((n: string) => Number(n), {
 		expiration: 20
-	}));
+	})
+);
 
-expectType<(date: Date) => Promise<string>>(cache.function(
-	(date: Date) => String(date.getHours())
-	, {
+expectType<(date: Date) => Promise<string>>(
+	cache.function((date: Date) => String(date.getHours()), {
 		cacheKey: ([date]) => date.toLocaleString()
-	}));
-
+	})
+);
