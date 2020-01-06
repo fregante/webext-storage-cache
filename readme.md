@@ -132,7 +132,7 @@ Type: `async function` that returns a cacheable value.
 
 ##### cacheKey
 
-Type: `function` that returns a string
+Type: `function` that returns a string<br>
 Default: `function` that returns the first argument of the call
 
 ```js
@@ -145,13 +145,34 @@ cachedOperate(1, 2, 3);
 // Without a custom `cacheKey`, it would be stored in the key '1'
 ```
 
-
 ##### expiration
 
 Type: `number`<br>
 Default: 30
 
 The number of days after which the cache item will expire.
+
+##### isExpired
+
+Type: `function` that returns a boolean<br>
+Default: `() => false`
+
+You may want to have additional checks on the cached value, for example after updating its format.
+
+```js
+async function getContent(url, options) {
+	const response = await fetch(url, options);
+	return response.json(); // For example, you used to return plain text, now you return a JSON object
+}
+
+const cachedGetContent = cache.function(getContent, {
+	// If it's a string, it's in the old format and a new value will be fetched and cached
+	isExpired: cachedValue => typeof cachedValue === 'string'
+});
+
+const json = await cachedGetHTML('https://google.com', {});
+// The HTML of google.com will be saved with the key 'https://google.com'
+```
 
 ## Related
 
