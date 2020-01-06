@@ -95,7 +95,7 @@ Type: `string | number | boolean` or `array | object` of those three types
 
 #### expiration
 
-Type: `number`
+Type: `number`<br>
 Default: 30
 
 The number of days after which the cache item will expire.
@@ -118,7 +118,7 @@ async function getHTML(url, options) {
 	return response.text();
 }
 
-const cachedGetHTML = cache.memoized(getHTML);
+const cachedGetHTML = cache.function(getHTML);
 
 const html = await cachedGetHTML('https://google.com', {});
 // The HTML of google.com will be saved with the key 'https://google.com'
@@ -136,7 +136,7 @@ Type: `function` that returns a string
 Default: `function` that returns the first argument of the call
 
 ```js
-const cachedOperate = cache.memoized(operate, {
+const cachedOperate = cache.function(operate, {
 	cacheKey: args => args.join(',')
 });
 
@@ -148,7 +148,7 @@ cachedOperate(1, 2, 3);
 
 ##### expiration
 
-Type: `number`
+Type: `number`<br>
 Default: 30
 
 The number of days after which the cache item will expire.
