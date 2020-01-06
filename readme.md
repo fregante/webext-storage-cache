@@ -46,9 +46,24 @@ import cache from 'webext-storage-cache';
 })();
 ```
 
+The same code could be also written more effectively with `cache.function`:
+
+```js
+import cache from 'webext-storage-cache';
+
+const cachedFunction = cache.function(someFunction, {
+	expiration: 3,
+	cacheKey: () => 'unique'
+});
+
+(async () => {
+  console.log(await cachedFunction());
+})();
+```
+
 ## API
 
-Similar to a `Map()`, but **all methods a return a `Promise`.**
+Similar to a `Map()`, but **all methods a return a `Promise`.** It also has a memoization method that hides the caching logic and makes it a breeze to use.
 
 ### cache.has(key)
 
@@ -80,10 +95,10 @@ Type: `string | number | boolean` or `array | object` of those three types
 
 #### expiration
 
-The number of days after which the cache item will expire.
-
 Type: `number`
 Default: 30
+
+The number of days after which the cache item will expire.
 
 ### cache.delete(key)
 
@@ -92,6 +107,51 @@ Deletes the requested item from the cache.
 #### key
 
 Type: `string`
+
+### cache.function(getter, options)
+
+Caches the return value of the function based on the `cacheKey`. It works similarly to `lodash.memoize`:
+
+```js
+async function getHTML(url, options) {
+	const response = await fetch(url, options);
+	return response.text();
+}
+
+const cachedGetHTML = cache.memoized(getHTML);
+
+const html = await cachedGetHTML('https://google.com', {});
+// The HTML of google.com will be saved with the key 'https://google.com'
+```
+
+#### getter
+
+Type: `async function` that returns a cacheable value.
+
+#### options
+
+##### cacheKey
+
+Type: `function` that returns a string
+Default: `function` that returns the first argument of the call
+
+```js
+const cachedOperate = cache.memoized(operate, {
+	cacheKey: args => args.join(',')
+});
+
+cachedOperate(1, 2, 3);
+// The result of `operate(1, 2, 3)` will be stored in the key '1,2,3'
+// Without a custom `cacheKey`, it would be stored in the key '1'
+```
+
+
+##### expiration
+
+Type: `number`
+Default: 30
+
+The number of days after which the cache item will expire.
 
 ## Related
 
