@@ -34,7 +34,7 @@
   "module": "index.js",
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "tsc --silent",
+    "prepublishOnly": "tsc",
     "test": "run-s build test:*",
     "test:xo": "xo",
     "test:tsd": "tsd; true",
