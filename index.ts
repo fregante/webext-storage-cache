@@ -90,14 +90,14 @@ interface MemoizedFunctionOptions<TArgs extends any[]> {
 
 function function_<
 	TValue extends Value,
-	TArgs extends any[],
-	TFunction extends (...args: TArgs) => Promise<TValue>
+	TFunction extends (...args: any[]) => Promise<TValue>,
+	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
 	options: MemoizedFunctionOptions<TArgs> = {}
 ): TFunction {
-	return (async (...args) => {
-		const key = options.cacheKey ? options.cacheKey(args) : args[0];
+	return (async (...args: TArgs) => {
+		const key = options.cacheKey ? options.cacheKey(args) : args[0] as string;
 		const cachedValue = await get<TValue>(key);
 		if (cachedValue !== undefined) {
 			return cachedValue;
