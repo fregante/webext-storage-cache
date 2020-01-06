@@ -32,22 +32,21 @@ const _remove = chrome.storage.local.remove.bind(chrome.storage.local);
 
 async function has(key: string): Promise<boolean> {
 	const cachedKey = `cache:${key}`;
-	const values = await p<Cache>(_get, cachedKey);
-	return values[cachedKey] !== undefined;
+	return cachedKey in await p<Cache>(_get, cachedKey);
 }
 
 async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
 	const cachedKey = `cache:${key}`;
 	const values = await p<Cache<TValue>>(_get, cachedKey);
 	const value = values[cachedKey];
-	// If it's not in the cache, it's best to return "undefined"
 	if (value === undefined) {
-		return undefined;
+		// `undefined` means not in cache
+		return;
 	}
 
 	if (Date.now() > value.expiration) {
 		await p(_remove, cachedKey);
-		return undefined;
+		return;
 	}
 
 	return value.data;
@@ -84,15 +83,46 @@ async function purge(): Promise<void> {
 	}
 }
 
-// Automatically clear cache every day
-if (isBackgroundPage()) {
-	setTimeout(purge, 60000); // Purge cache on launch, but wait a bit
-	setInterval(purge, 1000 * 3600 * 24);
+interface MemoizedFunctionOptions<TArgs extends any[]> {
+	expiration?: number;
+	cacheKey?: (args: TArgs) => string;
 }
+
+function function_<
+	TValue extends Value,
+	TFunction extends (...args: any[]) => Promise<TValue>,
+	TArgs extends Parameters<TFunction>
+>(
+	getter: TFunction,
+	options: MemoizedFunctionOptions<TArgs> = {}
+): TFunction {
+	return (async (...args: TArgs) => {
+		const key = options.cacheKey ? options.cacheKey(args) : args[0] as string;
+		const cachedValue = await get<TValue>(key);
+		if (cachedValue !== undefined) {
+			return cachedValue;
+		}
+
+		const freshValue = await getter(...args);
+		await set<TValue>(key, freshValue, options.expiration);
+		return freshValue;
+	}) as TFunction;
+}
+
+function init(): void {
+	// Automatically clear cache every day
+	if (isBackgroundPage()) {
+		setTimeout(purge, 60000); // Purge cache on launch, but wait a bit
+		setInterval(purge, 1000 * 3600 * 24);
+	}
+}
+
+init();
 
 export default {
 	has,
 	get,
 	set,
+	function: function_,
 	delete: delete_
 };

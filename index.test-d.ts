@@ -16,3 +16,38 @@ expectAssignable<Promise<boolean>>(cache.set('key', true));
 expectAssignable<Promise<[boolean, string]>>(cache.set('key', [true, 'string']));
 expectAssignable<Promise<Record<string, any[]>>>(cache.set('key', {wow: [true, 'string']}));
 expectAssignable<Promise<number>>(cache.set('key', 1, 1));
+
+const cachedPower = cache.function(async (n: number) => n ** 1000);
+expectType<(n: number) => Promise<number>>(cachedPower);
+expectType<number>(await cachedPower(1));
+
+expectType<(n: string) => Promise<number>>(
+	cache.function(async (n: string) => Number(n))
+);
+
+expectType<(n: string) => Promise<number>>(
+	cache.function(async (n: string) => Number(n))
+);
+
+async function identity(x: string): Promise <string>;
+async function identity(x: number): Promise <number>;
+async function identity(x: number | string): Promise <number | string> {
+	return x;
+}
+
+expectType<Promise<number>>(cache.function(identity)(1));
+expectType<Promise<string>>(cache.function(identity)('1'));
+expectNotAssignable<Promise<string>>(cache.function(identity)(1));
+expectNotAssignable<Promise<number>>(cache.function(identity)('1'));
+
+expectType<(n: string) => Promise<number>>(
+	cache.function(async (n: string) => Number(n), {
+		expiration: 20
+	})
+);
+
+expectType<(date: Date) => Promise<string>>(
+	cache.function(async (date: Date) => String(date.getHours()), {
+		cacheKey: ([date]) => date.toLocaleString()
+	})
+);
