@@ -91,21 +91,22 @@ interface MemoizedFunctionOptions<TArgs extends any[]> {
 function function_<
 	TValue extends Value,
 	TArgs extends any[],
+	TFunction extends (...args: TArgs) => Promise<TValue>
 >(
-	function_: (...args: TArgs) => Promise<TValue> | TValue,
+	getter: TFunction,
 	options: MemoizedFunctionOptions<TArgs> = {}
-): (...args: TArgs) => Promise<TValue> {
-	return async (...args) => {
+): TFunction {
+	return (async (...args) => {
 		const key = options.cacheKey ? options.cacheKey(args) : args[0];
 		const cachedValue = await get<TValue>(key);
 		if (cachedValue !== undefined) {
 			return cachedValue;
 		}
 
-		const freshValue = await function_(...args);
+		const freshValue = await getter(...args);
 		await set<TValue>(key, freshValue, options.expiration);
 		return freshValue;
-	};
+	}) as TFunction;
 }
 
 function init(): void {
