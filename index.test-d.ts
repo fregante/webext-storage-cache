@@ -1,8 +1,12 @@
 import {expectType, expectNotAssignable, expectAssignable} from 'tsd';
 import cache from '.';
 
-type Primitive = boolean | number | string;
-type Value = Primitive | Primitive[] | Record<string, unknown>;
+type Value =
+	| boolean
+	| number
+	| string
+	| Value[]
+	| { [key: string]: Value };
 
 expectType<Promise<boolean>>(cache.has('key'));
 expectType<Promise<void>>(cache.delete('key'));
