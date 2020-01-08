@@ -83,9 +83,10 @@ async function purge(): Promise<void> {
 	}
 }
 
-interface MemoizedFunctionOptions<TArgs extends any[]> {
+interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
 	expiration?: number;
 	cacheKey?: (args: TArgs) => string;
+	isExpired?: (cachedValue: TValue) => boolean;
 }
 
 function function_<
@@ -94,12 +95,12 @@ function function_<
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
-	options: MemoizedFunctionOptions<TArgs> = {}
+	options: MemoizedFunctionOptions<TArgs, TValue> = {}
 ): TFunction {
 	return (async (...args: TArgs) => {
 		const key = options.cacheKey ? options.cacheKey(args) : args[0] as string;
 		const cachedValue = await get<TValue>(key);
-		if (cachedValue !== undefined) {
+		if (cachedValue !== undefined && !options.isExpired?.(cachedValue)) {
 			return cachedValue;
 		}
 
