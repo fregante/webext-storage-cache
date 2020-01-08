@@ -1,9 +1,6 @@
-# webext-storage-cache
+# webext-storage-cache [![](https://img.shields.io/npm/v/webext-storage-cache.svg)](https://www.npmjs.com/package/webext-storage-cache)
 
 > WebExtensions module: Map-like promised cache storage with expiration. Chrome and Firefox.
-
-[![Travis build status](https://api.travis-ci.com/fregante/webext-storage-cache.svg?branch=master)](https://travis-ci.com/fregante/webext-storage-cache)
-[![npm version](https://img.shields.io/npm/v/webext-storage-cache.svg)](https://www.npmjs.com/package/webext-storage-cache)
 
 This module works on content scripts, background pages and option pages.
 
@@ -27,9 +24,9 @@ This module requires the `storage` permission:
 ```json
 // manifest.json
 {
-  "permissions": [
-    "storage"
-  ]
+	"permissions": [
+		"storage"
+	]
 }
 ```
 
@@ -37,12 +34,12 @@ This module requires the `storage` permission:
 import cache from 'webext-storage-cache';
 
 (async () => {
-  if (!await cache.has('unique')) {
-    const cachableItem = await someFunction();
-    await cache.set('unique', cachableItem, 3 /* days */);
+	if (!await cache.has('unique')) {
+		const cachableItem = await someFunction();
+		await cache.set('unique', cachableItem, 3 /* days */);
 	}
 
-  console.log(await cache.get('unique'));
+	console.log(await cache.get('unique'));
 })();
 ```
 
@@ -57,7 +54,7 @@ const cachedFunction = cache.function(someFunction, {
 });
 
 (async () => {
-  console.log(await cachedFunction());
+	console.log(await cachedFunction());
 })();
 ```
 

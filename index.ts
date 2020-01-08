@@ -14,7 +14,7 @@ async function p<T>(fn, ...args): Promise<T> {
 	});
 }
 
-type Primitive = boolean | number | string | undefined;
+type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, unknown>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
