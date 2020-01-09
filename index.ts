@@ -124,6 +124,8 @@ function init(): void {
 		setTimeout(deleteExpired, 60000); // Purge cache on launch, but wait a bit
 		setInterval(deleteExpired, 1000 * 3600 * 24);
 	}
+
+	(window as any).webextStorageCache = cache;
 }
 
 init();
