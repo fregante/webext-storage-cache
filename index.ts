@@ -118,6 +118,15 @@ function function_<
 	}) as TFunction;
 }
 
+const cache = {
+	has,
+	get,
+	set,
+	clear,
+	function: function_,
+	delete: delete_
+};
+
 function init(): void {
 	// Automatically clear cache every day
 	if (isBackgroundPage()) {
@@ -129,14 +138,5 @@ function init(): void {
 }
 
 init();
-
-const cache = {
-	has,
-	get,
-	set,
-	clear,
-	function: function_,
-	delete: delete_
-};
 
 export default cache;
