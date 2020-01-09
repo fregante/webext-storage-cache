@@ -66,6 +66,11 @@ Similar to a `Map()`, but **all methods a return a `Promise`.** It also has a me
 
 Checks if the given key is in the cache, returns a `boolean`.
 
+```js
+const isCached = await cache.has('cached-url');
+// true or false
+```
+
 #### key
 
 Type: `string`
@@ -74,6 +79,11 @@ Type: `string`
 
 Returns the cached value of key if it exists and hasn't expired, returns `undefined` otherwise.
 
+```js
+const url = await cache.get('cached-url');
+// It will be `undefined` if it's not found.
+```
+
 #### key
 
 Type: `string`
@@ -81,6 +91,11 @@ Type: `string`
 ### cache.set(key, value, expiration /* in days */)
 
 Caches the given key and value for a given amount of days. It returns the value itself.
+
+```js
+const info = await getInfoObject();
+await cache.set('core-info', info); // Cached for 30 days by default
+```
 
 #### key
 
@@ -100,6 +115,10 @@ The number of days after which the cache item will expire.
 ### cache.delete(key)
 
 Deletes the requested item from the cache.
+
+```js
+await cache.delete('cached-url');
+```
 
 #### key
 
