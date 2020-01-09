@@ -69,11 +69,11 @@ async function delete_(key: string): Promise<void> {
 	return p(_remove, cachedKey);
 }
 
-async function purge(): Promise<void> {
+async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promise<void> {
 	const values = await p<Cache>(_get);
 	const removableItems = [];
 	for (const [key, value] of Object.entries(values)) {
-		if (key.startsWith('cache:') && Date.now() > value.expiration) {
+		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
 			removableItems.push(key);
 		}
 	}
@@ -81,6 +81,14 @@ async function purge(): Promise<void> {
 	if (removableItems.length > 0) {
 		await p(_remove, removableItems);
 	}
+}
+
+async function deleteExpired(): Promise<void> {
+	await deleteWithLogic(value => Date.now() > value.expiration);
+}
+
+async function clear(): Promise<void> {
+	await deleteWithLogic();
 }
 
 interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
@@ -113,8 +121,8 @@ function function_<
 function init(): void {
 	// Automatically clear cache every day
 	if (isBackgroundPage()) {
-		setTimeout(purge, 60000); // Purge cache on launch, but wait a bit
-		setInterval(purge, 1000 * 3600 * 24);
+		setTimeout(deleteExpired, 60000); // Purge cache on launch, but wait a bit
+		setInterval(deleteExpired, 1000 * 3600 * 24);
 	}
 }
 
@@ -124,6 +132,7 @@ const cache = {
 	has,
 	get,
 	set,
+	clear,
 	function: function_,
 	delete: delete_
 };

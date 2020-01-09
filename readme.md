@@ -124,6 +124,14 @@ await cache.delete('cached-url');
 
 Type: `string`
 
+### cache.clear()
+
+Deletes the entire cache.
+
+```js
+await cache.clear();
+```
+
 ### cache.function(getter, options)
 
 Caches the return value of the function based on the `cacheKey`. It works similarly to `lodash.memoize`:
