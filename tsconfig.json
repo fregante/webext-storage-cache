@@ -3,7 +3,10 @@
 	"compilerOptions": {
 		"outDir": ".",
 		"target": "es2018",
-		"module": "es2015"
+		"module": "es2015",
+		"lib": [
+			"DOM"
+		]
 	},
 	"files": [
 		"index.ts"

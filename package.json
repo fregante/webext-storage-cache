@@ -37,7 +37,7 @@
     "prepublishOnly": "tsc",
     "test": "run-s build test:*",
     "test:xo": "xo",
-    "test:tsd": "tsd; true",
+    "test:tsd": "tsd",
     "watch": "tsc --watch"
   },
   "xo": {
