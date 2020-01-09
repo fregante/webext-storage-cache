@@ -120,10 +120,12 @@ function init(): void {
 
 init();
 
-export default {
+const cache = {
 	has,
 	get,
 	set,
 	function: function_,
 	delete: delete_
 };
+
+export default cache;
