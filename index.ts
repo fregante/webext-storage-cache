@@ -54,6 +54,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 
 async function set<TValue extends Value>(key: string, value: TValue, expiration = 30 /* days */): Promise<TValue> {
 	if (typeof value === 'undefined') {
+		// @ts-ignore This never happens in TS because `value` can't be undefined
 		return;
 	}
 
