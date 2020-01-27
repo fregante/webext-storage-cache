@@ -51,3 +51,8 @@ expectType<(date: Date) => Promise<string>>(
 		cacheKey: ([date]) => date.toLocaleString()
 	})
 );
+
+// This function won't be cached
+expectType<(n: undefined[]) => Promise<undefined>>(
+	cache.function(async (n: undefined[]) => n[1])
+);
