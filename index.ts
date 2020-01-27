@@ -53,6 +53,10 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 }
 
 async function set<TValue extends Value>(key: string, value: TValue, expiration = 30 /* days */): Promise<TValue> {
+	if (typeof value === 'undefined') {
+		return;
+	}
+
 	const cachedKey = `cache:${key}`;
 	await p(_set, {
 		[cachedKey]: {
@@ -99,7 +103,7 @@ interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
 
 function function_<
 	TValue extends Value,
-	TFunction extends (...args: any[]) => Promise<TValue>,
+	TFunction extends (...args: any[]) => Promise<TValue | undefined>,
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
