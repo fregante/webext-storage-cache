@@ -103,7 +103,9 @@ Type: `string`
 
 #### value
 
-Type: `string | number | boolean` or `array | object` of those three types
+Type: `string | number | boolean` or `array | object` of those three types.
+
+`undefined` won't be cached, it's considered "no value" in the Storage API.
 
 #### expiration
 
@@ -152,6 +154,8 @@ const html = await cachedGetHTML('https://google.com', {});
 
 Type: `async function` that returns a cacheable value.
 
+Returning `undefined` will skip the cache, just like `cache.set()`.
+
 #### options
 
 ##### cacheKey
@@ -184,8 +188,8 @@ Default: `() => false`
 You may want to have additional checks on the cached value, for example after updating its format.
 
 ```js
-async function getContent(url, options) {
-	const response = await fetch(url, options);
+async function getContent(url) {
+	const response = await fetch(url);
 	return response.json(); // For example, you used to return plain text, now you return a JSON object
 }
 
@@ -194,7 +198,7 @@ const cachedGetContent = cache.function(getContent, {
 	isExpired: cachedValue => typeof cachedValue === 'string'
 });
 
-const json = await cachedGetHTML('https://google.com', {});
+const json = await cachedGetHTML('https://google.com');
 // The HTML of google.com will be saved with the key 'https://google.com'
 ```
 
