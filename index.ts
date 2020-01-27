@@ -117,7 +117,7 @@ function function_<
 		}
 
 		const freshValue = await getter(...args);
-		await set<TValue>(key, freshValue, options.expiration);
+		await set<TValue>(key, freshValue!, options.expiration);
 		return freshValue;
 	}) as TFunction;
 }
