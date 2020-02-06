@@ -31,25 +31,26 @@ const _set = chrome.storage.local.set.bind(chrome.storage.local);
 const _remove = chrome.storage.local.remove.bind(chrome.storage.local);
 
 async function has(key: string): Promise<boolean> {
-	const cachedKey = `cache:${key}`;
-	return cachedKey in await p<Cache>(_get, cachedKey);
+	const internalKey = `cache:${key}`;
+	return internalKey in await p<Cache>(_get, internalKey);
 }
 
 async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
-	const cachedKey = `cache:${key}`;
-	const values = await p<Cache<TValue>>(_get, cachedKey);
-	const value = values[cachedKey];
-	if (value === undefined) {
+	const internalKey = `cache:${key}`;
+	const storageData = await p<Cache<TValue>>(_get, internalKey);
+	const cachedItem = storageData[internalKey];
+
+	if (cachedItem === undefined) {
 		// `undefined` means not in cache
 		return;
 	}
 
-	if (Date.now() > value.expiration) {
-		await p(_remove, cachedKey);
+	if (Date.now() > cachedItem.expiration) {
+		await p(_remove, internalKey);
 		return;
 	}
 
-	return value.data;
+	return cachedItem.data;
 }
 
 async function set<TValue extends Value>(key: string, value: TValue, expiration = 30 /* days */): Promise<TValue> {
@@ -58,9 +59,9 @@ async function set<TValue extends Value>(key: string, value: TValue, expiration 
 		return;
 	}
 
-	const cachedKey = `cache:${key}`;
+	const internalKey = `cache:${key}`;
 	await p(_set, {
-		[cachedKey]: {
+		[internalKey]: {
 			data: value,
 			expiration: Date.now() + (1000 * 3600 * 24 * expiration)
 		}
@@ -70,14 +71,14 @@ async function set<TValue extends Value>(key: string, value: TValue, expiration 
 }
 
 async function delete_(key: string): Promise<void> {
-	const cachedKey = `cache:${key}`;
-	return p(_remove, cachedKey);
+	const internalKey = `cache:${key}`;
+	return p(_remove, internalKey);
 }
 
 async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promise<void> {
-	const values = await p<Cache>(_get);
+	const wholeCache = await p<Cache>(_get);
 	const removableItems = [];
-	for (const [key, value] of Object.entries(values)) {
+	for (const [key, value] of Object.entries(wholeCache)) {
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
 			removableItems.push(key);
 		}
@@ -89,7 +90,7 @@ async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promis
 }
 
 async function deleteExpired(): Promise<void> {
-	await deleteWithLogic(value => Date.now() > value.expiration);
+	await deleteWithLogic(cachedItem => Date.now() > cachedItem.expiration);
 }
 
 async function clear(): Promise<void> {
@@ -108,18 +109,28 @@ function function_<
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
-	options: MemoizedFunctionOptions<TArgs, TValue> = {}
+	{cacheKey, expiration, isExpired}: MemoizedFunctionOptions<TArgs, TValue> = {}
 ): TFunction {
-	return (async (...args: TArgs) => {
-		const key = options.cacheKey ? options.cacheKey(args) : args[0] as string;
-		const cachedValue = await get<TValue>(key);
-		if (cachedValue !== undefined && !options.isExpired?.(cachedValue)) {
-			return cachedValue;
+	const getSet = async (key: string, args: TArgs): Promise<TValue | undefined> => {
+		const freshValue = await getter(...args);
+		if (freshValue === undefined) {
+			await delete_(key);
+			return;
 		}
 
-		const freshValue = await getter(...args);
-		await set<TValue>(key, freshValue!, options.expiration);
-		return freshValue;
+		return set<TValue>(key, freshValue, expiration);
+	};
+
+	return (async (...args: TArgs) => {
+		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
+		const internalKey = `cache:${userKey}`;
+		const storageData = await p<Cache<TValue>>(_get, internalKey);
+		const cachedItem = storageData[internalKey];
+		if (cachedItem === undefined || isExpired?.(cachedItem.data)) {
+			return getSet(userKey, args);
+		}
+
+		return cachedItem.data;
 	}) as TFunction;
 }
 
