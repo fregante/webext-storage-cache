@@ -8,5 +8,5 @@ Thumbs.db
 *.log
 logs
 *.map
-index.js
+/index.js
 index.d.ts

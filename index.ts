@@ -1,18 +1,24 @@
 import {isBackgroundPage} from 'webext-detect-page';
 
 // @ts-ignore
-async function p<T>(fn, ...args): Promise<T> {
-	return new Promise((resolve, reject) => {
-		// @ts-ignore
-		fn(...args, result => {
-			if (chrome.runtime.lastError) {
-				reject(chrome.runtime.lastError);
-			} else {
-				resolve(result);
-			}
-		});
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promise((resolve, reject) => {
+	// @ts-ignore
+	executor(key, result => {
+		if (chrome.runtime.lastError) {
+			reject(chrome.runtime.lastError);
+		} else {
+			resolve(result);
+		}
 	});
-}
+});
+
+// @ts-ignore
+const _get = getPromise((...args) => chrome.storage.local.get(...args));
+// @ts-ignore
+const _set = getPromise((...args) => chrome.storage.local.set(...args));
+// @ts-ignore
+const _remove = getPromise((...args) => chrome.storage.local.remove(...args));
 
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;
@@ -26,18 +32,14 @@ interface CacheItem<TValue> {
 
 type Cache<TValue extends Value = Value> = Record<string, CacheItem<TValue>>;
 
-const _get = chrome.storage.local.get.bind(chrome.storage.local);
-const _set = chrome.storage.local.set.bind(chrome.storage.local);
-const _remove = chrome.storage.local.remove.bind(chrome.storage.local);
-
 async function has(key: string): Promise<boolean> {
 	const internalKey = `cache:${key}`;
-	return internalKey in await p<Cache>(_get, internalKey);
+	return internalKey in await _get<Cache>(internalKey);
 }
 
 async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
 	const internalKey = `cache:${key}`;
-	const storageData = await p<Cache<TValue>>(_get, internalKey);
+	const storageData = await _get<Cache<TValue>>(internalKey);
 	const cachedItem = storageData[internalKey];
 
 	if (cachedItem === undefined) {
@@ -46,7 +48,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	}
 
 	if (Date.now() > cachedItem.expiration) {
-		await p(_remove, internalKey);
+		await _remove(internalKey);
 		return;
 	}
 
@@ -60,7 +62,7 @@ async function set<TValue extends Value>(key: string, value: TValue, expiration 
 	}
 
 	const internalKey = `cache:${key}`;
-	await p(_set, {
+	await _set({
 		[internalKey]: {
 			data: value,
 			expiration: Date.now() + (1000 * 3600 * 24 * expiration)
@@ -72,11 +74,11 @@ async function set<TValue extends Value>(key: string, value: TValue, expiration 
 
 async function delete_(key: string): Promise<void> {
 	const internalKey = `cache:${key}`;
-	return p(_remove, internalKey);
+	return _remove(internalKey);
 }
 
 async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promise<void> {
-	const wholeCache = await p<Cache>(_get);
+	const wholeCache = await _get<Record<string, any>>();
 	const removableItems = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
@@ -85,7 +87,7 @@ async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promis
 	}
 
 	if (removableItems.length > 0) {
-		await p(_remove, removableItems);
+		await _remove(removableItems);
 	}
 }
 
@@ -124,7 +126,7 @@ function function_<
 	return (async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
 		const internalKey = `cache:${userKey}`;
-		const storageData = await p<Cache<TValue>>(_get, internalKey);
+		const storageData = await _get<Cache<TValue>>(internalKey);
 		const cachedItem = storageData[internalKey];
 		if (cachedItem === undefined || isExpired?.(cachedItem.data)) {
 			return getSet(userKey, args);
