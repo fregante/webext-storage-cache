@@ -1,6 +1,6 @@
 {
   "name": "webext-storage-cache",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "WebExtensions module: Map-like promised cache storage with expiration. Chrome and Firefox.",
   "keywords": [
     "await",
