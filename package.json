@@ -26,11 +26,13 @@
   "contributors": [
     "Federico Brigante <opensource@bfred.it> (bfred.it)"
   ],
+  "type": "module",
+  "main": "index.js",
+  "module": "index.js",
   "files": [
     "index.js",
     "index.d.ts"
   ],
-  "module": "index.js",
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "tsc",
@@ -58,7 +60,7 @@
     ]
   },
   "dependencies": {
-    "webext-detect-page": "^1.0.1"
+    "webext-detect-page": "^2.0.2"
   },
   "devDependencies": {
     "@sindresorhus/tsconfig": "^0.6.0",
@@ -70,6 +72,5 @@
     "tsd": "^0.11.0",
     "typescript": "^3.7.3",
     "xo": "*"
-  },
-  "type": "module"
+  }
 }
