@@ -22,9 +22,9 @@
   ],
   "repository": "fregante/webext-storage-cache",
   "license": "MIT",
-  "author": "Connor Love",
+  "author": "Federico Brigante <opensource@bfred.it> (bfred.it)",
   "contributors": [
-    "Federico Brigante <opensource@bfred.it> (bfred.it)"
+    "Connor Love"
   ],
   "type": "module",
   "main": "index.js",
