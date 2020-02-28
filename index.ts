@@ -13,6 +13,10 @@ const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promis
 	});
 });
 
+function daysInTheFuture(days: number): number {
+	return Date.now() + (1000 * 3600 * 24 * days);
+}
+
 // @ts-ignore
 const _get = getPromise((...args) => chrome.storage.local.get(...args));
 // @ts-ignore
@@ -27,7 +31,7 @@ type Value = Primitive | Primitive[] | Record<string, any>;
 
 interface CacheItem<TValue> {
 	data: TValue;
-	expiration: number;
+	maxAge: number;
 }
 
 type Cache<TValue extends Value = Value> = Record<string, CacheItem<TValue>>;
@@ -47,7 +51,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 		return;
 	}
 
-	if (Date.now() > cachedItem.expiration) {
+	if (Date.now() > cachedItem.maxAge) {
 		await _remove(internalKey);
 		return;
 	}
@@ -55,7 +59,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	return cachedItem.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, expiration = 30 /* days */): Promise<TValue> {
+async function set<TValue extends Value>(key: string, value: TValue, maxAge = 30 /* days */): Promise<TValue> {
 	if (typeof value === 'undefined') {
 		// @ts-ignore This never happens in TS because `value` can't be undefined
 		return;
@@ -65,7 +69,7 @@ async function set<TValue extends Value>(key: string, value: TValue, expiration 
 	await _set({
 		[internalKey]: {
 			data: value,
-			expiration: Date.now() + (1000 * 3600 * 24 * expiration)
+			maxAge: daysInTheFuture(maxAge)
 		}
 	});
 
@@ -92,7 +96,7 @@ async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promis
 }
 
 async function deleteExpired(): Promise<void> {
-	await deleteWithLogic(cachedItem => Date.now() > cachedItem.expiration);
+	await deleteWithLogic(cachedItem => Date.now() > cachedItem.maxAge);
 }
 
 async function clear(): Promise<void> {
@@ -100,9 +104,9 @@ async function clear(): Promise<void> {
 }
 
 interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
-	expiration?: number;
+	maxAge?: number;
 	cacheKey?: (args: TArgs) => string;
-	isExpired?: (cachedValue: TValue) => boolean;
+	shouldRevalidate?: (cachedValue: TValue) => boolean;
 }
 
 function function_<
@@ -111,7 +115,7 @@ function function_<
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
-	{cacheKey, expiration, isExpired}: MemoizedFunctionOptions<TArgs, TValue> = {}
+	{cacheKey, maxAge = 30, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
 ): TFunction {
 	const getSet = async (key: string, args: TArgs): Promise<TValue | undefined> => {
 		const freshValue = await getter(...args);
@@ -120,7 +124,7 @@ function function_<
 			return;
 		}
 
-		return set<TValue>(key, freshValue, expiration);
+		return set<TValue>(key, freshValue, maxAge);
 	};
 
 	return (async (...args: TArgs) => {
@@ -128,7 +132,7 @@ function function_<
 		const internalKey = `cache:${userKey}`;
 		const storageData = await _get<Cache<TValue>>(internalKey);
 		const cachedItem = storageData[internalKey];
-		if (cachedItem === undefined || isExpired?.(cachedItem.data)) {
+		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
 		}
 

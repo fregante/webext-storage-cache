@@ -42,7 +42,7 @@ expectNotAssignable<Promise<number>>(cache.function(identity)('1'));
 
 expectType<(n: string) => Promise<number>>(
 	cache.function(async (n: string) => Number(n), {
-		expiration: 20
+		maxAge: 20
 	})
 );
 

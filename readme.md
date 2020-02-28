@@ -49,7 +49,7 @@ The same code could be also written more effectively with `cache.function`:
 import cache from 'webext-storage-cache';
 
 const cachedFunction = cache.function(someFunction, {
-	expiration: 3,
+	maxAge: 3,
 	cacheKey: () => 'unique'
 });
 
@@ -88,7 +88,7 @@ const url = await cache.get('cached-url');
 
 Type: `string`
 
-### cache.set(key, value, expiration /* in days */)
+### cache.set(key, value, maxAge /* in days */)
 
 Caches the given key and value for a given amount of days. It returns the value itself.
 
@@ -107,7 +107,7 @@ Type: `string | number | boolean` or `array | object` of those three types.
 
 `undefined` won't be cached, it's considered "no value" in the Storage API.
 
-#### expiration
+#### maxAge
 
 Type: `number`<br>
 Default: 30
@@ -173,14 +173,14 @@ cachedOperate(1, 2, 3);
 // Without a custom `cacheKey`, it would be stored in the key '1'
 ```
 
-##### expiration
+##### maxAge
 
 Type: `number`<br>
 Default: 30
 
 The number of days after which the cache item will expire.
 
-##### isExpired
+##### shouldRevalidate
 
 Type: `function` that returns a boolean<br>
 Default: `() => false`
@@ -195,7 +195,7 @@ async function getContent(url) {
 
 const cachedGetContent = cache.function(getContent, {
 	// If it's a string, it's in the old format and a new value will be fetched and cached
-	isExpired: cachedValue => typeof cachedValue === 'string'
+	shouldRevalidate: cachedValue => typeof cachedValue === 'string'
 });
 
 const json = await cachedGetHTML('https://google.com');

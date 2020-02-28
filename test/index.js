@@ -5,13 +5,17 @@ import cache from '../index.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 
+function daysInTheFuture(days) {
+	return Date.now() + (1000 * 3600 * 24 * days);
+}
+
 function createCache(daysFromToday, wholeCache) {
 	for (const [key, data] of Object.entries(wholeCache)) {
 		chrome.storage.local.get
 			.withArgs(key)
 			.yields({[key]: {
 				data,
-				expiration: Date.now() + (daysFromToday * 1000 * 60 * 60 * 24)
+				maxAge: daysInTheFuture(daysFromToday)
 			}});
 	}
 }
@@ -47,15 +51,16 @@ test('set() with undefined', async t => {
 	t.is(chrome.storage.local.set.callCount, 0);
 });
 
-test.todo('set() with past expiration should throw');
+test.todo('set() with past maxAge should throw');
 
 test('set() with value', async t => {
-	const expiration = 20;
-	await cache.set('name', 'Anne', expiration);
+	const maxAge = 20;
+	await cache.set('name', 'Anne', maxAge);
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
 	t.deepEqual(Object.keys(arguments_), ['cache:name']);
 	t.is(arguments_['cache:name'].data, 'Anne');
-	t.true(arguments_['cache:name'].expiration < Date.now() + (1000 * 3600 * 24 * expiration));
+	t.true(arguments_['cache:name'].maxAge > daysInTheFuture(maxAge - 0.5));
+	t.true(arguments_['cache:name'].maxAge < daysInTheFuture(maxAge + 0.5));
 });
 
 test('function() with empty cache', async t => {
@@ -133,14 +138,14 @@ test('function() accepts custom cache key generator', async t => {
 	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne,2');
 });
 
-test('function() verifies cache with isExpired callback', async t => {
+test('function() verifies cache with shouldRevalidate callback', async t => {
 	createCache(10, {
 		'cache:@anne': '@anne'
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		isExpired: value => value.startsWith('@')
+		shouldRevalidate: value => value.startsWith('@')
 	});
 
 	t.is(await call('@anne'), 'ANNE');
