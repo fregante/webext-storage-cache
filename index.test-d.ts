@@ -52,6 +52,12 @@ expectType<(date: Date) => Promise<string>>(
 	})
 );
 
+expectType<(date: Date) => Promise<string>>(
+	cache.function(async (date: Date) => String(date.getHours()), {
+		shouldRevalidate: date => typeof date === 'string'
+	})
+);
+
 // This function won't be cached
 expectType<(n: undefined[]) => Promise<undefined>>(
 	cache.function(async (n: undefined[]) => n[1])

@@ -27,25 +27,25 @@ test.beforeEach(() => {
 	chrome.storage.local.remove.yields(undefined);
 });
 
-test('get() with empty cache', async t => {
+test.serial('get() with empty cache', async t => {
 	t.is(await cache.get('name'), undefined);
 });
 
-test('get() with cache', async t => {
+test.serial('get() with cache', async t => {
 	createCache(10, {
 		'cache:name': 'Rico'
 	});
 	t.is(await cache.get('name'), 'Rico');
 });
 
-test('get() with expired cache', async t => {
+test.serial('get() with expired cache', async t => {
 	createCache(-10, {
 		'cache:name': 'Rico'
 	});
 	t.is(await cache.get('name'), undefined);
 });
 
-test('set() with undefined', async t => {
+test.serial('set() with undefined', async t => {
 	await cache.set('name');
 	// StorageArea.set should not be called with `undefined`
 	t.is(chrome.storage.local.set.callCount, 0);
@@ -53,7 +53,7 @@ test('set() with undefined', async t => {
 
 test.todo('set() with past maxAge should throw');
 
-test('set() with value', async t => {
+test.serial('set() with value', async t => {
 	const maxAge = 20;
 	await cache.set('name', 'Anne', maxAge);
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
@@ -63,7 +63,7 @@ test('set() with value', async t => {
 	t.true(arguments_['cache:name'].maxAge < daysInTheFuture(maxAge + 0.5));
 });
 
-test('function() with empty cache', async t => {
+test.serial('function() with empty cache', async t => {
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy);
 
@@ -75,7 +75,7 @@ test('function() with empty cache', async t => {
 	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
 });
 
-test('function() with cache', async t => {
+test.serial('function() with cache', async t => {
 	createCache(10, {
 		'cache:@anne': 'ANNE'
 	});
@@ -90,7 +90,7 @@ test('function() with cache', async t => {
 	t.is(spy.callCount, 0);
 });
 
-test('function() varies cache by function argument', async t => {
+test.serial('function() varies cache by function argument', async t => {
 	createCache(10, {
 		'cache:@anne': 'ANNE'
 	});
@@ -105,7 +105,7 @@ test('function() varies cache by function argument', async t => {
 	t.is(spy.callCount, 1);
 });
 
-test('function() ignores second argument by default', async t => {
+test.serial('function() ignores second argument by default', async t => {
 	createCache(10, {
 		'cache:@anne': 'ANNE'
 	});
@@ -118,7 +118,7 @@ test('function() ignores second argument by default', async t => {
 	t.is(spy.callCount, 0);
 });
 
-test('function() accepts custom cache key generator', async t => {
+test.serial('function() accepts custom cache key generator', async t => {
 	createCache(10, {
 		'cache:@anne,1': 'ANNE,1'
 	});
@@ -138,7 +138,7 @@ test('function() accepts custom cache key generator', async t => {
 	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne,2');
 });
 
-test('function() verifies cache with shouldRevalidate callback', async t => {
+test.serial('function() verifies cache with shouldRevalidate callback', async t => {
 	createCache(10, {
 		'cache:@anne': '@anne'
 	});
