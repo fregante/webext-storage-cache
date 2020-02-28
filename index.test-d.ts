@@ -46,6 +46,13 @@ expectType<(n: string) => Promise<number>>(
 	})
 );
 
+expectType<(n: string) => Promise<number>>(
+	cache.function(async (n: string) => Number(n), {
+		maxAge: 20,
+		staleWhileRevalidate: 5
+	})
+);
+
 expectType<(date: Date) => Promise<string>>(
 	cache.function(async (date: Date) => String(date.getHours()), {
 		cacheKey: ([date]) => date.toLocaleString()
