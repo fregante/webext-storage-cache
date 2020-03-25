@@ -180,6 +180,32 @@ Default: 30
 
 The number of days after which the cache item will expire.
 
+##### staleWhileRevalidate
+
+Type: `number`<br>
+Default: `0` (disabled)
+
+Specifies how many additional days an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call should return an updated and fresher item.
+
+```js
+const cachedOperate = cache.function(operate, {
+	maxAge: 10,
+	staleWhileRevalidate: 2
+});
+
+cachedOperate(); // It will run `operate` and cache it for 10 days
+cachedOperate(); // It will return the cache
+
+/* 11 days later, cache is expired, but still there */
+
+cachedOperate(); // It will return the cache
+// Asynchronously, it will also run `operate` and cache the new value for 10 more days
+
+/* 13 days later, cache is expired and deleted */
+
+cachedOperate(); // It will run `operate` and cache it for 10 days
+```
+
 ##### shouldRevalidate
 
 Type: `function` that returns a boolean<br>

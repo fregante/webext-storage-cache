@@ -90,6 +90,77 @@ test.serial('function() with cache', async t => {
 	t.is(spy.callCount, 0);
 });
 
+test.serial('function() with empty cache and staleWhileRevalidate', async t => {
+	const maxAge = 1;
+	const staleWhileRevalidate = 29;
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy, {
+		maxAge,
+		staleWhileRevalidate
+	});
+
+	t.is(await call('@anne'), 'ANNE');
+
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.set.callCount, 1);
+	const arguments_ = chrome.storage.local.set.lastCall.args[0];
+	t.deepEqual(Object.keys(arguments_), ['cache:@anne']);
+	t.is(arguments_['cache:@anne'].data, 'ANNE');
+
+	const expectedExpiration = maxAge + staleWhileRevalidate;
+	t.true(arguments_['cache:@anne'].maxAge > daysInTheFuture(expectedExpiration - 0.5));
+	t.true(arguments_['cache:@anne'].maxAge < daysInTheFuture(expectedExpiration + 0.5));
+});
+
+test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
+	createCache(30, {
+		'cache:@anne': 'ANNE'
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy, {
+		maxAge: 1,
+		staleWhileRevalidate: 29
+	});
+
+	t.is(await call('@anne'), 'ANNE');
+
+	// Cache is still fresh, it should be used
+	t.is(spy.callCount, 0);
+	t.is(chrome.storage.local.set.callCount, 0);
+
+	await new Promise(resolve => setTimeout(resolve, 100));
+
+	// Cache is still fresh, it should never be revalidated
+	t.is(spy.callCount, 0);
+});
+
+test.serial('function() with stale cache and staleWhileRevalidate', async t => {
+	createCache(15, {
+		'cache:@anne': 'ANNE'
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy, {
+		maxAge: 1,
+		staleWhileRevalidate: 29
+	});
+
+	t.is(await call('@anne'), 'ANNE');
+
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.set.callCount, 0);
+
+	t.is(spy.callCount, 0, 'It shouldn’t be called yet');
+
+	await new Promise(resolve => setTimeout(resolve, 100));
+
+	t.is(spy.callCount, 1, 'It should be revalidated');
+	t.is(chrome.storage.local.set.callCount, 1);
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+});
+
 test.serial('function() varies cache by function argument', async t => {
 	createCache(10, {
 		'cache:@anne': 'ANNE'

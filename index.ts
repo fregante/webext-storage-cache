@@ -105,6 +105,7 @@ async function clear(): Promise<void> {
 
 interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
 	maxAge?: number;
+	staleWhileRevalidate?: number;
 	cacheKey?: (args: TArgs) => string;
 	shouldRevalidate?: (cachedValue: TValue) => boolean;
 }
@@ -115,7 +116,7 @@ function function_<
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
-	{cacheKey, maxAge = 30, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
+	{cacheKey, maxAge = 30, staleWhileRevalidate = 0, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
 ): TFunction {
 	const getSet = async (key: string, args: TArgs): Promise<TValue | undefined> => {
 		const freshValue = await getter(...args);
@@ -124,7 +125,7 @@ function function_<
 			return;
 		}
 
-		return set<TValue>(key, freshValue, maxAge);
+		return set<TValue>(key, freshValue, maxAge + staleWhileRevalidate);
 	};
 
 	return (async (...args: TArgs) => {
@@ -134,6 +135,11 @@ function function_<
 		const cachedItem = storageData[internalKey];
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
+		}
+
+		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
+		if (daysInTheFuture(staleWhileRevalidate) > cachedItem.maxAge) {
+			setTimeout(getSet, 0, userKey, args);
 		}
 
 		return cachedItem.data;
