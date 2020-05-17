@@ -59,8 +59,8 @@ test.serial('set() with value', async t => {
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
 	t.deepEqual(Object.keys(arguments_), ['cache:name']);
 	t.is(arguments_['cache:name'].data, 'Anne');
-	t.true(arguments_['cache:name'].maxAge > millisecondsInTheFuture(maxAge - cache.days(0.5)));
-	t.true(arguments_['cache:name'].maxAge < millisecondsInTheFuture(maxAge + cache.days(0.5)));
+	t.true(arguments_['cache:name'].maxAge > millisecondsFromNow(maxAge - cache.days(0.5)));
+	t.true(arguments_['cache:name'].maxAge < millisecondsFromNow(maxAge + cache.days(0.5)));
 });
 
 test.serial('function() with empty cache', async t => {
@@ -109,8 +109,8 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 	t.is(arguments_['cache:@anne'].data, 'ANNE');
 
 	const expectedExpiration = maxAge + staleWhileRevalidate;
-	t.true(arguments_['cache:@anne'].maxAge > millisecondsInTheFuture(expectedExpiration - cache.days(0.5)));
-	t.true(arguments_['cache:@anne'].maxAge < millisecondsInTheFuture(expectedExpiration + cache.days(0.5)));
+	t.true(arguments_['cache:@anne'].maxAge > millisecondsFromNow(expectedExpiration - cache.days(0.5)));
+	t.true(arguments_['cache:@anne'].maxAge < millisecondsFromNow(expectedExpiration + cache.days(0.5)));
 });
 
 test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
