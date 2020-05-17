@@ -5,8 +5,8 @@ import cache from '../index.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 
-function daysInTheFuture(days) {
-	return Date.now() + (1000 * 3600 * 24 * days);
+function millisecondsFromNow(milliseconds) {
+	return Date.now() + milliseconds;
 }
 
 function createCache(daysFromToday, wholeCache) {
@@ -15,7 +15,7 @@ function createCache(daysFromToday, wholeCache) {
 			.withArgs(key)
 			.yields({[key]: {
 				data,
-				maxAge: daysInTheFuture(daysFromToday)
+				maxAge: millisecondsFromNow(cache.days(daysFromToday))
 			}});
 	}
 }
@@ -54,13 +54,13 @@ test.serial('set() with undefined', async t => {
 test.todo('set() with past maxAge should throw');
 
 test.serial('set() with value', async t => {
-	const maxAge = 20;
+	const maxAge = cache.days(20);
 	await cache.set('name', 'Anne', maxAge);
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
 	t.deepEqual(Object.keys(arguments_), ['cache:name']);
 	t.is(arguments_['cache:name'].data, 'Anne');
-	t.true(arguments_['cache:name'].maxAge > daysInTheFuture(maxAge - 0.5));
-	t.true(arguments_['cache:name'].maxAge < daysInTheFuture(maxAge + 0.5));
+	t.true(arguments_['cache:name'].maxAge > millisecondsInTheFuture(maxAge - cache.days(0.5)));
+	t.true(arguments_['cache:name'].maxAge < millisecondsInTheFuture(maxAge + cache.days(0.5)));
 });
 
 test.serial('function() with empty cache', async t => {
@@ -91,8 +91,8 @@ test.serial('function() with cache', async t => {
 });
 
 test.serial('function() with empty cache and staleWhileRevalidate', async t => {
-	const maxAge = 1;
-	const staleWhileRevalidate = 29;
+	const maxAge = cache.days(1);
+	const staleWhileRevalidate = cache.days(29);
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
@@ -109,8 +109,8 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 	t.is(arguments_['cache:@anne'].data, 'ANNE');
 
 	const expectedExpiration = maxAge + staleWhileRevalidate;
-	t.true(arguments_['cache:@anne'].maxAge > daysInTheFuture(expectedExpiration - 0.5));
-	t.true(arguments_['cache:@anne'].maxAge < daysInTheFuture(expectedExpiration + 0.5));
+	t.true(arguments_['cache:@anne'].maxAge > millisecondsInTheFuture(expectedExpiration - cache.days(0.5)));
+	t.true(arguments_['cache:@anne'].maxAge < millisecondsInTheFuture(expectedExpiration + cache.days(0.5)));
 });
 
 test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
@@ -120,8 +120,8 @@ test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		maxAge: 1,
-		staleWhileRevalidate: 29
+		maxAge: cache.days(1),
+		staleWhileRevalidate: cache.days(29)
 	});
 
 	t.is(await call('@anne'), 'ANNE');
@@ -143,8 +143,8 @@ test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		maxAge: 1,
-		staleWhileRevalidate: 29
+		maxAge: cache.days(1),
+		staleWhileRevalidate: cache.days(29)
 	});
 
 	t.is(await call('@anne'), 'ANNE');
