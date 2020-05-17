@@ -36,7 +36,7 @@ import cache from 'webext-storage-cache';
 (async () => {
 	if (!await cache.has('unique')) {
 		const cachableItem = await someFunction();
-		await cache.set('unique', cachableItem, 3 /* days */);
+		await cache.set('unique', cachableItem, cache.days(3));
 	}
 
 	console.log(await cache.get('unique'));
@@ -61,6 +61,25 @@ const cachedFunction = cache.function(someFunction, {
 ## API
 
 Similar to a `Map()`, but **all methods a return a `Promise`.** It also has a memoization method that hides the caching logic and makes it a breeze to use.
+
+
+### cache.days(days)
+
+Utility method to convert days to milliseconds, to be used as `maxAge` or `staleWhileRevalidate`
+
+```js
+cache.days(1);
+// 86400
+```
+
+### cache.hours(hours)
+
+Utility method to convert days to milliseconds, to be used as `maxAge` or `staleWhileRevalidate`
+
+```js
+cache.hours(1);
+// 3600
+```
 
 ### cache.has(key)
 
@@ -88,9 +107,9 @@ const url = await cache.get('cached-url');
 
 Type: `string`
 
-### cache.set(key, value, maxAge /* in days */)
+### cache.set(key, value, maxAge /* in milliseconds */)
 
-Caches the given key and value for a given amount of days. It returns the value itself.
+Caches the given key and value for a given amount of milliseconds. It returns the value itself.
 
 ```js
 const info = await getInfoObject();
@@ -110,9 +129,9 @@ Type: `string | number | boolean` or `array | object` of those three types.
 #### maxAge
 
 Type: `number`<br>
-Default: 30
+Default: `cache.days(30)`, which is the same as `30 * 24 * 3600 * 1000`
 
-The number of days after which the cache item will expire.
+The number of milliseconds after which the cache item will expire.
 
 ### cache.delete(key)
 
@@ -176,20 +195,20 @@ cachedOperate(1, 2, 3);
 ##### maxAge
 
 Type: `number`<br>
-Default: 30
+Default: `cache.days(30)`, which is the same as `30 * 24 * 3600 * 1000`
 
-The number of days after which the cache item will expire.
+The number of milliseconds after which the cache item will expire.
 
 ##### staleWhileRevalidate
 
 Type: `number`<br>
 Default: `0` (disabled)
 
-Specifies how many additional days an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call should return an updated and fresher item.
+Specifies how many additional milliseconds an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call should return an updated and fresher item.
 
 ```js
 const cachedOperate = cache.function(operate, {
-	maxAge: 10,
+	maxAge: cache.days(10),
 	staleWhileRevalidate: 2
 });
 
