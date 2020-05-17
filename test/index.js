@@ -5,8 +5,12 @@ import cache from '../index.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 
-function millisecondsFromNow(milliseconds) {
-	return Date.now() + milliseconds;
+function getFutureTimestampFromSeconds(seconds) {
+	return Date.now() + seconds;
+}
+
+function isTimestampWithinRange(actual, expected) {
+	return expected * 0.95 < actual && actual < expected * 1.05;
 }
 
 function createCache(daysFromToday, wholeCache) {
@@ -15,7 +19,7 @@ function createCache(daysFromToday, wholeCache) {
 			.withArgs(key)
 			.yields({[key]: {
 				data,
-				maxAge: millisecondsFromNow(cache.days(daysFromToday))
+				maxAge: getFutureTimestampFromSeconds(cache.days(daysFromToday))
 			}});
 	}
 }
@@ -59,8 +63,7 @@ test.serial('set() with value', async t => {
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
 	t.deepEqual(Object.keys(arguments_), ['cache:name']);
 	t.is(arguments_['cache:name'].data, 'Anne');
-	t.true(arguments_['cache:name'].maxAge > millisecondsFromNow(maxAge - cache.days(0.5)));
-	t.true(arguments_['cache:name'].maxAge < millisecondsFromNow(maxAge + cache.days(0.5)));
+	t.true(isTimestampWithinRange(arguments_['cache:name'].maxAge, getFutureTimestampFromSeconds(maxAge));
 });
 
 test.serial('function() with empty cache', async t => {
@@ -109,8 +112,7 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 	t.is(arguments_['cache:@anne'].data, 'ANNE');
 
 	const expectedExpiration = maxAge + staleWhileRevalidate;
-	t.true(arguments_['cache:@anne'].maxAge > millisecondsFromNow(expectedExpiration - cache.days(0.5)));
-	t.true(arguments_['cache:@anne'].maxAge < millisecondsFromNow(expectedExpiration + cache.days(0.5)));
+	t.true(isTimestampWithinRange(arguments_['cache:@anne'].maxAge, getFutureTimestampFromSeconds(expectedExpiration));
 });
 
 test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
