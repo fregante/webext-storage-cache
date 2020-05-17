@@ -65,7 +65,7 @@ Similar to a `Map()`, but **all methods a return a `Promise`.** It also has a me
 
 ### cache.days(days)
 
-Utility method to convert days to milliseconds, to be used as `maxAge` or `staleWhileRevalidate`
+Utility method to convert days to seconds, to be used as `maxAge` or `staleWhileRevalidate`
 
 ```js
 cache.days(1);
@@ -74,7 +74,7 @@ cache.days(1);
 
 ### cache.hours(hours)
 
-Utility method to convert days to milliseconds, to be used as `maxAge` or `staleWhileRevalidate`
+Utility method to convert days to seconds, to be used as `maxAge` or `staleWhileRevalidate`
 
 ```js
 cache.hours(1);
@@ -107,9 +107,9 @@ const url = await cache.get('cached-url');
 
 Type: `string`
 
-### cache.set(key, value, maxAge /* in milliseconds */)
+### cache.set(key, value, maxAge /* in seconds */)
 
-Caches the given key and value for a given amount of milliseconds. It returns the value itself.
+Caches the given key and value for a given amount of seconds. It returns the value itself.
 
 ```js
 const info = await getInfoObject();
@@ -131,7 +131,7 @@ Type: `string | number | boolean` or `array | object` of those three types.
 Type: `number`<br>
 Default: `cache.days(30)`, which is the same as `30 * 24 * 3600 * 1000`
 
-The number of milliseconds after which the cache item will expire.
+The number of seconds after which the cache item will expire.
 
 ### cache.delete(key)
 
@@ -197,14 +197,14 @@ cachedOperate(1, 2, 3);
 Type: `number`<br>
 Default: `cache.days(30)`, which is the same as `30 * 24 * 3600 * 1000`
 
-The number of milliseconds after which the cache item will expire.
+The number of seconds after which the cache item will expire.
 
 ##### staleWhileRevalidate
 
 Type: `number`<br>
 Default: `0` (disabled)
 
-Specifies how many additional milliseconds an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call should return an updated and fresher item.
+Specifies how many additional seconds an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call should return an updated and fresher item.
 
 ```js
 const cachedOperate = cache.function(operate, {
