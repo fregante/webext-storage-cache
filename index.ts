@@ -13,8 +13,16 @@ const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promis
 	});
 });
 
-function daysInTheFuture(days: number): number {
-	return Date.now() + (1000 * 3600 * 24 * days);
+function millisecondsFromNow(milliseconds: number): number {
+	return Date.now() + milliseconds;
+}
+
+function days(days: number): number {
+	return days * 24 * 3600;
+}
+
+function hours(hours: number): number {
+	return hours * 3600;
 }
 
 // @ts-ignore
@@ -59,7 +67,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	return cachedItem.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, maxAge = 30 /* days */): Promise<TValue> {
+async function set<TValue extends Value>(key: string, value: TValue, maxAge = days(30)): Promise<TValue> {
 	if (typeof value === 'undefined') {
 		// @ts-ignore This never happens in TS because `value` can't be undefined
 		return;
@@ -69,7 +77,7 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge = 30
 	await _set({
 		[internalKey]: {
 			data: value,
-			maxAge: daysInTheFuture(maxAge)
+			maxAge: millisecondsFromNow(maxAge)
 		}
 	});
 
@@ -116,7 +124,7 @@ function function_<
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
-	{cacheKey, maxAge = 30, staleWhileRevalidate = 0, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
+	{cacheKey, maxAge = days(30), staleWhileRevalidate = 0, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
 ): TFunction {
 	const getSet = async (key: string, args: TArgs): Promise<TValue | undefined> => {
 		const freshValue = await getter(...args);
@@ -138,7 +146,7 @@ function function_<
 		}
 
 		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-		if (daysInTheFuture(staleWhileRevalidate) > cachedItem.maxAge) {
+		if (millisecondsFromNow(staleWhileRevalidate) > cachedItem.maxAge) {
 			setTimeout(getSet, 0, userKey, args);
 		}
 
@@ -152,7 +160,9 @@ const cache = {
 	set,
 	clear,
 	function: function_,
-	delete: delete_
+	delete: delete_,
+	days,
+	hours
 };
 
 function init(): void {
