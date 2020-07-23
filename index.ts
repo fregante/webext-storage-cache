@@ -125,7 +125,8 @@ function function_<
 			await delete_(key);
 			return;
 		}
-		const milliseconds = toMilliseconds(maxAge) + toMilliseconds(staleWhileRevalidate)
+
+		const milliseconds = toMilliseconds(maxAge) + toMilliseconds(staleWhileRevalidate);
 
 		return set<TValue>(key, freshValue, {milliseconds});
 	};
