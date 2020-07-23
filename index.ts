@@ -14,8 +14,8 @@ const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promis
 	});
 });
 
-function timeInTheFuture(time: number): number {
-	return Date.now() + time;
+function timeInTheFuture(time: TimeDescriptor): number {
+	return Date.now() + toMilliseconds(time);
 }
 
 // @ts-ignore
@@ -70,7 +70,7 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge: Tim
 	await _set({
 		[internalKey]: {
 			data: value,
-			maxAge: timeInTheFuture(toMilliseconds(maxAge))
+			maxAge: timeInTheFuture(maxAge)
 		}
 	});
 
@@ -140,7 +140,7 @@ function function_<
 		}
 
 		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-		if (timeInTheFuture(toMilliseconds(maxAge)) > cachedItem.maxAge) {
+		if (timeInTheFuture(maxAge) > cachedItem.maxAge) {
 			setTimeout(getSet, 0, userKey, args);
 		}
 
