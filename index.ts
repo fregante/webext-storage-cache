@@ -1,4 +1,5 @@
 import {isBackgroundPage} from 'webext-detect-page';
+import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -13,8 +14,8 @@ const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promis
 	});
 });
 
-function daysInTheFuture(days: number): number {
-	return Date.now() + (1000 * 3600 * 24 * days);
+function timeInTheFuture(time: number): number {
+	return Date.now() + time;
 }
 
 // @ts-ignore
@@ -59,7 +60,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	return cachedItem.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, maxAge = 30 /* days */): Promise<TValue> {
+async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
 	if (typeof value === 'undefined') {
 		// @ts-ignore This never happens in TS because `value` can't be undefined
 		return;
@@ -69,7 +70,7 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge = 30
 	await _set({
 		[internalKey]: {
 			data: value,
-			maxAge: daysInTheFuture(maxAge)
+			maxAge: timeInTheFuture(toMilliseconds(maxAge))
 		}
 	});
 
@@ -104,8 +105,8 @@ async function clear(): Promise<void> {
 }
 
 interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
-	maxAge?: number;
-	staleWhileRevalidate?: number;
+	maxAge?: TimeDescriptor;
+	staleWhileRevalidate?: TimeDescriptor;
 	cacheKey?: (args: TArgs) => string;
 	shouldRevalidate?: (cachedValue: TValue) => boolean;
 }
@@ -116,7 +117,7 @@ function function_<
 	TArgs extends Parameters<TFunction>
 >(
 	getter: TFunction,
-	{cacheKey, maxAge = 30, staleWhileRevalidate = 0, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
+	{cacheKey, maxAge = {days: 30}, staleWhileRevalidate = {days: 0}, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
 ): TFunction {
 	const getSet = async (key: string, args: TArgs): Promise<TValue | undefined> => {
 		const freshValue = await getter(...args);
@@ -124,8 +125,9 @@ function function_<
 			await delete_(key);
 			return;
 		}
+		const milliseconds = toMilliseconds(maxAge) + toMilliseconds(staleWhileRevalidate)
 
-		return set<TValue>(key, freshValue, maxAge + staleWhileRevalidate);
+		return set<TValue>(key, freshValue, {milliseconds});
 	};
 
 	return (async (...args: TArgs) => {
@@ -138,7 +140,7 @@ function function_<
 		}
 
 		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-		if (daysInTheFuture(staleWhileRevalidate) > cachedItem.maxAge) {
+		if (timeInTheFuture(toMilliseconds(maxAge)) > cachedItem.maxAge) {
 			setTimeout(getSet, 0, userKey, args);
 		}
 

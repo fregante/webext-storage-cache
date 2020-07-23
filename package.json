@@ -69,6 +69,7 @@
     ]
   },
   "dependencies": {
+    "@sindresorhus/to-milliseconds": "^1.2.0",
     "webext-detect-page": "^2.0.2"
   },
   "devDependencies": {
