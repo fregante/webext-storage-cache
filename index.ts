@@ -140,7 +140,7 @@ function function_<
 		}
 
 		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-		if (timeInTheFuture(maxAge) > cachedItem.maxAge) {
+		if (timeInTheFuture(staleWhileRevalidate) > cachedItem.maxAge) {
 			setTimeout(getSet, 0, userKey, args);
 		}
 
