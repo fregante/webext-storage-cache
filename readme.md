@@ -189,7 +189,7 @@ The amount of time after which the cache item will expire.
 Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
 Default: `{days: 0}` (disabled)
 
-Specifies how many additional time an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call should return an updated and fresher item.
+Specifies how much longer an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call will return the updated and fresher item.
 
 ```js
 const cachedOperate = cache.function(operate, {
