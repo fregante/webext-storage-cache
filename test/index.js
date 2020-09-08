@@ -91,6 +91,22 @@ test.serial('function() with cache', async t => {
 	t.is(spy.callCount, 0);
 });
 
+test.serial('function() with expired cache', async t => {
+	createCache(-10, {
+		'cache:@anne': 'ONNA'
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy);
+
+	t.is(await cache.get('@anne'), undefined);
+	t.is(await call('@anne'), 'ANNE');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.true(spy.withArgs('@anne').calledOnce);
+	t.is(spy.callCount, 1);
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+});
+
 test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
