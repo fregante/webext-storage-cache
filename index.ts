@@ -55,6 +55,7 @@ async function _get<TValue extends Value>(key: string, remove: boolean): Promise
 		if (remove) {
 			await storageRemove(internalKey);
 		}
+
 		return;
 	}
 
