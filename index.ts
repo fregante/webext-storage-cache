@@ -19,11 +19,11 @@ function timeInTheFuture(time: TimeDescriptor): number {
 }
 
 // @ts-ignore
-const _get = getPromise((...args) => chrome.storage.local.get(...args));
+const storageGet = getPromise((...args) => chrome.storage.local.get(...args));
 // @ts-ignore
-const _set = getPromise((...args) => chrome.storage.local.set(...args));
+const storageSet = getPromise((...args) => chrome.storage.local.set(...args));
 // @ts-ignore
-const _remove = getPromise((...args) => chrome.storage.local.remove(...args));
+const storageRemove = getPromise((...args) => chrome.storage.local.remove(...args));
 
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;
@@ -38,13 +38,12 @@ interface CacheItem<TValue> {
 type Cache<TValue extends Value = Value> = Record<string, CacheItem<TValue>>;
 
 async function has(key: string): Promise<boolean> {
-	const internalKey = `cache:${key}`;
-	return internalKey in await _get<Cache>(internalKey);
+	return await _get(key, false) !== undefined;
 }
 
-async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
+async function _get<TValue extends Value>(key: string, remove: boolean): Promise<CacheItem<TValue> | undefined> {
 	const internalKey = `cache:${key}`;
-	const storageData = await _get<Cache<TValue>>(internalKey);
+	const storageData = await storageGet<Cache<TValue>>(internalKey);
 	const cachedItem = storageData[internalKey];
 
 	if (cachedItem === undefined) {
@@ -53,11 +52,18 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	}
 
 	if (Date.now() > cachedItem.maxAge) {
-		await _remove(internalKey);
+		if (remove) {
+			await storageRemove(internalKey);
+		}
+
 		return;
 	}
 
-	return cachedItem.data;
+	return cachedItem;
+}
+
+async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
+	return (await _get<TValue>(key, true))?.data;
 }
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
@@ -67,7 +73,7 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge: Tim
 	}
 
 	const internalKey = `cache:${key}`;
-	await _set({
+	await storageSet({
 		[internalKey]: {
 			data: value,
 			maxAge: timeInTheFuture(maxAge)
@@ -79,11 +85,11 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge: Tim
 
 async function delete_(key: string): Promise<void> {
 	const internalKey = `cache:${key}`;
-	return _remove(internalKey);
+	return storageRemove(internalKey);
 }
 
 async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promise<void> {
-	const wholeCache = await _get<Record<string, any>>();
+	const wholeCache = await storageGet<Record<string, any>>();
 	const removableItems = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
@@ -92,7 +98,7 @@ async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promis
 	}
 
 	if (removableItems.length > 0) {
-		await _remove(removableItems);
+		await storageRemove(removableItems);
 	}
 }
 
@@ -133,9 +139,7 @@ function function_<
 
 	return (async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
-		const internalKey = `cache:${userKey}`;
-		const storageData = await _get<Cache<TValue>>(internalKey);
-		const cachedItem = storageData[internalKey];
+		const cachedItem = await _get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
 		}
