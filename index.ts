@@ -38,11 +38,10 @@ interface CacheItem<TValue> {
 type Cache<TValue extends Value = Value> = Record<string, CacheItem<TValue>>;
 
 async function has(key: string): Promise<boolean> {
-	const internalKey = `cache:${key}`;
-	return internalKey in await _get<Cache>(internalKey);
+	return await __get(key, false) !== undefined;
 }
 
-async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
+async function __get<TValue extends Value>(key: string, remove: boolean): Promise<CacheItem<TValue> | undefined> {
 	const internalKey = `cache:${key}`;
 	const storageData = await _get<Cache<TValue>>(internalKey);
 	const cachedItem = storageData[internalKey];
@@ -53,11 +52,17 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 	}
 
 	if (Date.now() > cachedItem.maxAge) {
-		await _remove(internalKey);
+		if (remove) {
+			await _remove(internalKey);
+		}
 		return;
 	}
 
-	return cachedItem.data;
+	return cachedItem;
+}
+
+async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
+	return (await __get<TValue>(key, true))?.data;
 }
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
