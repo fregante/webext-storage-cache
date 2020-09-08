@@ -138,9 +138,7 @@ function function_<
 
 	return (async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
-		const internalKey = `cache:${userKey}`;
-		const storageData = await _get<Cache<TValue>>(internalKey);
-		const cachedItem = storageData[internalKey];
+		const cachedItem = await __get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
 		}
