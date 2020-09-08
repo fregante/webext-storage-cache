@@ -46,6 +46,24 @@ test.serial('get() with expired cache', async t => {
 	t.is(await cache.get('name'), undefined);
 });
 
+test.serial('has() with empty cache', async t => {
+	t.is(await cache.has('name'), false);
+});
+
+test.serial('has() with cache', async t => {
+	createCache(10, {
+		'cache:name': 'Rico'
+	});
+	t.is(await cache.has('name'), true);
+});
+
+test.serial('has() with expired cache', async t => {
+	createCache(-10, {
+		'cache:name': 'Rico'
+	});
+	t.is(await cache.has('name'), false);
+});
+
 test.serial('set() with undefined', async t => {
 	await cache.set('name');
 	// StorageArea.set should not be called with `undefined`
