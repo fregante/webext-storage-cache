@@ -172,13 +172,13 @@ function init(): void {
 
 	// Automatically clear cache every day
 	if (!isBackgroundPage()) {
-		return
+		return;
 	}
 
 	if (chrome.alarms) {
 		chrome.alarms.create('webext-storage-cache', {
-				delayInMinutes: 1,
-				periodInMinutes: 10
+			delayInMinutes: 1,
+			periodInMinutes: 10
 		});
 		chrome.alarms.onAlarm.addListener(deleteExpired);
 	} else {
