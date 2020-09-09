@@ -178,7 +178,7 @@ function init(): void {
 	if (chrome.alarms) {
 		chrome.alarms.create('webext-storage-cache', {
 			delayInMinutes: 1,
-			periodInMinutes: 10
+			periodInMinutes: 60 * 24
 		});
 		chrome.alarms.onAlarm.addListener(deleteExpired);
 	} else {
