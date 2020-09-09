@@ -35,7 +35,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "tsc",
+    "prepack": "tsc --sourceMap false",
     "test": "tsc && tsd && ava && xo",
     "watch": "tsc --watch"
   },
