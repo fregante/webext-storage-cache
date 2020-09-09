@@ -19,14 +19,21 @@ import storageCache from 'webext-storage-cache';
 
 ## Usage
 
-This module requires the `storage` permission:
+This module requires the `storage` permission and it’s suggested to also use `alarms` to safely schedule cache purging:
 
-```json
-// manifest.json
+```json5
+/* manifest.json */
 {
 	"permissions": [
-		"storage"
-	]
+		"storage",
+		"alarms"
+	],
+	"background": {
+		"scripts": [
+			/* Remember to include/import it in the background to enable expired cache purging */
+			"webext-storage-cache.js"
+		]
+	}
 }
 ```
 
@@ -45,7 +52,7 @@ import cache from 'webext-storage-cache';
 })();
 ```
 
-The same code could be also written more effectively with `cache.function`:
+The same code could also be written more effectively with `cache.function`:
 
 ```js
 import cache from 'webext-storage-cache';
