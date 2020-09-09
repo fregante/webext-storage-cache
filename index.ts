@@ -102,8 +102,12 @@ async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promis
 	}
 }
 
+let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
 async function deleteExpired(): Promise<void> {
-	await deleteWithLogic(cachedItem => Date.now() > cachedItem.maxAge);
+	if (lastRun < Date.now() - 1000) {
+		lastRun = Date.now();
+		await deleteWithLogic(cachedItem => Date.now() > cachedItem.maxAge);
+	}
 }
 
 async function clear(): Promise<void> {
@@ -163,13 +167,24 @@ const cache = {
 };
 
 function init(): void {
+	// Make it available globally for ease of use
+	(window as any).webextStorageCache = cache;
+
 	// Automatically clear cache every day
-	if (isBackgroundPage()) {
+	if (!isBackgroundPage()) {
+		return
+	}
+
+	if (chrome.alarms) {
+		chrome.alarms.create('webext-storage-cache', {
+				delayInMinutes: 1,
+				periodInMinutes: 10
+		});
+		chrome.alarms.onAlarm.addListener(deleteExpired);
+	} else {
 		setTimeout(deleteExpired, 60000); // Purge cache on launch, but wait a bit
 		setInterval(deleteExpired, 1000 * 3600 * 24);
 	}
-
-	(window as any).webextStorageCache = cache;
 }
 
 init();
