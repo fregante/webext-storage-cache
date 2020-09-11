@@ -181,7 +181,7 @@ function init(): void {
 		chrome.alarms.onAlarm.addListener(alarm => {
 			if (alarm.name === 'webext-storage-cache' && lastRun < Date.now() - 1000) {
 				lastRun = Date.now();
-				await deleteWithLogic(cachedItem => Date.now() > cachedItem.maxAge);
+				deleteExpired();
 			}
 		});
 	} else {
