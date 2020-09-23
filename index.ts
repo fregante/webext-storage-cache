@@ -68,7 +68,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
 	if (typeof value === 'undefined') {
-		await delete_(key);
+		return delete_(key);
 	}
 
 	const internalKey = `cache:${key}`;
