@@ -65,9 +65,10 @@ test.serial('has() with expired cache', async t => {
 });
 
 test.serial('set() with undefined', async t => {
+	await cache.set('name', 'Anne');
 	await cache.set('name');
-	// StorageArea.set should not be called with `undefined`
-	t.is(chrome.storage.local.set.callCount, 0);
+	// Cached value should be erased
+	t.is(await cache.has('name'), false);
 });
 
 test.todo('set() with past maxAge should throw');
