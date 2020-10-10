@@ -1,3 +1,4 @@
+import ManyKeysMap from 'many-keys-map';
 import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
@@ -137,7 +138,9 @@ function function_<
 		return set<TValue>(key, freshValue, {milliseconds});
 	};
 
-	return (async (...args: TArgs) => {
+	const inflight: Map<TArgs, Promise<TValue | undefined>> = new ManyKeysMap();
+
+	const handler = (async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
 		const cachedItem = await _get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
@@ -150,6 +153,22 @@ function function_<
 		}
 
 		return cachedItem.data;
+	}) as TFunction;
+
+	// Hold the current call in memory so it can't be called twice
+	return (async (...args: TArgs) => {
+		const inflightCall = inflight.get(args);
+		if (inflightCall) {
+			return inflightCall;
+		}
+
+		const newCall = handler(...args);
+		inflight.set(args, newCall);
+		try {
+			return await newCall;
+		} finally {
+			inflight.delete(args);
+		}
 	}) as TFunction;
 }
 
