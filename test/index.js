@@ -70,8 +70,6 @@ test.serial('set() with undefined', async t => {
 	t.is(chrome.storage.local.set.callCount, 0);
 });
 
-test.todo('set() with past maxAge should throw');
-
 test.serial('set() with value', async t => {
 	const maxAge = 20;
 	await cache.set('name', 'Anne', {days: maxAge});

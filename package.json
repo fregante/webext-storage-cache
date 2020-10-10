@@ -44,23 +44,14 @@
       "browser",
       "webextensions"
     ],
-    "extensions": [
-      "ts"
-    ],
-    "overrides": [
-      {
-        "files": "**/*.ts",
-        "extends": "xo-typescript",
-        "parserOptions": {
-          "project": "./tsconfig.xo.json"
-        }
-      }
-    ],
     "rules": {
+      "@typescript-eslint/return-await": 0,
       "import/extensions": 0,
       "import/no-unassigned-import": 0,
       "import/no-useless-path-segments": 0,
-      "unicorn/import-index": 0
+      "no-promise-executor-return": 0,
+      "unicorn/import-index": 0,
+      "unicorn/no-object-as-default-parameter": 0
     }
   },
   "ava": {
@@ -74,16 +65,13 @@
   },
   "devDependencies": {
     "@sindresorhus/tsconfig": "^0.7.0",
-    "@types/chrome": "0.0.95",
+    "@types/chrome": "0.0.124",
     "@types/sinon-chrome": "^2.2.6",
-    "@typescript-eslint/eslint-plugin": "^2.19.2",
-    "@typescript-eslint/parser": "^2.19.2",
     "ava": "^3.3.0",
-    "eslint-config-xo-typescript": "^0.26.0",
-    "sinon": "^8.1.1",
+    "sinon": "^9.2.0",
     "sinon-chrome": "^3.0.1",
-    "tsd": "^0.11.0",
-    "typescript": "^3.7.5",
-    "xo": "^0.26.0"
+    "tsd": "^0.13.1",
+    "typescript": "^4.0.3",
+    "xo": "^0.33.1"
   }
 }
