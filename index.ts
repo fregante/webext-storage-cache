@@ -1,10 +1,10 @@
 import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
-// @ts-ignore
+// @ts-expect-error
 // eslint-disable-next-line @typescript-eslint/promise-function-async
 const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promise((resolve, reject) => {
-	// @ts-ignore
+	// @ts-expect-error
 	executor(key, result => {
 		if (chrome.runtime.lastError) {
 			reject(chrome.runtime.lastError);
@@ -18,11 +18,11 @@ function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
-// @ts-ignore
+// @ts-expect-error
 const storageGet = getPromise((...args) => chrome.storage.local.get(...args));
-// @ts-ignore
+// @ts-expect-error
 const storageSet = getPromise((...args) => chrome.storage.local.set(...args));
-// @ts-ignore
+// @ts-expect-error
 const storageRemove = getPromise((...args) => chrome.storage.local.remove(...args));
 
 type Primitive = boolean | number | string;
@@ -68,7 +68,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
 	if (typeof value === 'undefined') {
-		// @ts-ignore This never happens in TS because `value` can't be undefined
+		// @ts-expect-error This never happens in TS because `value` can't be undefined
 		return;
 	}
 
@@ -181,7 +181,7 @@ function init(): void {
 		chrome.alarms.onAlarm.addListener(alarm => {
 			if (alarm.name === 'webext-storage-cache' && lastRun < Date.now() - 1000) {
 				lastRun = Date.now();
-				deleteExpired();
+				void deleteExpired();
 			}
 		});
 	} else {
