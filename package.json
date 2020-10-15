@@ -61,7 +61,6 @@
   },
   "dependencies": {
     "@sindresorhus/to-milliseconds": "^1.2.0",
-    "many-keys-map": "^1.0.3",
     "micro-memoize": "^4.0.9",
     "webext-detect-page": "^2.0.2"
   },
