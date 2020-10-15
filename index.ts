@@ -19,6 +19,26 @@ function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
+type AsyncFunction = (...args: any[]) => Promise<unknown>;
+function memoizeInflight<TFunction extends AsyncFunction>(function_: TFunction): TFunction {
+	const inflightList = new ManyKeysMap();
+
+	return (async (...arguments_) => {
+		const inflightCall = inflightList.get(arguments_);
+		if (inflightCall) {
+			return inflightCall;
+		}
+
+		const newCall = function_(...arguments_);
+		inflightList.set(arguments_, newCall);
+		try {
+			return await newCall;
+		} finally {
+			inflightList.delete(arguments_);
+		}
+	}) as TFunction;
+}
+
 // @ts-expect-error
 const storageGet = getPromise((...args) => chrome.storage.local.get(...args));
 // @ts-expect-error
@@ -138,9 +158,7 @@ function function_<
 		return set<TValue>(key, freshValue, {milliseconds});
 	};
 
-	const inflight: Map<TArgs, Promise<TValue | undefined>> = new ManyKeysMap();
-
-	const handler = (async (...args: TArgs) => {
+	return memoizeInflight((async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
 		const cachedItem = await _get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
@@ -153,23 +171,7 @@ function function_<
 		}
 
 		return cachedItem.data;
-	}) as TFunction;
-
-	// Hold the current call in memory so it can't be called twice
-	return (async (...args: TArgs) => {
-		const inflightCall = inflight.get(args);
-		if (inflightCall) {
-			return inflightCall;
-		}
-
-		const newCall = handler(...args);
-		inflight.set(args, newCall);
-		try {
-			return await newCall;
-		} finally {
-			inflight.delete(args);
-		}
-	}) as TFunction;
+	}) as TFunction);
 }
 
 const cache = {
