@@ -1,3 +1,4 @@
+import microMemoize from 'micro-memoize';
 import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
@@ -137,7 +138,7 @@ function function_<
 		return set<TValue>(key, freshValue, {milliseconds});
 	};
 
-	return (async (...args: TArgs) => {
+	return microMemoize((async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
 		const cachedItem = await _get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
@@ -150,7 +151,7 @@ function function_<
 		}
 
 		return cachedItem.data;
-	}) as TFunction;
+	}) as TFunction);
 }
 
 const cache = {
