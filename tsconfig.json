@@ -4,10 +4,14 @@
 		"outDir": ".",
 		"target": "es2018",
 		"module": "es2015",
+		"allowSyntheticDefaultImports": true,
 		"lib": [
 			"DOM"
 		]
 	},
+	"include": [
+		"index.test-d.ts"
+	],
 	"files": [
 		"index.ts"
 	]
