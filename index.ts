@@ -1,4 +1,4 @@
-import ManyKeysMap from 'many-keys-map';
+import microMemoize from 'micro-memoize';
 import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
@@ -17,26 +17,6 @@ const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promis
 
 function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
-}
-
-type AsyncFunction = (...args: any[]) => Promise<unknown>;
-function memoizeInflight<TFunction extends AsyncFunction>(function_: TFunction): TFunction {
-	const inflightList = new ManyKeysMap();
-
-	return (async (...arguments_) => {
-		const inflightCall = inflightList.get(arguments_);
-		if (inflightCall) {
-			return inflightCall;
-		}
-
-		const newCall = function_(...arguments_);
-		inflightList.set(arguments_, newCall);
-		try {
-			return await newCall;
-		} finally {
-			inflightList.delete(arguments_);
-		}
-	}) as TFunction;
 }
 
 // @ts-expect-error
@@ -158,7 +138,7 @@ function function_<
 		return set<TValue>(key, freshValue, {milliseconds});
 	};
 
-	return memoizeInflight((async (...args: TArgs) => {
+	return microMemoize((async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
 		const cachedItem = await _get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
