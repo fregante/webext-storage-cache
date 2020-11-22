@@ -68,6 +68,10 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 }
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
+	if (arguments.length < 2) {
+		throw new TypeError('Need a value');
+	}
+
 	if (typeof value === 'undefined') {
 		await delete_(key);
 		return value;

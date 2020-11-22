@@ -64,9 +64,13 @@ test.serial('has() with expired cache', async t => {
 	t.is(await cache.has('name'), false);
 });
 
+test.serial('set() with no value', async t => {
+	await t.throwsAsync(cache.set('name'), {instanceOf: TypeError, message: 'Need a value'});
+});
+
 test.serial('set() with undefined', async t => {
 	await cache.set('name', 'Anne');
-	await cache.set('name');
+	await cache.set('name', undefined);
 	// Cached value should be erased
 	t.is(await cache.has('name'), false);
 });
