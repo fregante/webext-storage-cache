@@ -64,8 +64,8 @@ test.serial('has() with expired cache', async t => {
 	t.is(await cache.has('name'), false);
 });
 
-test.serial('set() with no value', async t => {
-	await t.throwsAsync(cache.set('name'), {instanceOf: TypeError, message: 'Need a value'});
+test.serial('set() without a value', async t => {
+	await t.throwsAsync(cache.set('name'), {instanceOf: TypeError, message: 'Expected a value as the second argument'});
 });
 
 test.serial('set() with undefined', async t => {
