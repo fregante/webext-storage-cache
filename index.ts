@@ -1,10 +1,11 @@
+import microMemoize from 'micro-memoize';
 import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
-// @ts-ignore
+// @ts-expect-error
 // eslint-disable-next-line @typescript-eslint/promise-function-async
 const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promise((resolve, reject) => {
-	// @ts-ignore
+	// @ts-expect-error
 	executor(key, result => {
 		if (chrome.runtime.lastError) {
 			reject(chrome.runtime.lastError);
@@ -18,11 +19,11 @@ function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
-// @ts-ignore
+// @ts-expect-error
 const storageGet = getPromise((...args) => chrome.storage.local.get(...args));
-// @ts-ignore
+// @ts-expect-error
 const storageSet = getPromise((...args) => chrome.storage.local.set(...args));
-// @ts-ignore
+// @ts-expect-error
 const storageRemove = getPromise((...args) => chrome.storage.local.remove(...args));
 
 type Primitive = boolean | number | string;
@@ -137,7 +138,7 @@ function function_<
 		return set<TValue>(key, freshValue, {milliseconds});
 	};
 
-	return (async (...args: TArgs) => {
+	return microMemoize((async (...args: TArgs) => {
 		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
 		const cachedItem = await _get<TValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
@@ -150,7 +151,7 @@ function function_<
 		}
 
 		return cachedItem.data;
-	}) as TFunction;
+	}) as TFunction);
 }
 
 const cache = {
@@ -181,7 +182,7 @@ function init(): void {
 		chrome.alarms.onAlarm.addListener(alarm => {
 			if (alarm.name === 'webext-storage-cache' && lastRun < Date.now() - 1000) {
 				lastRun = Date.now();
-				deleteExpired();
+				void deleteExpired();
 			}
 		});
 	} else {

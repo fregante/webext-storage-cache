@@ -71,8 +71,6 @@ test.serial('set() with undefined', async t => {
 	t.is(await cache.has('name'), false);
 });
 
-test.todo('set() with past maxAge should throw');
-
 test.serial('set() with value', async t => {
 	const maxAge = 20;
 	await cache.set('name', 'Anne', {days: maxAge});
@@ -258,5 +256,16 @@ test.serial('function() verifies cache with shouldRevalidate callback', async t 
 	t.is(await call('@anne'), 'ANNE');
 	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
 	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+	t.is(spy.callCount, 1);
+});
+
+test.serial('function() avoids duplicate nearby function calls', async t => {
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy);
+
+	t.is(spy.callCount, 0);
+	const cacheMePlease = function () {};
+	t.is(call('@anne', cacheMePlease), call('@anne', cacheMePlease));
+	await call('@anne', cacheMePlease);
 	t.is(spy.callCount, 1);
 });
