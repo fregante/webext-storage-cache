@@ -74,16 +74,15 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge: Tim
 
 	if (typeof value === 'undefined') {
 		await delete_(key);
-		return value;
+	} else {
+		const internalKey = `cache:${key}`;
+		await storageSet({
+			[internalKey]: {
+				data: value,
+				maxAge: timeInTheFuture(maxAge)
+			}
+		});
 	}
-
-	const internalKey = `cache:${key}`;
-	await storageSet({
-		[internalKey]: {
-			data: value,
-			maxAge: timeInTheFuture(maxAge)
-		}
-	});
 
 	return value;
 }
