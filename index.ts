@@ -69,7 +69,7 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
 	if (arguments.length < 2) {
-		throw new TypeError('Need a value');
+		throw new TypeError('Expected a value as the second argument');
 	}
 
 	if (typeof value === 'undefined') {
