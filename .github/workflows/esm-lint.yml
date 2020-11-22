@@ -1,6 +1,6 @@
 env:
-  IMPORT_TEXT: import YourModuleHere from
-  NPM_MODULE_NAME: your-module-here
+  IMPORT_TEXT: import storageCache from
+  NPM_MODULE_NAME: webext-storage-cache
 
 # DO NOT EDIT BELOW, USE: npx ghat fregante/ghatemplates/esm-lint
 
