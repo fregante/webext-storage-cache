@@ -3,15 +3,12 @@
 	"compilerOptions": {
 		"outDir": ".",
 		"target": "es2018",
-		"module": "es2015",
-		"allowSyntheticDefaultImports": true,
+		"module": "esnext",
+		"noUncheckedIndexedAccess": false,
 		"lib": [
 			"DOM"
 		]
 	},
-	"include": [
-		"index.test-d.ts"
-	],
 	"files": [
 		"index.ts"
 	]

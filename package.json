@@ -62,17 +62,18 @@
   "dependencies": {
     "@sindresorhus/to-milliseconds": "^1.2.0",
     "micro-memoize": "^4.0.9",
-    "webext-detect-page": "^2.0.2"
+    "webext-detect-page": "^2.0.5"
   },
   "devDependencies": {
-    "@sindresorhus/tsconfig": "^0.7.0",
-    "@types/chrome": "0.0.124",
-    "@types/sinon-chrome": "^2.2.6",
-    "ava": "^3.3.0",
-    "sinon": "^9.2.0",
+    "@babel/core": "^7.12.7",
+    "@sindresorhus/tsconfig": "^0.8.0",
+    "@types/chrome": "0.0.126",
+    "@types/sinon-chrome": "^2.2.10",
+    "ava": "^3.13.0",
+    "sinon": "^9.2.1",
     "sinon-chrome": "^3.0.1",
     "tsd": "^0.13.1",
-    "typescript": "^4.0.3",
-    "xo": "^0.33.1"
+    "typescript": "^4.1.2",
+    "xo": "^0.35.0"
   }
 }
