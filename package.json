@@ -26,6 +26,7 @@
   "contributors": [
     "Connor Love"
   ],
+  "type": "module",
   "main": "index.js",
   "module": "index.js",
   "files": [
