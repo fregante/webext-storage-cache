@@ -64,10 +64,15 @@ test.serial('has() with expired cache', async t => {
 	t.is(await cache.has('name'), false);
 });
 
+test.serial('set() without a value', async t => {
+	await t.throwsAsync(cache.set('name'), {instanceOf: TypeError, message: 'Expected a value as the second argument'});
+});
+
 test.serial('set() with undefined', async t => {
-	await cache.set('name');
-	// StorageArea.set should not be called with `undefined`
-	t.is(chrome.storage.local.set.callCount, 0);
+	await cache.set('name', 'Anne');
+	await cache.set('name', undefined);
+	// Cached value should be erased
+	t.is(await cache.has('name'), false);
 });
 
 test.serial('set() with value', async t => {

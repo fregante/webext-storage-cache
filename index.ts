@@ -68,18 +68,21 @@ async function get<TValue extends Value>(key: string): Promise<TValue | undefine
 }
 
 async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
-	if (typeof value === 'undefined') {
-		// @ts-expect-error This never happens in TS because `value` can't be undefined
-		return;
+	if (arguments.length < 2) {
+		throw new TypeError('Expected a value as the second argument');
 	}
 
-	const internalKey = `cache:${key}`;
-	await storageSet({
-		[internalKey]: {
-			data: value,
-			maxAge: timeInTheFuture(maxAge)
-		}
-	});
+	if (typeof value === 'undefined') {
+		await delete_(key);
+	} else {
+		const internalKey = `cache:${key}`;
+		await storageSet({
+			[internalKey]: {
+				data: value,
+				maxAge: timeInTheFuture(maxAge)
+			}
+		});
+	}
 
 	return value;
 }
