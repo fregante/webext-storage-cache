@@ -116,7 +116,7 @@ Type: `string`
 
 Type: `string | number | boolean` or `array | object` of those three types.
 
-`undefined` won't be cached, it's considered "no value" in the Storage API.
+`undefined` will remove the cached item. For this purpose it's best to use `cache.delete(key)` instead
 
 #### maxAge
 
