@@ -6,7 +6,9 @@ This module works on content scripts, background pages and option pages.
 
 ## Install
 
-You can just download the [standalone bundle](https://packd.fregante.now.sh/webext-storage-cache@latest?name=storageCache) (it might take a minute to download) and include the file in your `manifest.json`, or:
+You can download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-additional-permissions&global=getAdditionalPermissions) and include it in your `manifest.json`.
+
+Or use `npm`:
 
 ```sh
 npm install --save webext-storage-cache
