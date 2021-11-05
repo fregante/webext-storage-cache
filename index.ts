@@ -1,50 +1,34 @@
 import microMemoize from 'micro-memoize';
 import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
-
-// @ts-expect-error
-// eslint-disable-next-line @typescript-eslint/promise-function-async
-const getPromise = (executor: () => void) => <T>(key?): Promise<T> => new Promise((resolve, reject) => {
-	// @ts-expect-error
-	executor(key, result => {
-		if (chrome.runtime.lastError) {
-			reject(chrome.runtime.lastError);
-		} else {
-			resolve(result);
-		}
-	});
-});
+import chromeP from 'webext-polyfill-kinda';
 
 function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
-
-// @ts-expect-error
-const storageGet = getPromise((...args) => chrome.storage.local.get(...args));
-// @ts-expect-error
-const storageSet = getPromise((...args) => chrome.storage.local.set(...args));
-// @ts-expect-error
-const storageRemove = getPromise((...args) => chrome.storage.local.remove(...args));
 
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
-interface CacheItem<TValue> {
-	data: TValue;
+interface CacheItem<Value> {
+	data: Value;
 	maxAge: number;
 }
 
-type Cache<TValue extends Value = Value> = Record<string, CacheItem<TValue>>;
+type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
 async function has(key: string): Promise<boolean> {
-	return await _get(key, false) !== undefined;
+	return (await _get(key, false)) !== undefined;
 }
 
-async function _get<TValue extends Value>(key: string, remove: boolean): Promise<CacheItem<TValue> | undefined> {
+async function _get<ScopedValue extends Value>(
+	key: string,
+	remove: boolean,
+): Promise<CacheItem<ScopedValue> | undefined> {
 	const internalKey = `cache:${key}`;
-	const storageData = await storageGet<Cache<TValue>>(internalKey);
+	const storageData = await chromeP.storage.local.get(internalKey) as Cache<ScopedValue>;
 	const cachedItem = storageData[internalKey];
 
 	if (cachedItem === undefined) {
@@ -54,7 +38,7 @@ async function _get<TValue extends Value>(key: string, remove: boolean): Promise
 
 	if (Date.now() > cachedItem.maxAge) {
 		if (remove) {
-			await storageRemove(internalKey);
+			await chromeP.storage.local.remove(internalKey);
 		}
 
 		return;
@@ -63,11 +47,17 @@ async function _get<TValue extends Value>(key: string, remove: boolean): Promise
 	return cachedItem;
 }
 
-async function get<TValue extends Value>(key: string): Promise<TValue | undefined> {
-	return (await _get<TValue>(key, true))?.data;
+async function get<ScopedValue extends Value>(
+	key: string,
+): Promise<ScopedValue | undefined> {
+	return (await _get<ScopedValue>(key, true))?.data;
 }
 
-async function set<TValue extends Value>(key: string, value: TValue, maxAge: TimeDescriptor = {days: 30}): Promise<TValue> {
+async function set<ScopedValue extends Value>(
+	key: string,
+	value: ScopedValue,
+	maxAge: TimeDescriptor = {days: 30},
+): Promise<ScopedValue> {
 	if (arguments.length < 2) {
 		throw new TypeError('Expected a value as the second argument');
 	}
@@ -76,11 +66,11 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge: Tim
 		await delete_(key);
 	} else {
 		const internalKey = `cache:${key}`;
-		await storageSet({
+		await chromeP.storage.local.set({
 			[internalKey]: {
 				data: value,
-				maxAge: timeInTheFuture(maxAge)
-			}
+				maxAge: timeInTheFuture(maxAge),
+			},
 		});
 	}
 
@@ -89,11 +79,13 @@ async function set<TValue extends Value>(key: string, value: TValue, maxAge: Tim
 
 async function delete_(key: string): Promise<void> {
 	const internalKey = `cache:${key}`;
-	return storageRemove(internalKey);
+	return chromeP.storage.local.remove(internalKey);
 }
 
-async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promise<void> {
-	const wholeCache = await storageGet<Record<string, any>>();
+async function deleteWithLogic(
+	logic?: (x: CacheItem<Value>) => boolean,
+): Promise<void> {
+	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
 	const removableItems = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
@@ -102,7 +94,7 @@ async function deleteWithLogic(logic?: (x: CacheItem<Value>) => boolean): Promis
 	}
 
 	if (removableItems.length > 0) {
-		await storageRemove(removableItems);
+		await chromeP.storage.local.remove(removableItems);
 	}
 }
 
@@ -114,22 +106,30 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-interface MemoizedFunctionOptions<TArgs extends any[], TValue> {
+interface MemoizedFunctionOptions<Arguments extends any[], ScopedValue> {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
-	cacheKey?: (args: TArgs) => string;
-	shouldRevalidate?: (cachedValue: TValue) => boolean;
+	cacheKey?: (args: Arguments) => string;
+	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 }
 
 function function_<
-	TValue extends Value,
-	TFunction extends (...args: any[]) => Promise<TValue | undefined>,
-	TArgs extends Parameters<TFunction>
+	ScopedValue extends Value,
+	Getter extends (...args: any[]) => Promise<ScopedValue | undefined>,
+	Arguments extends Parameters<Getter>,
 >(
-	getter: TFunction,
-	{cacheKey, maxAge = {days: 30}, staleWhileRevalidate = {days: 0}, shouldRevalidate}: MemoizedFunctionOptions<TArgs, TValue> = {}
-): TFunction {
-	const getSet = async (key: string, args: TArgs): Promise<TValue | undefined> => {
+	getter: Getter,
+	{
+		cacheKey,
+		maxAge = {days: 30},
+		staleWhileRevalidate = {days: 0},
+		shouldRevalidate,
+	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
+): Getter {
+	const getSet = async (
+		key: string,
+		args: Arguments,
+	): Promise<ScopedValue | undefined> => {
 		const freshValue = await getter(...args);
 		if (freshValue === undefined) {
 			await delete_(key);
@@ -138,12 +138,12 @@ function function_<
 
 		const milliseconds = toMilliseconds(maxAge) + toMilliseconds(staleWhileRevalidate);
 
-		return set<TValue>(key, freshValue, {milliseconds});
+		return set<ScopedValue>(key, freshValue, {milliseconds});
 	};
 
-	return microMemoize((async (...args: TArgs) => {
-		const userKey = cacheKey ? cacheKey(args) : args[0] as string;
-		const cachedItem = await _get<TValue>(userKey, false);
+	return microMemoize((async (...args: Arguments) => {
+		const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
+		const cachedItem = await _get<ScopedValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
 		}
@@ -154,7 +154,7 @@ function function_<
 		}
 
 		return cachedItem.data;
-	}) as TFunction);
+	}) as Getter);
 }
 
 const cache = {
@@ -163,7 +163,7 @@ const cache = {
 	set,
 	clear,
 	function: function_,
-	delete: delete_
+	delete: delete_,
 };
 
 function init(): void {
@@ -178,7 +178,7 @@ function init(): void {
 	if (chrome.alarms) {
 		chrome.alarms.create('webext-storage-cache', {
 			delayInMinutes: 1,
-			periodInMinutes: 60 * 24
+			periodInMinutes: 60 * 24,
 		});
 
 		let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
@@ -189,7 +189,7 @@ function init(): void {
 			}
 		});
 	} else {
-		setTimeout(deleteExpired, 60000); // Purge cache on launch, but wait a bit
+		setTimeout(deleteExpired, 60_000); // Purge cache on launch, but wait a bit
 		setInterval(deleteExpired, 1000 * 3600 * 24);
 	}
 }

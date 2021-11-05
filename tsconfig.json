@@ -1,13 +1,8 @@
 {
-	"extends": "@sindresorhus/tsconfig",
+	"extends": "@sindresorhus/tsconfig/tsconfig.json",
 	"compilerOptions": {
 		"outDir": ".",
-		"target": "es2018",
-		"module": "esnext",
-		"noUncheckedIndexedAccess": false,
-		"lib": [
-			"DOM"
-		]
+		"noUncheckedIndexedAccess": false
 	},
 	"files": [
 		"index.ts"

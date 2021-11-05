@@ -1,79 +1,77 @@
 {
-  "name": "webext-storage-cache",
-  "version": "4.2.0",
-  "description": "WebExtensions module: Map-like promised cache storage with expiration. Chrome and Firefox.",
-  "keywords": [
-    "await",
-    "background page",
-    "browser",
-    "cache",
-    "chrome",
-    "content script",
-    "expirating",
-    "extension",
-    "firefox",
-    "map",
-    "options page",
-    "promises",
-    "self-cleaning",
-    "temporary",
-    "web-ext",
-    "webext"
-  ],
-  "repository": "fregante/webext-storage-cache",
-  "license": "MIT",
-  "author": "Federico Brigante <opensource@bfred.it> (bfred.it)",
-  "contributors": [
-    "Connor Love"
-  ],
-  "type": "module",
-  "main": "index.js",
-  "module": "index.js",
-  "files": [
-    "index.js",
-    "index.d.ts"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "prepack": "tsc --sourceMap false",
-    "test": "tsc && tsd && ava && xo",
-    "watch": "tsc --watch"
-  },
-  "xo": {
-    "envs": [
-      "browser",
-      "webextensions"
-    ],
-    "rules": {
-      "@typescript-eslint/return-await": 0,
-      "import/extensions": 0,
-      "import/no-unassigned-import": 0,
-      "import/no-useless-path-segments": 0,
-      "no-promise-executor-return": 0,
-      "unicorn/import-index": 0,
-      "unicorn/no-object-as-default-parameter": 0
-    }
-  },
-  "ava": {
-    "nodeArguments": [
-      "--experimental-modules"
-    ]
-  },
-  "dependencies": {
-    "@sindresorhus/to-milliseconds": "^1.2.0",
-    "micro-memoize": "^4.0.9",
-    "webext-detect-page": "^2.0.5"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.12.7",
-    "@sindresorhus/tsconfig": "^0.8.0",
-    "@types/chrome": "0.0.126",
-    "@types/sinon-chrome": "^2.2.10",
-    "ava": "^3.13.0",
-    "sinon": "^9.2.1",
-    "sinon-chrome": "^3.0.1",
-    "tsd": "^0.13.1",
-    "typescript": "^4.1.2",
-    "xo": "^0.35.0"
-  }
+	"name": "webext-storage-cache",
+	"version": "4.2.0",
+	"description": "Map-like promised cache storage with expiration. WebExtensions module for Chrome, Firefox, Safari",
+	"keywords": [
+		"await",
+		"background page",
+		"browser",
+		"cache",
+		"chrome",
+		"content script",
+		"expirating",
+		"extension",
+		"firefox",
+		"map",
+		"options page",
+		"promises",
+		"self-cleaning",
+		"temporary",
+		"web-ext",
+		"webext"
+	],
+	"repository": "fregante/webext-storage-cache",
+	"funding": "https://github.com/sponsors/fregante",
+	"license": "MIT",
+	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
+	"contributors": [
+		"Connor Love"
+	],
+	"type": "module",
+	"main": "index.js",
+	"module": "index.js",
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"scripts": {
+		"build": "tsc",
+		"prepack": "tsc --sourceMap false",
+		"test": "tsc && tsd && ava && xo",
+		"watch": "tsc --watch"
+	},
+	"xo": {
+		"envs": [
+			"browser",
+			"webextensions"
+		],
+		"rules": {
+			"@typescript-eslint/return-await": 0,
+			"import/extensions": 0,
+			"import/no-unassigned-import": 0,
+			"import/no-useless-path-segments": 0,
+			"no-promise-executor-return": 0,
+			"unicorn/import-index": 0,
+			"unicorn/no-object-as-default-parameter": 0
+		}
+	},
+	"dependencies": {
+		"@sindresorhus/to-milliseconds": "^2.0.0",
+		"micro-memoize": "^4.0.9",
+		"webext-detect-page": "^3.1.0",
+		"webext-polyfill-kinda": "^0.9.0"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.16.0",
+		"@sindresorhus/tsconfig": "^2.0.0",
+		"@types/chrome": "0.0.163",
+		"@types/firefox-webext-browser": "^94.0.0",
+		"@types/sinon-chrome": "^2.2.11",
+		"ava": "^3.15.0",
+		"sinon": "^12.0.1",
+		"sinon-chrome": "^3.0.1",
+		"tsd": "^0.18.0",
+		"typescript": "^4.4.4",
+		"xo": "^0.46.4"
+	}
 }

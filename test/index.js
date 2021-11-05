@@ -1,8 +1,8 @@
 import test from 'ava';
 import sinon from 'sinon';
 import './_fixtures.js';
-import cache from '../index.js';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
+import cache from '../index.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 
@@ -16,7 +16,7 @@ function createCache(daysFromToday, wholeCache) {
 			.withArgs(key)
 			.yields({[key]: {
 				data,
-				maxAge: timeInTheFuture({days: daysFromToday})
+				maxAge: timeInTheFuture({days: daysFromToday}),
 			}});
 	}
 }
@@ -34,14 +34,14 @@ test.serial('get() with empty cache', async t => {
 
 test.serial('get() with cache', async t => {
 	createCache(10, {
-		'cache:name': 'Rico'
+		'cache:name': 'Rico',
 	});
 	t.is(await cache.get('name'), 'Rico');
 });
 
 test.serial('get() with expired cache', async t => {
 	createCache(-10, {
-		'cache:name': 'Rico'
+		'cache:name': 'Rico',
 	});
 	t.is(await cache.get('name'), undefined);
 });
@@ -52,20 +52,23 @@ test.serial('has() with empty cache', async t => {
 
 test.serial('has() with cache', async t => {
 	createCache(10, {
-		'cache:name': 'Rico'
+		'cache:name': 'Rico',
 	});
 	t.is(await cache.has('name'), true);
 });
 
 test.serial('has() with expired cache', async t => {
 	createCache(-10, {
-		'cache:name': 'Rico'
+		'cache:name': 'Rico',
 	});
 	t.is(await cache.has('name'), false);
 });
 
 test.serial('set() without a value', async t => {
-	await t.throwsAsync(cache.set('name'), {instanceOf: TypeError, message: 'Expected a value as the second argument'});
+	await t.throwsAsync(cache.set('name'), {
+		instanceOf: TypeError,
+		message: 'Expected a value as the second argument',
+	});
 });
 
 test.serial('set() with undefined', async t => {
@@ -99,7 +102,7 @@ test.serial('function() with empty cache', async t => {
 
 test.serial('function() with cache', async t => {
 	createCache(10, {
-		'cache:@anne': 'ANNE'
+		'cache:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
@@ -114,7 +117,7 @@ test.serial('function() with cache', async t => {
 
 test.serial('function() with expired cache', async t => {
 	createCache(-10, {
-		'cache:@anne': 'ONNA'
+		'cache:@anne': 'ONNA',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
@@ -135,7 +138,7 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
 		maxAge: {days: maxAge},
-		staleWhileRevalidate: {days: staleWhileRevalidate}
+		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
 
 	t.is(await call('@anne'), 'ANNE');
@@ -153,13 +156,13 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 
 test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 	createCache(30, {
-		'cache:@anne': 'ANNE'
+		'cache:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
 		maxAge: {days: 1},
-		staleWhileRevalidate: {days: 29}
+		staleWhileRevalidate: {days: 29},
 	});
 
 	t.is(await call('@anne'), 'ANNE');
@@ -176,13 +179,13 @@ test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 
 test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 	createCache(15, {
-		'cache:@anne': 'ANNE'
+		'cache:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
 		maxAge: {days: 1},
-		staleWhileRevalidate: {days: 29}
+		staleWhileRevalidate: {days: 29},
 	});
 
 	t.is(await call('@anne'), 'ANNE');
@@ -201,7 +204,7 @@ test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 
 test.serial('function() varies cache by function argument', async t => {
 	createCache(10, {
-		'cache:@anne': 'ANNE'
+		'cache:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
@@ -216,7 +219,7 @@ test.serial('function() varies cache by function argument', async t => {
 
 test.serial('function() ignores second argument by default', async t => {
 	createCache(10, {
-		'cache:@anne': 'ANNE'
+		'cache:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
@@ -229,12 +232,12 @@ test.serial('function() ignores second argument by default', async t => {
 
 test.serial('function() accepts custom cache key generator', async t => {
 	createCache(10, {
-		'cache:@anne,1': 'ANNE,1'
+		'cache:@anne,1': 'ANNE,1',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		cacheKey: arguments_ => arguments_.join()
+		cacheKey: arguments_ => arguments_.join(','),
 	});
 
 	await call('@anne', 1);
@@ -249,12 +252,12 @@ test.serial('function() accepts custom cache key generator', async t => {
 
 test.serial('function() verifies cache with shouldRevalidate callback', async t => {
 	createCache(10, {
-		'cache:@anne': '@anne'
+		'cache:@anne': '@anne',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		shouldRevalidate: value => value.startsWith('@')
+		shouldRevalidate: value => value.startsWith('@'),
 	});
 
 	t.is(await call('@anne'), 'ANNE');
