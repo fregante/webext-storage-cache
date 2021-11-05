@@ -1,6 +1,6 @@
 # webext-storage-cache [![](https://img.shields.io/npm/v/webext-storage-cache.svg)](https://www.npmjs.com/package/webext-storage-cache)
 
-> WebExtensions module: Map-like promised cache storage with expiration. Chrome and Firefox.
+> Map-like promised cache storage with expiration. WebExtensions module for Chrome, Firefox, Safari
 
 This module works on content scripts, background pages and option pages.
 
