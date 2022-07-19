@@ -63,8 +63,8 @@ jobs:
     needs: Pack
     steps:
       - uses: actions/download-artifact@v3
-      - run: echo "${{ env.IMPORT_TEXT }} '${{ env.NPM_MODULE_NAME }}'" > index.js
-      - run: echo '<script src="index.js" type="module"></script>' > index.html
+      - run: npm install ./artifact
+      - run: echo '<script type="module">${{ env.IMPORT_TEXT }} "${{ env.NPM_MODULE_NAME }}"</script>' > index.html
       - run: npx vite build
       - run: cat dist/assets/*
 
