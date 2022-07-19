@@ -1,5 +1,5 @@
 import microMemoize from 'micro-memoize';
-import {isBackgroundPage} from 'webext-detect-page';
+import {isBackgroundPage, isExtensionContext} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import chromeP from 'webext-polyfill-kinda';
 
@@ -171,7 +171,9 @@ const cache = {
 
 function init(): void {
 	// Make it available globally for ease of use
-	(window as any).webextStorageCache = cache;
+	if (isExtensionContext()) {
+		(globalThis as any).webextStorageCache = cache;
+	}
 
 	// Automatically clear cache every day
 	if (!isBackgroundPage()) {
