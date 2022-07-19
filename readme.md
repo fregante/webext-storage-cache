@@ -161,6 +161,9 @@ const cachedGetHTML = cache.function(getHTML);
 
 const html = await cachedGetHTML('https://google.com', {});
 // The HTML of google.com will be saved with the key 'https://google.com'
+
+const freshHtml = await cachedGetHTML.fresh('https://google.com', {});
+// Escape hatch to ignore memoization and force a refresh of the cache
 ```
 
 #### getter
