@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: install
-        run: npm ci
+        run: npm install
       - name: XO
         run: npx xo
 
@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: install
-        run: npm ci
+        run: npm install
       - name: build
-        run: npm run build
+        run: npm run build --if-present
       - name: AVA
         run: npx ava
 
@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: install
-        run: npm ci
+        run: npm install
       - name: build
         run: npm run build
 
@@ -39,6 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: install
-        run: npm ci
+        run: npm install
       - run: npm run build
       - run: npx tsd
