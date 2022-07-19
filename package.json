@@ -45,33 +45,29 @@
 			"browser",
 			"webextensions"
 		],
-		"rules": {
-			"@typescript-eslint/return-await": 0,
-			"import/extensions": 0,
-			"import/no-unassigned-import": 0,
-			"import/no-useless-path-segments": 0,
-			"no-promise-executor-return": 0,
-			"unicorn/import-index": 0,
-			"unicorn/no-object-as-default-parameter": 0
-		}
+		"rules": {}
+	},
+	"ava": {
+		"require": [
+			"./test/_setup.js"
+		]
 	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
-		"micro-memoize": "^4.0.9",
-		"webext-detect-page": "^3.1.0",
-		"webext-polyfill-kinda": "^0.9.0"
+		"micro-memoize": "^4.0.10",
+		"webext-detect-page": "^4.0.1",
+		"webext-polyfill-kinda": "^0.10.0"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.16.0",
 		"@sindresorhus/tsconfig": "^2.0.0",
-		"@types/chrome": "0.0.163",
-		"@types/firefox-webext-browser": "^94.0.0",
+		"@types/chrome": "0.0.193",
+		"@types/firefox-webext-browser": "^94.0.1",
 		"@types/sinon-chrome": "^2.2.11",
-		"ava": "^3.15.0",
-		"sinon": "^12.0.1",
+		"ava": "^4.3.1",
+		"sinon": "^14.0.0",
 		"sinon-chrome": "^3.0.1",
-		"tsd": "^0.18.0",
-		"typescript": "^4.4.4",
-		"xo": "^0.46.4"
+		"tsd": "^0.22.0",
+		"typescript": "^4.7.4",
+		"xo": "^0.50.0"
 	}
 }

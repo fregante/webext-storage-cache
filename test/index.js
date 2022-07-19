@@ -1,6 +1,5 @@
 import test from 'ava';
 import sinon from 'sinon';
-import './_fixtures.js';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
 import cache from '../index.js';
 
@@ -171,7 +170,9 @@ test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 	t.is(spy.callCount, 0);
 	t.is(chrome.storage.local.set.callCount, 0);
 
-	await new Promise(resolve => setTimeout(resolve, 100));
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
 
 	// Cache is still fresh, it should never be revalidated
 	t.is(spy.callCount, 0);
@@ -195,7 +196,9 @@ test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 
 	t.is(spy.callCount, 0, 'It shouldn’t be called yet');
 
-	await new Promise(resolve => setTimeout(resolve, 100));
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
 
 	t.is(spy.callCount, 1, 'It should be revalidated');
 	t.is(chrome.storage.local.set.callCount, 1);
