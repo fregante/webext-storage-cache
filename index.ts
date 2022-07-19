@@ -3,6 +3,8 @@ import {isBackgroundPage} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import chromeP from 'webext-polyfill-kinda';
 
+const cacheDefault = {days: 30};
+
 function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
@@ -50,13 +52,14 @@ async function _get<ScopedValue extends Value>(
 async function get<ScopedValue extends Value>(
 	key: string,
 ): Promise<ScopedValue | undefined> {
-	return (await _get<ScopedValue>(key, true))?.data;
+	const cacheItem = await _get<ScopedValue>(key, true);
+	return cacheItem?.data;
 }
 
 async function set<ScopedValue extends Value>(
 	key: string,
 	value: ScopedValue,
-	maxAge: TimeDescriptor = {days: 30},
+	maxAge: TimeDescriptor = cacheDefault,
 ): Promise<ScopedValue> {
 	if (arguments.length < 2) {
 		throw new TypeError('Expected a value as the second argument');
