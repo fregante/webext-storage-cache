@@ -279,3 +279,19 @@ test.serial('function() avoids duplicate nearby function calls', async t => {
 	await call('@anne', cacheMePlease);
 	t.is(spy.callCount, 1);
 });
+
+test.serial('function.fresh() ignores cached value', async t => {
+	createCache(10, {
+		'cache:@anne': 'OVERWRITE_ME',
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy);
+
+	t.is(await call.fresh('@anne'), 'ANNE');
+
+	t.true(spy.withArgs('@anne').calledOnce);
+	t.is(spy.callCount, 1);
+	t.is(chrome.storage.local.get.callCount, 0);
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+});

@@ -1,7 +1,7 @@
+import chromeP from 'webext-polyfill-kinda';
 import microMemoize from 'micro-memoize';
 import {isBackgroundPage, isExtensionContext} from 'webext-detect-page';
 import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
-import chromeP from 'webext-polyfill-kinda';
 
 const cacheDefault = {days: 30};
 
@@ -128,7 +128,7 @@ function function_<
 		staleWhileRevalidate = {days: 0},
 		shouldRevalidate,
 	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
-): Getter {
+): Getter & {fresh: Getter} {
 	const getSet = async (
 		key: string,
 		args: Arguments,
@@ -144,7 +144,7 @@ function function_<
 		return set<ScopedValue>(key, freshValue, {milliseconds});
 	};
 
-	return microMemoize((async (...args: Arguments) => {
+	return Object.assign(microMemoize((async (...args: Arguments) => {
 		const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
 		const cachedItem = await _get<ScopedValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
@@ -157,7 +157,13 @@ function function_<
 		}
 
 		return cachedItem.data;
-	}) as Getter);
+	}) as Getter), {
+		fresh: (async (...args: Arguments) => {
+			const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
+
+			return getSet(userKey, args);
+		}) as Getter,
+	});
 }
 
 const cache = {
