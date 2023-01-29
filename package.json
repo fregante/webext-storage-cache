@@ -54,20 +54,19 @@
 	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
-		"micro-memoize": "^4.0.10",
+		"micro-memoize": "^4.0.14",
 		"webext-detect-page": "^4.0.1",
-		"webext-polyfill-kinda": "^0.10.0"
+		"webext-polyfill-kinda": "^1.0.0"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^2.0.0",
-		"@types/chrome": "0.0.193",
-		"@types/firefox-webext-browser": "^94.0.1",
+		"@types/chrome": "0.0.210",
 		"@types/sinon-chrome": "^2.2.11",
-		"ava": "^4.3.1",
-		"sinon": "^14.0.0",
+		"ava": "^5.1.1",
+		"sinon": "^15.0.1",
 		"sinon-chrome": "^3.0.1",
-		"tsd": "^0.22.0",
-		"typescript": "^4.7.4",
-		"xo": "^0.50.0"
+		"tsd": "^0.25.0",
+		"typescript": "^4.9.4",
+		"xo": "^0.53.1"
 	}
 }
