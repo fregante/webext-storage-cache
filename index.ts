@@ -1,7 +1,7 @@
 import chromeP from 'webext-polyfill-kinda';
 import microMemoize from 'micro-memoize';
 import {isBackgroundPage, isExtensionContext} from 'webext-detect-page';
-import toMilliseconds, {TimeDescriptor} from '@sindresorhus/to-milliseconds';
+import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
 const cacheDefault = {days: 30};
 
@@ -14,6 +14,7 @@ type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- TODO: When releasing a breaking release
 interface CacheItem<Value> {
 	data: Value;
 	maxAge: number;
@@ -109,6 +110,7 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- TODO: When releasing a breaking release
 interface MemoizedFunctionOptions<Arguments extends any[], ScopedValue> {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
