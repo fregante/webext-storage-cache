@@ -283,7 +283,7 @@ test.serial('function() avoids concurrent function calls', async t => {
 	t.is(spy.callCount, 4);
 });
 
-test.serial.skip('function() avoids concurrent function calls with complex arguments', async t => {
+test.serial.failing('function() avoids concurrent function calls with complex arguments', async t => {
 	const spy = sinon.spy(async (transform, user) => transform(user.name));
 	const call = cache.function(spy);
 
