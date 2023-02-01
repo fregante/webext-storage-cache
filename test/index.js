@@ -274,10 +274,28 @@ test.serial('function() avoids concurrent function calls', async t => {
 	const call = cache.function(spy);
 
 	t.is(spy.callCount, 0);
-	const cacheMePlease = function () {};
-	t.is(call('@anne', cacheMePlease), call('@anne', cacheMePlease));
-	await call('@anne', cacheMePlease);
+	t.is(call('@anne'), call('@anne'));
+	await call('@anne');
 	t.is(spy.callCount, 1);
+
+	t.not(call('@new'), call('@other'));
+	await call('@idk');
+	t.is(spy.callCount, 4);
+});
+
+test.serial.skip('function() avoids concurrent function calls with complex arguments', async t => {
+	const spy = sinon.spy(async (transform, user) => transform(user.name));
+	const call = cache.function(spy);
+
+	t.is(spy.callCount, 0);
+	const cacheMePlease = name => name.slice(1).toUpperCase();
+	t.is(call(cacheMePlease, {name: '@anne'}), call(cacheMePlease, {name: '@anne'}));
+	await call(cacheMePlease, {name: '@anne'});
+	t.is(spy.callCount, 1);
+
+	t.not(call(cacheMePlease, {name: '@new'}), call(cacheMePlease, {name: '@other'}));
+	await call(cacheMePlease, {name: '@idk'});
+	t.is(spy.callCount, 4);
 });
 
 test.serial('function() always loads the data from storage, not memory', async t => {
