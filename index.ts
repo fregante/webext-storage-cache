@@ -13,11 +13,10 @@ type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- TODO: When releasing a breaking release
-interface CacheItem<Value> {
+type CacheItem<Value> = {
 	data: Value;
 	maxAge: number;
-}
+};
 
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
