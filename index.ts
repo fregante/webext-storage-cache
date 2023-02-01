@@ -162,7 +162,12 @@ function function_<
 		return cachedItem.data;
 	}) as Getter;
 
-	const concurrentOnlyMemoizedFunction = pMemoize(internalGetSet);
+	const concurrentOnlyMemoizedFunction = pMemoize(internalGetSet, {
+		// @ts-expect-error any[]' is assignable to the constraint of type 'Arguments', but 'Arguments' could be instantiated with a different subtype of constraint 'any[]'.ts(2322)
+		// TODO: Fix type instead
+		cacheKey,
+		cache: false, // In-flight only
+	});
 
 	return Object.assign(concurrentOnlyMemoizedFunction, {
 		fresh: (async (...args: Arguments) => {
