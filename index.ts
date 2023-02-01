@@ -1,5 +1,4 @@
 import chromeP from 'webext-polyfill-kinda';
-import pMemoize from 'p-memoize';
 import {isBackgroundPage, isExtensionContext} from 'webext-detect-page';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
@@ -110,13 +109,12 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- TODO: When releasing a breaking release
-interface MemoizedFunctionOptions<Arguments extends any[], ScopedValue> {
+type MemoizedFunctionOptions<Arguments extends any[], ScopedValue> = {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
 	cacheKey?: (args: Arguments) => string;
 	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
-}
+};
 
 function function_<
 	ScopedValue extends Value,
@@ -131,6 +129,7 @@ function function_<
 		shouldRevalidate,
 	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
 ): Getter & {fresh: Getter} {
+	const inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
 	const getSet = async (
 		key: string,
 		args: Arguments,
@@ -147,8 +146,7 @@ function function_<
 	};
 
 	// TODO: Oh boy, better names are needed
-	const internalGetSet = (async (...args: Arguments) => {
-		const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
+	const internalGetSet = (async (userKey: string, ...args: Arguments) => {
 		const cachedItem = await _get<ScopedValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
@@ -160,16 +158,27 @@ function function_<
 		}
 
 		return cachedItem.data;
-	}) as Getter;
-
-	const concurrentOnlyMemoizedFunction = pMemoize(internalGetSet, {
-		// @ts-expect-error any[]' is assignable to the constraint of type 'Arguments', but 'Arguments' could be instantiated with a different subtype of constraint 'any[]'.ts(2322)
-		// TODO: Fix type instead
-		cacheKey,
-		cache: false, // In-flight only
 	});
 
-	return Object.assign(concurrentOnlyMemoizedFunction, {
+	// TODO: Oh boy, better names are needed
+	function memoizedInFlight(...args: Arguments) {
+		const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
+		if (inFlightCache.has(userKey)) {
+			// Avoid calling the same function twice while pending
+			return inFlightCache.get(userKey);
+		}
+
+		const promise = internalGetSet(userKey, ...args);
+		inFlightCache.set(userKey, promise);
+		const del = () => {
+			inFlightCache.delete(userKey);
+		};
+
+		promise.then(del, del);
+		return promise;
+	}
+
+	return Object.assign(memoizedInFlight as Getter, {
 		fresh: (async (...args: Arguments) => {
 			const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
 
