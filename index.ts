@@ -21,18 +21,11 @@ type CacheItem<Value> = {
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
 function getUserKey<Arguments extends unknown[]>(
-	cacheKey: undefined | CacheKey<Arguments>,
+	name: string,
+	cacheKey: CacheKey<Arguments>,
 	args: Arguments,
 ): string {
-	if (!cacheKey) {
-		return args[0] as string;
-	}
-
-	if (typeof cacheKey === 'function') {
-		return cacheKey(args);
-	}
-
-	return cacheKey + ':' + JSON.stringify(args)
+	return `${name}:${cacheKey(args)}`;
 }
 
 async function has(key: string): Promise<boolean> {
@@ -103,7 +96,7 @@ async function deleteWithLogic(
 	logic?: (x: CacheItem<Value>) => boolean,
 ): Promise<void> {
 	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
-	const removableItems = [];
+	const removableItems: string[] = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
 			removableItems.push(key);
@@ -123,9 +116,10 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-type CacheKey<Arguments> = string | ((args: Arguments) => string);
+type CacheKey<Arguments> = (args: Arguments) => string;
 
 type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
+	name: string;
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
 	cacheKey?: CacheKey<Arguments>;
@@ -139,11 +133,12 @@ function function_<
 >(
 	getter: Getter,
 	{
-		cacheKey,
+		name,
+		cacheKey = JSON.stringify,
 		maxAge = {days: 30},
 		staleWhileRevalidate = {days: 0},
 		shouldRevalidate,
-	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
+	}: MemoizedFunctionOptions<Arguments, ScopedValue>,
 ): Getter & {fresh: Getter} {
 	const inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
 	const getSet = async (
@@ -176,7 +171,7 @@ function function_<
 	};
 
 	function memoizePending(...args: Arguments) {
-		const userKey = getUserKey(cacheKey, args);
+		const userKey = getUserKey(name, cacheKey, args);
 		if (inFlightCache.has(userKey)) {
 			// Avoid calling the same function twice while pending
 			return inFlightCache.get(userKey);
@@ -194,7 +189,7 @@ function function_<
 
 	return Object.assign(memoizePending as Getter, {
 		fresh: (
-			async (...args: Arguments) => getSet(getUserKey(cacheKey, args), args)
+			async (...args: Arguments) => getSet(getUserKey(name, cacheKey, args), args)
 		) as Getter,
 	});
 }

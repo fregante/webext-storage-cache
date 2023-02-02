@@ -17,12 +17,12 @@ expectAssignable<Promise<[boolean, string]>>(cache.set('key', [true, 'string']))
 expectAssignable<Promise<Record<string, any[]>>>(cache.set('key', {wow: [true, 'string']}));
 expectAssignable<Promise<number>>(cache.set('key', 1, {days: 1}));
 
-const cachedPower = cache.function(async (n: number) => n ** 1000);
+const cachedPower = cache.function(async (n: number) => n ** 1000, {name: 'power'});
 expectType<((n: number) => Promise<number>) & {fresh: (n: number) => Promise<number>}>(cachedPower);
 expectType<number>(await cachedPower(1));
 
 expectType<((n: string) => Promise<number>) & {fresh: (n: string) => Promise<number>}>(
-	cache.function(async (n: string) => Number(n)),
+	cache.function(async (n: string) => Number(n), {name: 'number'}),
 );
 
 async function identity(x: string): Promise<string>;
@@ -31,19 +31,21 @@ async function identity(x: number | string): Promise<number | string> {
 	return x;
 }
 
-expectType<Promise<number>>(cache.function(identity)(1));
-expectType<Promise<string>>(cache.function(identity)('1'));
-expectNotAssignable<Promise<string>>(cache.function(identity)(1));
-expectNotAssignable<Promise<number>>(cache.function(identity)('1'));
+expectType<Promise<number>>(cache.function(identity, {name: 'identity'})(1));
+expectType<Promise<string>>(cache.function(identity, {name: 'identity'})('1'));
+expectNotAssignable<Promise<string>>(cache.function(identity, {name: 'identity'})(1));
+expectNotAssignable<Promise<number>>(cache.function(identity, {name: 'identity'})('1'));
 
 expectType<((n: string) => Promise<number>) & {fresh: (n: string) => Promise<number>}>(
 	cache.function(async (n: string) => Number(n), {
+		name: 'number',
 		maxAge: {days: 20},
 	}),
 );
 
 expectType<((n: string) => Promise<number>) & {fresh: (n: string) => Promise<number>}>(
 	cache.function(async (n: string) => Number(n), {
+		name: 'number',
 		maxAge: {days: 20},
 		staleWhileRevalidate: {days: 5},
 	}),
@@ -51,17 +53,19 @@ expectType<((n: string) => Promise<number>) & {fresh: (n: string) => Promise<num
 
 expectType<((date: Date) => Promise<string>) & {fresh: (date: Date) => Promise<string>}>(
 	cache.function(async (date: Date) => String(date.getHours()), {
+		name: 'number',
 		cacheKey: ([date]) => date.toLocaleString(),
 	}),
 );
 
 expectType<((date: Date) => Promise<string>) & {fresh: (date: Date) => Promise<string>}>(
 	cache.function(async (date: Date) => String(date.getHours()), {
+		name: 'number',
 		shouldRevalidate: date => typeof date === 'string',
 	}),
 );
 
 // This function won't be cached
 expectType<((n: undefined[]) => Promise<undefined>) & {fresh: (n: undefined[]) => Promise<undefined>}>(
-	cache.function(async (n: undefined[]) => n[1]),
+	cache.function(async (n: undefined[]) => n[1], {name: 'first'}),
 );
