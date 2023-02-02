@@ -176,8 +176,10 @@ Returning `undefined` will skip the cache, just like `cache.set()`.
 
 ##### cacheKey
 
-Type: `function` that returns a string<br>
-Default: `function` that returns the first argument of the call
+Type: `string | (args: any[]) => string`
+Default: `(args: any[]) => args[0]`
+
+By default, only the first argument is used to generate the key, so `cachedSum(1, 2)` will ignore the `2`. For functions that non-string parameters or multiple parameters, you should set a custom `cacheKey` function:
 
 ```js
 const cachedOperate = cache.function(operate, {
@@ -187,6 +189,17 @@ const cachedOperate = cache.function(operate, {
 cachedOperate(1, 2, 3);
 // The result of `operate(1, 2, 3)` will be stored in the key '1,2,3'
 // Without a custom `cacheKey`, it would be stored in the key '1'
+```
+
+You can alternatively pass a string (ideally the function’s name):
+
+```js
+const cachedOperate = cache.function(operate, {
+	cacheKey: 'operate',
+});
+
+cachedOperate(1, 2, 3);
+// The result of `operate(1, 2, 3)` will be stored in the key 'operate:[1,2,3]'
 ```
 
 ##### maxAge
