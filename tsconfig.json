@@ -4,6 +4,7 @@
 		"outDir": "."
 	},
 	"files": [
+		"index.test-d.ts",
 		"index.ts"
 	]
 }

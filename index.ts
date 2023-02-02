@@ -124,7 +124,7 @@ type MemoizedFunctionOptions<Arguments extends any[], ScopedValue> = {
 
 function function_<
 	ScopedValue extends Value,
-	Getter extends (...args: unknown[]) => Promise<ScopedValue | undefined>,
+	Getter extends (...args: any[]) => Promise<ScopedValue | undefined>,
 	Arguments extends Parameters<Getter>,
 >(
 	getter: Getter,
