@@ -255,12 +255,12 @@ test.serial('function() accepts custom cache key generator', async t => {
 
 test.serial('function() verifies cache with shouldRevalidate callback', async t => {
 	createCache(10, {
-		'cache:@anne': '@anne',
+		'cache:@anne': 'anne@',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		shouldRevalidate: value => value.startsWith('@'),
+		shouldRevalidate: value => value.endsWith('@'),
 	});
 
 	t.is(await call('@anne'), 'ANNE');
@@ -269,15 +269,58 @@ test.serial('function() verifies cache with shouldRevalidate callback', async t 
 	t.is(spy.callCount, 1);
 });
 
-test.serial('function() avoids duplicate nearby function calls', async t => {
+test.serial('function() avoids concurrent function calls', async t => {
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy);
 
 	t.is(spy.callCount, 0);
-	const cacheMePlease = function () {};
-	t.is(call('@anne', cacheMePlease), call('@anne', cacheMePlease));
-	await call('@anne', cacheMePlease);
+	t.is(call('@anne'), call('@anne'));
+	await call('@anne');
 	t.is(spy.callCount, 1);
+
+	t.not(call('@new'), call('@other'));
+	await call('@idk');
+	t.is(spy.callCount, 4);
+});
+
+test.serial('function() avoids concurrent function calls with complex arguments via cacheKey', async t => {
+	const spy = sinon.spy(async (transform, user) => transform(user.name));
+	const call = cache.function(spy, {
+		cacheKey: ([fn, user]) => JSON.stringify([fn.name, user]),
+	});
+
+	t.is(spy.callCount, 0);
+	const cacheMePlease = name => name.slice(1).toUpperCase();
+	t.is(call(cacheMePlease, {name: '@anne'}), call(cacheMePlease, {name: '@anne'}));
+	await call(cacheMePlease, {name: '@anne'});
+	t.is(spy.callCount, 1);
+
+	t.not(call(cacheMePlease, {name: '@new'}), call(cacheMePlease, {name: '@other'}));
+	await call(cacheMePlease, {name: '@idk'});
+	t.is(spy.callCount, 4);
+});
+
+test.serial('function() always loads the data from storage, not memory', async t => {
+	createCache(10, {
+		'cache:@anne': 'ANNE',
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy);
+
+	t.is(await call('@anne'), 'ANNE');
+
+	t.is(chrome.storage.local.get.callCount, 1);
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+
+	createCache(10, {
+		'cache:@anne': 'NEW ANNE',
+	});
+
+	t.is(await call('@anne'), 'NEW ANNE');
+
+	t.is(chrome.storage.local.get.callCount, 2);
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
 });
 
 test.serial('function.fresh() ignores cached value', async t => {
