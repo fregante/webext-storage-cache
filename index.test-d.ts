@@ -1,5 +1,5 @@
 import {expectType, expectNotAssignable, expectAssignable} from 'tsd';
-import cache from '.';
+import cache from './index.js';
 
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;

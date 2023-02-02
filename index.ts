@@ -20,6 +20,13 @@ type CacheItem<Value> = {
 
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
+function getUserKey<Arguments extends unknown[]>(
+	cacheKey: undefined | ((args: Arguments) => string),
+	args: Arguments,
+): string {
+	return cacheKey ? cacheKey(args) : (args[0] as string);
+}
+
 async function has(key: string): Promise<boolean> {
 	return (await _get(key, false)) !== undefined;
 }
@@ -144,8 +151,7 @@ function function_<
 		return set<ScopedValue>(key, freshValue, {milliseconds});
 	};
 
-	// TODO: Oh boy, better names are needed
-	const internalGetSet = (async (userKey: string, ...args: Arguments) => {
+	const memoizeStorage = async (userKey: string, ...args: Arguments) => {
 		const cachedItem = await _get<ScopedValue>(userKey, false);
 		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
 			return getSet(userKey, args);
@@ -157,17 +163,16 @@ function function_<
 		}
 
 		return cachedItem.data;
-	});
+	};
 
-	// TODO: Oh boy, better names are needed
-	function memoizedInFlight(...args: Arguments) {
-		const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
+	function memoizePending(...args: Arguments) {
+		const userKey = getUserKey(cacheKey, args);
 		if (inFlightCache.has(userKey)) {
 			// Avoid calling the same function twice while pending
 			return inFlightCache.get(userKey);
 		}
 
-		const promise = internalGetSet(userKey, ...args);
+		const promise = memoizeStorage(userKey, ...args);
 		inFlightCache.set(userKey, promise);
 		const del = () => {
 			inFlightCache.delete(userKey);
@@ -177,12 +182,10 @@ function function_<
 		return promise;
 	}
 
-	return Object.assign(memoizedInFlight as Getter, {
-		fresh: (async (...args: Arguments) => {
-			const userKey = cacheKey ? cacheKey(args) : (args[0] as string);
-
-			return getSet(userKey, args);
-		}) as Getter,
+	return Object.assign(memoizePending as Getter, {
+		fresh: (
+			async (...args: Arguments) => getSet(getUserKey(cacheKey, args), args)
+		) as Getter,
 	});
 }
 
@@ -214,7 +217,10 @@ function init(): void {
 
 		let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
 		chrome.alarms.onAlarm.addListener(alarm => {
-			if (alarm.name === 'webext-storage-cache' && lastRun < Date.now() - 1000) {
+			if (
+				alarm.name === 'webext-storage-cache'
+				&& lastRun < Date.now() - 1000
+			) {
 				lastRun = Date.now();
 				void deleteExpired();
 			}

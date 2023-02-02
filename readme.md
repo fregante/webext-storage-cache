@@ -11,7 +11,7 @@ You can download the [standalone bundle](https://bundle.fregante.com/?pkg=webext
 Or use `npm`:
 
 ```sh
-npm install --save webext-storage-cache
+npm install webext-storage-cache
 ```
 
 ```js
@@ -43,10 +43,10 @@ This module requires the `storage` permission and it’s suggested to also use `
 import cache from 'webext-storage-cache';
 
 (async () => {
-	if (!await cache.has('unique')) {
+	if (!(await cache.has('unique'))) {
 		const cachableItem = await someFunction();
 		await cache.set('unique', cachableItem, {
-			days: 3
+			days: 3,
 		});
 	}
 
@@ -61,9 +61,9 @@ import cache from 'webext-storage-cache';
 
 const cachedFunction = cache.function(someFunction, {
 	maxAge: {
-		days: 3
+		days: 3,
 	},
-	cacheKey: () => 'unique'
+	cacheKey: () => 'unique',
 });
 
 (async () => {
@@ -181,7 +181,7 @@ Default: `function` that returns the first argument of the call
 
 ```js
 const cachedOperate = cache.function(operate, {
-	cacheKey: args => args.join(',')
+	cacheKey: args => args.join(','),
 });
 
 cachedOperate(1, 2, 3);
@@ -206,11 +206,11 @@ Specifies how much longer an item should be kept in cache after its expiration. 
 ```js
 const cachedOperate = cache.function(operate, {
 	maxAge: {
-		days: 10
+		days: 10,
 	},
 	staleWhileRevalidate: {
-		days: 2
-	}
+		days: 2,
+	},
 });
 
 cachedOperate(); // It will run `operate` and cache it for 10 days
@@ -241,7 +241,7 @@ async function getContent(url) {
 
 const cachedGetContent = cache.function(getContent, {
 	// If it's a string, it's in the old format and a new value will be fetched and cached
-	shouldRevalidate: cachedValue => typeof cachedValue === 'string'
+	shouldRevalidate: cachedValue => typeof cachedValue === 'string',
 });
 
 const json = await cachedGetHTML('https://google.com');
