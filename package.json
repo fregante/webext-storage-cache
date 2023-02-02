@@ -28,8 +28,7 @@
 		"Connor Love"
 	],
 	"type": "module",
-	"main": "index.js",
-	"module": "index.js",
+	"exports": "./index.js",
 	"files": [
 		"index.js",
 		"index.d.ts"
@@ -44,8 +43,7 @@
 		"envs": [
 			"browser",
 			"webextensions"
-		],
-		"rules": {}
+		]
 	},
 	"ava": {
 		"require": [
@@ -58,14 +56,14 @@
 		"webext-polyfill-kinda": "^1.0.0"
 	},
 	"devDependencies": {
-		"@sindresorhus/tsconfig": "^2.0.0",
-		"@types/chrome": "0.0.210",
+		"@sindresorhus/tsconfig": "^3.0.1",
+		"@types/chrome": "0.0.211",
 		"@types/sinon-chrome": "^2.2.11",
 		"ava": "^5.1.1",
 		"sinon": "^15.0.1",
 		"sinon-chrome": "^3.0.1",
 		"tsd": "^0.25.0",
-		"typescript": "^4.9.4",
+		"typescript": "^4.9.5",
 		"xo": "^0.53.1"
 	}
 }

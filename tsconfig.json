@@ -1,8 +1,7 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"outDir": ".",
-		"noUncheckedIndexedAccess": false
+		"outDir": "."
 	},
 	"files": [
 		"index.ts"
