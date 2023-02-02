@@ -253,6 +253,46 @@ test.serial('function() accepts custom cache key generator', async t => {
 	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne,2');
 });
 
+test.serial('function() accepts custom string-based cache key', async t => {
+	createCache(10, {
+		'cache:CUSTOM:["@anne",1]': 'ANNE,1',
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy, {
+		cacheKey: 'CUSTOM',
+	});
+
+	await call('@anne', 1);
+	t.is(spy.callCount, 0);
+
+	await call('@anne', 2);
+	t.is(spy.callCount, 1);
+
+	t.is(chrome.storage.local.get.firstCall.args[0], 'cache:CUSTOM:["@anne",1]');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:CUSTOM:["@anne",2]');
+});
+
+test.serial('function() accepts custom string-based with non-primitive parameters', async t => {
+	createCache(10, {
+		'cache:CUSTOM:["@anne",{"user":[1]}]': 'ANNE,1',
+	});
+
+	const spy = sinon.spy(getUsernameDemo);
+	const call = cache.function(spy, {
+		cacheKey: 'CUSTOM',
+	});
+
+	await call('@anne', {user: [1]});
+	t.is(spy.callCount, 0);
+
+	await call('@anne', {user: [2]});
+	t.is(spy.callCount, 1);
+
+	t.is(chrome.storage.local.get.firstCall.args[0], 'cache:CUSTOM:["@anne",{"user":[1]}]');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:CUSTOM:["@anne",{"user":[2]}]');
+});
+
 test.serial('function() verifies cache with shouldRevalidate callback', async t => {
 	createCache(10, {
 		'cache:@anne': 'anne@',

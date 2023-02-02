@@ -21,10 +21,18 @@ type CacheItem<Value> = {
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
 function getUserKey<Arguments extends unknown[]>(
-	cacheKey: undefined | ((args: Arguments) => string),
+	cacheKey: undefined | CacheKey<Arguments>,
 	args: Arguments,
 ): string {
-	return cacheKey ? cacheKey(args) : (args[0] as string);
+	if (!cacheKey) {
+		return args[0] as string;
+	}
+
+	if (typeof cacheKey === 'function') {
+		return cacheKey(args);
+	}
+
+	return cacheKey + ':' + JSON.stringify(args)
 }
 
 async function has(key: string): Promise<boolean> {
@@ -115,10 +123,12 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-type MemoizedFunctionOptions<Arguments extends any[], ScopedValue> = {
+type CacheKey<Arguments> = string | ((args: Arguments) => string);
+
+type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
-	cacheKey?: (args: Arguments) => string;
+	cacheKey?: CacheKey<Arguments>;
 	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 };
 
