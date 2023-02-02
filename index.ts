@@ -8,6 +8,14 @@ function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
+export function defaultSerializer(arguments_: unknown[]): string {
+	if (arguments_.every(arg => typeof arg === 'string')) {
+		return arguments_.join(',');
+	}
+
+	return JSON.stringify(arguments_);
+}
+
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
@@ -134,7 +142,7 @@ function function_<
 	getter: Getter,
 	{
 		name,
-		cacheKey = JSON.stringify,
+		cacheKey = defaultSerializer,
 		maxAge = {days: 30},
 		staleWhileRevalidate = {days: 0},
 		shouldRevalidate,

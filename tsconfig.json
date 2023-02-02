@@ -1,7 +1,8 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"outDir": "."
+		"outDir": ".",
+		"checkJs": true
 	},
 	"files": [
 		"index.test-d.ts",

@@ -89,45 +89,45 @@ test.serial('set() with value', async t => {
 
 test.serial('function() with empty cache', async t => {
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(await call('@anne'), 'ANNE');
 
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 	t.true(spy.withArgs('@anne').calledOnce);
 	t.is(spy.callCount, 1);
-	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
 
 test.serial('function() with cache', async t => {
 	createCache(10, {
-		'cache:@anne': 'ANNE',
+		'cache:spy:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(await call('@anne'), 'ANNE');
 
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 	t.is(chrome.storage.local.set.callCount, 0);
 	t.is(spy.callCount, 0);
 });
 
 test.serial('function() with expired cache', async t => {
 	createCache(-10, {
-		'cache:@anne': 'ONNA',
+		'cache:spy:@anne': 'ONNA',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(await cache.get('@anne'), undefined);
 	t.is(await call('@anne'), 'ANNE');
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 	t.true(spy.withArgs('@anne').calledOnce);
 	t.is(spy.callCount, 1);
-	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
 
 test.serial('function() with empty cache and staleWhileRevalidate', async t => {
@@ -136,30 +136,32 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
+		name: 'spy',
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
 
 	t.is(await call('@anne'), 'ANNE');
 
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 	t.is(chrome.storage.local.set.callCount, 1);
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
-	t.deepEqual(Object.keys(arguments_), ['cache:@anne']);
-	t.is(arguments_['cache:@anne'].data, 'ANNE');
+	t.deepEqual(Object.keys(arguments_), ['cache:spy:@anne']);
+	t.is(arguments_['cache:spy:@anne'].data, 'ANNE');
 
 	const expectedExpiration = maxAge + staleWhileRevalidate;
-	t.true(arguments_['cache:@anne'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
-	t.true(arguments_['cache:@anne'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+	t.true(arguments_['cache:spy:@anne'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	t.true(arguments_['cache:spy:@anne'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
 test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 	createCache(30, {
-		'cache:@anne': 'ANNE',
+		'cache:spy:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
+		name: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
@@ -180,18 +182,19 @@ test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 
 test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 	createCache(15, {
-		'cache:@anne': 'ANNE',
+		'cache:spy:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
+		name: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
 	t.is(await call('@anne'), 'ANNE');
 
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 	t.is(chrome.storage.local.set.callCount, 0);
 
 	t.is(spy.callCount, 0, 'It shouldn’t be called yet');
@@ -202,16 +205,16 @@ test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 
 	t.is(spy.callCount, 1, 'It should be revalidated');
 	t.is(chrome.storage.local.set.callCount, 1);
-	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
 
 test.serial('function() varies cache by function argument', async t => {
 	createCache(10, {
-		'cache:@anne': 'ANNE',
+		'cache:spy:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(await call('@anne'), 'ANNE');
 	t.is(spy.callCount, 0);
@@ -220,37 +223,25 @@ test.serial('function() varies cache by function argument', async t => {
 	t.is(spy.callCount, 1);
 });
 
-test.serial('function() ignores second argument by default', async t => {
-	createCache(10, {
-		'cache:@anne': 'ANNE',
-	});
-
-	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
-
-	await call('@anne', 1);
-	await call('@anne', 2);
-	t.is(spy.callCount, 0);
-});
-
 test.serial('function() accepts custom cache key generator', async t => {
 	createCache(10, {
-		'cache:@anne,1': 'ANNE,1',
+		'cache:spy:@anne,1': 'ANNE,1',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
+		name: 'spy',
 		cacheKey: arguments_ => arguments_.join(','),
 	});
 
-	await call('@anne', 1);
+	await call('@anne', '1');
 	t.is(spy.callCount, 0);
 
-	await call('@anne', 2);
+	await call('@anne', '2');
 	t.is(spy.callCount, 1);
 
-	t.is(chrome.storage.local.get.firstCall.args[0], 'cache:@anne,1');
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne,2');
+	t.is(chrome.storage.local.get.firstCall.args[0], 'cache:spy:@anne,1');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne,2');
 });
 
 test.serial('function() accepts custom string-based cache key', async t => {
@@ -260,7 +251,7 @@ test.serial('function() accepts custom string-based cache key', async t => {
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		cacheKey: 'CUSTOM',
+		name: 'CUSTOM',
 	});
 
 	await call('@anne', 1);
@@ -280,7 +271,7 @@ test.serial('function() accepts custom string-based with non-primitive parameter
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
-		cacheKey: 'CUSTOM',
+		name: 'CUSTOM',
 	});
 
 	await call('@anne', {user: [1]});
@@ -300,18 +291,19 @@ test.serial('function() verifies cache with shouldRevalidate callback', async t 
 
 	const spy = sinon.spy(getUsernameDemo);
 	const call = cache.function(spy, {
+		name: 'spy',
 		shouldRevalidate: value => value.endsWith('@'),
 	});
 
 	t.is(await call('@anne'), 'ANNE');
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
-	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 	t.is(spy.callCount, 1);
 });
 
 test.serial('function() avoids concurrent function calls', async t => {
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(spy.callCount, 0);
 	t.is(call('@anne'), call('@anne'));
@@ -342,39 +334,39 @@ test.serial('function() avoids concurrent function calls with complex arguments 
 
 test.serial('function() always loads the data from storage, not memory', async t => {
 	createCache(10, {
-		'cache:@anne': 'ANNE',
+		'cache:spy:@anne': 'ANNE',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(await call('@anne'), 'ANNE');
 
 	t.is(chrome.storage.local.get.callCount, 1);
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 
 	createCache(10, {
-		'cache:@anne': 'NEW ANNE',
+		'cache:spy:@anne': 'NEW ANNE',
 	});
 
 	t.is(await call('@anne'), 'NEW ANNE');
 
 	t.is(chrome.storage.local.get.callCount, 2);
-	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:@anne');
+	t.is(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
 });
 
 test.serial('function.fresh() ignores cached value', async t => {
 	createCache(10, {
-		'cache:@anne': 'OVERWRITE_ME',
+		'cache:spy:@anne': 'OVERWRITE_ME',
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy);
+	const call = cache.function(spy, {name: 'spy'});
 
 	t.is(await call.fresh('@anne'), 'ANNE');
 
 	t.true(spy.withArgs('@anne').calledOnce);
 	t.is(spy.callCount, 1);
 	t.is(chrome.storage.local.get.callCount, 0);
-	t.is(chrome.storage.local.set.lastCall.args[0]['cache:@anne'].data, 'ANNE');
+	t.is(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
