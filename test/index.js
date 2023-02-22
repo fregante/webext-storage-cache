@@ -89,7 +89,7 @@ test.serial('set() with value', async t => {
 
 test.serial('function() with empty cache', async t => {
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(await call('@anne'), 'ANNE');
 
@@ -105,7 +105,7 @@ test.serial('function() with cache', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(await call('@anne'), 'ANNE');
 
@@ -120,7 +120,7 @@ test.serial('function() with expired cache', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(await cache.get('@anne'), undefined);
 	t.is(await call('@anne'), 'ANNE');
@@ -135,8 +135,7 @@ test.serial('function() with empty cache and staleWhileRevalidate', async t => {
 	const staleWhileRevalidate = 29;
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'spy',
+	const call = cache.function('spy', spy, {
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
@@ -160,8 +159,7 @@ test.serial('function() with fresh cache and staleWhileRevalidate', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'spy',
+	const call = cache.function('spy', spy, {
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
@@ -186,8 +184,7 @@ test.serial('function() with stale cache and staleWhileRevalidate', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'spy',
+	const call = cache.function('spy', spy, {
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
@@ -214,7 +211,7 @@ test.serial('function() varies cache by function argument', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(await call('@anne'), 'ANNE');
 	t.is(spy.callCount, 0);
@@ -229,10 +226,7 @@ test.serial('function() accepts custom cache key generator', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'spy',
-		cacheKey: arguments_ => arguments_.join(','),
-	});
+	const call = cache.function('spy', spy);
 
 	await call('@anne', '1');
 	t.is(spy.callCount, 0);
@@ -250,9 +244,7 @@ test.serial('function() accepts custom string-based cache key', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'CUSTOM',
-	});
+	const call = cache.function('CUSTOM', spy);
 
 	await call('@anne', 1);
 	t.is(spy.callCount, 0);
@@ -270,9 +262,7 @@ test.serial('function() accepts custom string-based with non-primitive parameter
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'CUSTOM',
-	});
+	const call = cache.function('CUSTOM', spy);
 
 	await call('@anne', {user: [1]});
 	t.is(spy.callCount, 0);
@@ -290,8 +280,7 @@ test.serial('function() verifies cache with shouldRevalidate callback', async t 
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {
-		name: 'spy',
+	const call = cache.function('spy', spy, {
 		shouldRevalidate: value => value.endsWith('@'),
 	});
 
@@ -303,7 +292,7 @@ test.serial('function() verifies cache with shouldRevalidate callback', async t 
 
 test.serial('function() avoids concurrent function calls', async t => {
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(spy.callCount, 0);
 	t.is(call('@anne'), call('@anne'));
@@ -317,7 +306,7 @@ test.serial('function() avoids concurrent function calls', async t => {
 
 test.serial('function() avoids concurrent function calls with complex arguments via cacheKey', async t => {
 	const spy = sinon.spy(async (transform, user) => transform(user.name));
-	const call = cache.function(spy, {
+	const call = cache.function('spy', spy, {
 		cacheKey: ([fn, user]) => JSON.stringify([fn.name, user]),
 	});
 
@@ -338,7 +327,7 @@ test.serial('function() always loads the data from storage, not memory', async t
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(await call('@anne'), 'ANNE');
 
@@ -361,7 +350,7 @@ test.serial('function.fresh() ignores cached value', async t => {
 	});
 
 	const spy = sinon.spy(getUsernameDemo);
-	const call = cache.function(spy, {name: 'spy'});
+	const call = cache.function('spy', spy);
 
 	t.is(await call.fresh('@anne'), 'ANNE');
 

@@ -127,7 +127,6 @@ async function clear(): Promise<void> {
 type CacheKey<Arguments> = (args: Arguments) => string;
 
 type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
-	name: string;
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
 	cacheKey?: CacheKey<Arguments>;
@@ -139,14 +138,14 @@ function function_<
 	Getter extends (...args: any[]) => Promise<ScopedValue | undefined>,
 	Arguments extends Parameters<Getter>,
 >(
+	name: string,
 	getter: Getter,
 	{
-		name,
 		cacheKey = defaultSerializer,
 		maxAge = {days: 30},
 		staleWhileRevalidate = {days: 0},
 		shouldRevalidate,
-	}: MemoizedFunctionOptions<Arguments, ScopedValue>,
+	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
 ): Getter & {fresh: Getter} {
 	const inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
 	const getSet = async (
