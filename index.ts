@@ -8,6 +8,14 @@ function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
+export function defaultSerializer(arguments_: unknown[]): string {
+	if (arguments_.every(arg => typeof arg === 'string')) {
+		return arguments_.join(',');
+	}
+
+	return JSON.stringify(arguments_);
+}
+
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
@@ -21,10 +29,11 @@ type CacheItem<Value> = {
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
 function getUserKey<Arguments extends unknown[]>(
-	cacheKey: undefined | ((args: Arguments) => string),
+	name: string,
+	cacheKey: CacheKey<Arguments>,
 	args: Arguments,
 ): string {
-	return cacheKey ? cacheKey(args) : (args[0] as string);
+	return `${name}:${cacheKey(args)}`;
 }
 
 async function has(key: string): Promise<boolean> {
@@ -95,7 +104,7 @@ async function deleteWithLogic(
 	logic?: (x: CacheItem<Value>) => boolean,
 ): Promise<void> {
 	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
-	const removableItems = [];
+	const removableItems: string[] = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
 			removableItems.push(key);
@@ -115,10 +124,12 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-type MemoizedFunctionOptions<Arguments extends any[], ScopedValue> = {
+type CacheKey<Arguments> = (args: Arguments) => string;
+
+type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
-	cacheKey?: (args: Arguments) => string;
+	cacheKey?: CacheKey<Arguments>;
 	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 };
 
@@ -127,9 +138,10 @@ function function_<
 	Getter extends (...args: any[]) => Promise<ScopedValue | undefined>,
 	Arguments extends Parameters<Getter>,
 >(
+	name: string,
 	getter: Getter,
 	{
-		cacheKey,
+		cacheKey = defaultSerializer,
 		maxAge = {days: 30},
 		staleWhileRevalidate = {days: 0},
 		shouldRevalidate,
@@ -166,7 +178,7 @@ function function_<
 	};
 
 	function memoizePending(...args: Arguments) {
-		const userKey = getUserKey(cacheKey, args);
+		const userKey = getUserKey(name, cacheKey, args);
 		if (inFlightCache.has(userKey)) {
 			// Avoid calling the same function twice while pending
 			return inFlightCache.get(userKey);
@@ -184,7 +196,7 @@ function function_<
 
 	return Object.assign(memoizePending as Getter, {
 		fresh: (
-			async (...args: Arguments) => getSet(getUserKey(cacheKey, args), args)
+			async (...args: Arguments) => getSet(getUserKey(name, cacheKey, args), args)
 		) as Getter,
 	});
 }

@@ -60,10 +60,10 @@ The same code could also be written more effectively with `cache.function`:
 import cache from 'webext-storage-cache';
 
 const cachedFunction = cache.function(someFunction, {
+	name: 'unique',
 	maxAge: {
 		days: 3,
 	},
-	cacheKey: () => 'unique',
 });
 
 (async () => {
@@ -149,7 +149,7 @@ await cache.clear();
 
 ### cache.function(getter, options)
 
-Caches the return value of the function based on the `cacheKey`. It works similarly to `lodash.memoize`:
+Caches the return value of the function based on the `cacheKey`. It works similarly to a memoization function:
 
 ```js
 async function getHTML(url, options) {
@@ -157,7 +157,7 @@ async function getHTML(url, options) {
 	return response.text();
 }
 
-const cachedGetHTML = cache.function(getHTML);
+const cachedGetHTML = cache.function(getHTML, {name: 'html'});
 
 const html = await cachedGetHTML('https://google.com', {});
 // The HTML of google.com will be saved with the key 'https://google.com'
@@ -174,19 +174,39 @@ Returning `undefined` will skip the cache, just like `cache.set()`.
 
 #### options
 
-##### cacheKey
+##### name
 
-Type: `function` that returns a string<br>
-Default: `function` that returns the first argument of the call
+Type: `string`
+
+Required.
+
+The base name used to construct the key in the cache:
 
 ```js
-const cachedOperate = cache.function(operate, {
-	cacheKey: args => args.join(','),
-});
+const cachedOperate = cache.function(operate, {name: 'operate'});
 
 cachedOperate(1, 2, 3);
-// The result of `operate(1, 2, 3)` will be stored in the key '1,2,3'
-// Without a custom `cacheKey`, it would be stored in the key '1'
+// Its result will be stored in the key 'operate:[1,2,3]'
+```
+
+##### cacheKey
+
+Type: `(args: any[]) => string`
+Default: `JSON.stringify`
+
+By default, the function’s `arguments` JSON-stringified array will be used to create the cache key.
+
+You can pass a `cacheKey` function to customize how the key is generated:
+
+```js
+const cachedFetchPosts = cache.function(fetchPosts, {
+	name: 'fetchPosts',
+	cacheKey: (args) => args[0].id, // Use just the user ID
+});
+
+const user = {id: 123, name: 'Fregante'};
+cachedFetchPosts(user);
+// Its result will be stored in the key 'fetchPosts:[1,2,3]'
 ```
 
 ##### maxAge
@@ -205,6 +225,7 @@ Specifies how much longer an item should be kept in cache after its expiration. 
 
 ```js
 const cachedOperate = cache.function(operate, {
+	name: 'operate',
 	maxAge: {
 		days: 10,
 	},
@@ -240,6 +261,7 @@ async function getContent(url) {
 }
 
 const cachedGetContent = cache.function(getContent, {
+	name: 'getContent',
 	// If it's a string, it's in the old format and a new value will be fetched and cached
 	shouldRevalidate: cachedValue => typeof cachedValue === 'string',
 });
