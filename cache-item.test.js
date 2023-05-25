@@ -47,6 +47,33 @@ test('get() with expired cache', async () => {
 	assert.equal(await testItem.get(), undefined);
 });
 
+test('getCached() with empty cache', async () => {
+	const spy = vi.fn(getUsernameDemo);
+	const testItem = new CacheItem('name', {updater: spy});
+	assert.equal(await testItem.getCached(), undefined);
+	expect(spy).not.toHaveBeenCalled();
+});
+
+test('getCached() with cache', async () => {
+	const spy = vi.fn(getUsernameDemo);
+	const testItem = new CacheItem('name', {updater: spy});
+	createCache(10, {
+		'cache:name': 'Rico',
+	});
+	assert.equal(await testItem.getCached(), 'Rico');
+	expect(spy).not.toHaveBeenCalled();
+});
+
+test('getCached() with expired cache', async () => {
+	const spy = vi.fn(getUsernameDemo);
+	const testItem = new CacheItem('name', {updater: spy});
+	createCache(-10, {
+		'cache:name': 'Rico',
+	});
+	assert.equal(await testItem.getCached(), undefined);
+	expect(spy).not.toHaveBeenCalled();
+});
+
 test('isCached() with empty cache', async () => {
 	assert.equal(await testItem.isCached(), false);
 });
@@ -92,7 +119,7 @@ test('set() with value', async () => {
 	assert.ok(arguments_['cache:name'].maxAge < timeInTheFuture({days: maxAge + 0.5}));
 });
 
-test('function() with empty cache', async () => {
+test('`updater` with empty cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new CacheItem('spy', {updater: spy});
 
@@ -103,7 +130,7 @@ test('function() with empty cache', async () => {
 	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
 
-test('function() with cache', async () => {
+test('`updater` with cache', async () => {
 	createCache(10, {
 		'cache:spy:@anne': 'ANNE',
 	});
@@ -118,7 +145,7 @@ test('function() with cache', async () => {
 	expect(spy).not.toHaveBeenCalled();
 });
 
-test('function() with expired cache', async () => {
+test('`updater` with expired cache', async () => {
 	createCache(-10, {
 		'cache:spy:@anne': 'ONNA-expired-name',
 	});
@@ -132,7 +159,7 @@ test('function() with expired cache', async () => {
 	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
 
-test('function() with empty cache and staleWhileRevalidate', async () => {
+test('`updater` with empty cache and staleWhileRevalidate', async () => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
 
@@ -156,7 +183,7 @@ test('function() with empty cache and staleWhileRevalidate', async () => {
 	assert.ok(arguments_['cache:spy:@anne'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
-test('function() with fresh cache and staleWhileRevalidate', async () => {
+test('`updater` with fresh cache and staleWhileRevalidate', async () => {
 	createCache(30, {
 		'cache:spy:@anne': 'ANNE',
 	});
@@ -182,7 +209,7 @@ test('function() with fresh cache and staleWhileRevalidate', async () => {
 	expect(spy).not.toHaveBeenCalled();
 });
 
-test('function() with stale cache and staleWhileRevalidate', async () => {
+test('`updater` with stale cache and staleWhileRevalidate', async () => {
 	createCache(15, {
 		'cache:spy:@anne': 'ANNE',
 	});
@@ -212,7 +239,7 @@ test('function() with stale cache and staleWhileRevalidate', async () => {
 	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
 });
 
-test('function() varies cache by function argument', async () => {
+test('`updater` varies cache by function argument', async () => {
 	createCache(10, {
 		'cache:spy:@anne': 'ANNE',
 	});
@@ -227,7 +254,7 @@ test('function() varies cache by function argument', async () => {
 	expect(spy).toHaveBeenCalledOnce();
 });
 
-test('function() accepts custom cache key generator', async () => {
+test('`updater` accepts custom cache key generator', async () => {
 	createCache(10, {
 		'cache:spy:@anne,1': 'ANNE,1',
 	});
@@ -245,7 +272,7 @@ test('function() accepts custom cache key generator', async () => {
 	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne,2');
 });
 
-test('function() accepts custom string-based cache key', async () => {
+test('`updater` accepts custom string-based cache key', async () => {
 	createCache(10, {
 		'cache:CUSTOM:["@anne",1]': 'ANNE,1',
 	});
@@ -263,7 +290,7 @@ test('function() accepts custom string-based cache key', async () => {
 	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:CUSTOM:["@anne",2]');
 });
 
-test('function() accepts custom string-based with non-primitive parameters', async () => {
+test('`updater` accepts custom string-based with non-primitive parameters', async () => {
 	createCache(10, {
 		'cache:CUSTOM:["@anne",{"user":[1]}]': 'ANNE,1',
 	});
@@ -281,7 +308,7 @@ test('function() accepts custom string-based with non-primitive parameters', asy
 	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:CUSTOM:["@anne",{"user":[2]}]');
 });
 
-test('function() verifies cache with shouldRevalidate callback', async () => {
+test('`updater` verifies cache with shouldRevalidate callback', async () => {
 	createCache(10, {
 		'cache:@anne': 'anne@',
 	});
@@ -298,7 +325,7 @@ test('function() verifies cache with shouldRevalidate callback', async () => {
 	expect(spy).toHaveBeenCalledOnce();
 });
 
-test('function() avoids concurrent function calls', async () => {
+test('`updater` avoids concurrent function calls', async () => {
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new CacheItem('spy', {updater: spy});
 
@@ -317,7 +344,7 @@ test('function() avoids concurrent function calls', async () => {
 	expect(spy).toHaveBeenCalledTimes(4);
 });
 
-test('function() avoids concurrent function calls with complex arguments via cacheKey', async () => {
+test('`updater` avoids concurrent function calls with complex arguments via cacheKey', async () => {
 	const spy = vi.fn(async (transform, user) => transform(user.name));
 
 	const updaterItem = new CacheItem('spy', {
@@ -343,7 +370,7 @@ test('function() avoids concurrent function calls with complex arguments via cac
 	expect(spy).toHaveBeenCalledTimes(4);
 });
 
-test('function() always loads the data from storage, not memory', async () => {
+test('`updater` always loads the data from storage, not memory', async () => {
 	createCache(10, {
 		'cache:spy:@anne': 'ANNE',
 	});
