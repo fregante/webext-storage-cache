@@ -36,18 +36,13 @@
 	"scripts": {
 		"build": "tsc",
 		"prepack": "tsc --sourceMap false",
-		"test": "tsc && tsd && ava && xo",
+		"test": "tsc && tsd && vitest && xo",
 		"watch": "tsc --watch"
 	},
 	"xo": {
 		"envs": [
 			"browser",
 			"webextensions"
-		]
-	},
-	"ava": {
-		"require": [
-			"./test/_setup.js"
 		]
 	},
 	"dependencies": {
@@ -59,11 +54,10 @@
 		"@sindresorhus/tsconfig": "^3.0.1",
 		"@types/chrome": "0.0.236",
 		"@types/sinon-chrome": "^2.2.11",
-		"ava": "^5.3.0",
-		"sinon": "^15.1.0",
 		"sinon-chrome": "^3.0.1",
 		"tsd": "^0.28.1",
 		"typescript": "^5.0.4",
+		"vitest": "^0.31.1",
 		"xo": "^0.54.2"
 	}
 }
