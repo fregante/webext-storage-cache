@@ -80,7 +80,7 @@ async function set<ScopedValue extends Value>(
 		throw new TypeError('Expected a value as the second argument');
 	}
 
-	if (typeof value === 'undefined') {
+	if (value === undefined) {
 		await delete_(key);
 	} else {
 		const internalKey = `cache:${key}`;
@@ -106,6 +106,7 @@ async function deleteWithLogic(
 	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
 	const removableItems: string[] = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: value is any
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
 			removableItems.push(key);
 		}
@@ -177,7 +178,7 @@ function function_<
 		return cachedItem.data;
 	};
 
-	function memoizePending(...args: Arguments) {
+	async function memoizePending(...args: Arguments) {
 		const userKey = getUserKey(name, cacheKey, args);
 		if (inFlightCache.has(userKey)) {
 			// Avoid calling the same function twice while pending
@@ -222,7 +223,7 @@ function init(): void {
 	}
 
 	if (chrome.alarms) {
-		chrome.alarms.create('webext-storage-cache', {
+		void chrome.alarms.create('webext-storage-cache', {
 			delayInMinutes: 1,
 			periodInMinutes: 60 * 24,
 		});
