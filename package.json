@@ -52,6 +52,7 @@
 	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
+		"type-fest": "^3.11.0",
 		"webext-detect-page": "^4.0.1",
 		"webext-polyfill-kinda": "^1.0.0"
 	},

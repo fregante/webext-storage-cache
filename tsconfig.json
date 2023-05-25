@@ -5,6 +5,7 @@
 		"checkJs": true
 	},
 	"files": [
+		"cache-item.ts",
 		"index.test-d.ts",
 		"index.ts"
 	]

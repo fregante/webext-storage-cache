@@ -9,5 +9,6 @@ Thumbs.db
 logs
 *.map
 /index.js
+/cache-item.js
 /index.test-d.js
 *.d.ts

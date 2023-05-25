@@ -4,7 +4,7 @@ import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds
 
 const cacheDefault = {days: 30};
 
-function timeInTheFuture(time: TimeDescriptor): number {
+export function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
@@ -28,7 +28,7 @@ type CacheItem<Value> = {
 
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
-function getUserKey<Arguments extends unknown[]>(
+export function getUserKey<Arguments extends unknown[]>(
 	name: string,
 	cacheKey: CacheKey<Arguments>,
 	args: Arguments,
@@ -40,7 +40,7 @@ async function has(key: string): Promise<boolean> {
 	return (await _get(key, false)) !== undefined;
 }
 
-async function _get<ScopedValue extends Value>(
+export async function _get<ScopedValue extends Value>(
 	key: string,
 	remove: boolean,
 ): Promise<CacheItem<ScopedValue> | undefined> {
@@ -95,8 +95,8 @@ async function set<ScopedValue extends Value>(
 	return value;
 }
 
-async function delete_(key: string): Promise<void> {
-	const internalKey = `cache:${key}`;
+async function delete_(userKey: string): Promise<void> {
+	const internalKey = `cache:${userKey}`;
 	return chromeP.storage.local.remove(internalKey);
 }
 
@@ -124,9 +124,9 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-type CacheKey<Arguments> = (args: Arguments) => string;
+export type CacheKey<Arguments extends unknown[]> = (args: Arguments) => string;
 
-type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
+export type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
 	cacheKey?: CacheKey<Arguments>;
