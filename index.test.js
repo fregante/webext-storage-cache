@@ -3,6 +3,7 @@ import {test, beforeEach, vi, assert, expect} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
 import cache from './index.js';
 
+// Help migration away from AVA
 const t = {
 	is: assert.equal,
 	not: assert.notEqual,
