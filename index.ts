@@ -178,7 +178,8 @@ function function_<
 		return cachedItem.data;
 	};
 
-	async function memoizePending(...args: Arguments) {
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Tests expect the same exact promise to be returned
+	function memoizePending(...args: Arguments) {
 		const userKey = getUserKey(name, cacheKey, args);
 		if (inFlightCache.has(userKey)) {
 			// Avoid calling the same function twice while pending
