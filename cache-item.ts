@@ -22,11 +22,11 @@ export default class CacheItem<
 	Updater extends ((...args: unknown[]) => Promise<ScopedValue>) = ((...args: unknown[]) => Promise<ScopedValue>),
 	Arguments extends unknown[] = Parameters<Updater>,
 > {
+	readonly maxAge: TimeDescriptor;
+	readonly staleWhileRevalidate: TimeDescriptor;
 	#cacheKey: CacheKey<Arguments>;
 	#updater: Updater | undefined;
 	#shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
-	readonly maxAge: TimeDescriptor;
-	readonly staleWhileRevalidate: TimeDescriptor;
 
 	constructor(
 		public name: string,
