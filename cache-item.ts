@@ -24,9 +24,11 @@ export default class CacheItem<
 > {
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
+
 	#cacheKey: CacheKey<Arguments>;
 	#updater: Updater | undefined;
 	#shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
+	#inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
 
 	constructor(
 		public name: string,
@@ -37,7 +39,6 @@ export default class CacheItem<
 		this.#shouldRevalidate = options.shouldRevalidate;
 		this.maxAge = options.maxAge ?? {days: 30};
 		this.staleWhileRevalidate = options.staleWhileRevalidate ?? {days: 0};
-		console.log('done');
 	}
 
 	async getCached(...args: Arguments) {
@@ -46,6 +47,10 @@ export default class CacheItem<
 	}
 
 	async set(value: ScopedValue, ...args: Arguments) {
+		if (arguments.length === 0) {
+			throw new TypeError('Expected a value to be stored');
+		}
+
 		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, args);
 		return cache.set(userKey, value, this.maxAge);
 	}
@@ -64,8 +69,15 @@ export default class CacheItem<
 		return cache.delete(userKey);
 	}
 
+	async isCached(...args: Arguments) {
+		return (await this.get(...args)) !== undefined;
+	}
+
 	async get(...args: Arguments) {
-		const inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
+		if (!this.#updater) {
+			return this.getCached(...args);
+		}
+
 		const getSet = async (
 			userKey: string,
 			args: Arguments,
@@ -96,15 +108,15 @@ export default class CacheItem<
 		};
 
 		const userKey = getUserKey(this.name, this.#cacheKey, args);
-		if (inFlightCache.has(userKey)) {
+		if (this.#inFlightCache.has(userKey)) {
 			// Avoid calling the same function twice while pending
-			return inFlightCache.get(userKey);
+			return this.#inFlightCache.get(userKey);
 		}
 
 		const promise = memoizeStorage(userKey, ...args);
-		inFlightCache.set(userKey, promise);
+		this.#inFlightCache.set(userKey, promise);
 		const del = () => {
-			inFlightCache.delete(userKey);
+			this.#inFlightCache.delete(userKey);
 		};
 
 		promise.then(del, del);

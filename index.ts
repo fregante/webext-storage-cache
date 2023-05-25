@@ -33,6 +33,10 @@ export function getUserKey<Arguments extends unknown[]>(
 	cacheKey: CacheKey<Arguments>,
 	args: Arguments,
 ): string {
+	if (args.length === 0) {
+		return name;
+	}
+
 	return `${name}:${cacheKey(args)}`;
 }
 
