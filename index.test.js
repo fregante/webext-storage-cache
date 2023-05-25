@@ -1,7 +1,7 @@
 import nodeAssert from 'node:assert';
 import {test, beforeEach, vi, assert, expect} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import cache from './index';
+import cache from './index.js';
 
 const t = {
 	is: assert.equal,

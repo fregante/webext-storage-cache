@@ -1,9 +1,10 @@
+// eslint-disable-next-line n/file-extension-in-import -- Export map unsupported
 import {defineConfig} from 'vitest/config';
 
 export default defineConfig({
 	test: {
 		setupFiles: [
-			"./test/_setup.js",
+			'./test/_setup.js',
 		],
 	},
 });
