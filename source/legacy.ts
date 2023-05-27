@@ -138,81 +138,12 @@ export type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = 
 	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 };
 
-function function_<
-	ScopedValue extends Value,
-	Getter extends (...args: any[]) => Promise<ScopedValue | undefined>,
-	Arguments extends Parameters<Getter>,
->(
-	name: string,
-	getter: Getter,
-	{
-		cacheKey = defaultSerializer,
-		maxAge = {days: 30},
-		staleWhileRevalidate = {days: 0},
-		shouldRevalidate,
-	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
-): Getter & {fresh: Getter} {
-	const inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
-	const getSet = async (
-		key: string,
-		args: Arguments,
-	): Promise<ScopedValue | undefined> => {
-		const freshValue = await getter(...args);
-		if (freshValue === undefined) {
-			await delete_(key);
-			return;
-		}
-
-		const milliseconds = toMilliseconds(maxAge) + toMilliseconds(staleWhileRevalidate);
-
-		return set<ScopedValue>(key, freshValue, {milliseconds});
-	};
-
-	const memoizeStorage = async (userKey: string, ...args: Arguments) => {
-		const cachedItem = await _get<ScopedValue>(userKey, false);
-		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
-			return getSet(userKey, args);
-		}
-
-		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-		if (timeInTheFuture(staleWhileRevalidate) > cachedItem.maxAge) {
-			setTimeout(getSet, 0, userKey, args);
-		}
-
-		return cachedItem.data;
-	};
-
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Tests expect the same exact promise to be returned
-	function memoizePending(...args: Arguments) {
-		const userKey = getUserKey(name, cacheKey, args);
-		if (inFlightCache.has(userKey)) {
-			// Avoid calling the same function twice while pending
-			return inFlightCache.get(userKey);
-		}
-
-		const promise = memoizeStorage(userKey, ...args);
-		inFlightCache.set(userKey, promise);
-		const del = () => {
-			inFlightCache.delete(userKey);
-		};
-
-		promise.then(del, del);
-		return promise;
-	}
-
-	return Object.assign(memoizePending as Getter, {
-		fresh: (
-			async (...args: Arguments) => getSet(getUserKey(name, cacheKey, args), args)
-		) as Getter,
-	});
-}
-
+/** @deprecated Use CacheItem and UpdatableCacheItem instead */
 const cache = {
 	has,
 	get,
 	set,
 	clear,
-	function: function_,
 	delete: delete_,
 };
 
