@@ -29,7 +29,10 @@
 	],
 	"type": "module",
 	"types": "./distribution/index.d.ts",
-	"exports": "./distribution/index.js",
+	"exports": {
+		".": "./distribution/index.js",
+		"legacy.js": "./distribution/legacy.js"
+	},
 	"files": [
 		"distribution/index.js",
 		"distribution/index.d.ts",
