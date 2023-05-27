@@ -28,12 +28,12 @@ type CacheItem<Value> = {
 
 type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
 
-export function getUserKey<Arguments extends unknown[]>(
+export function getUserKey<Arguments extends any[]>(
 	name: string,
-	cacheKey: CacheKey<Arguments>,
+	cacheKey: CacheKey<Arguments> | undefined,
 	args: Arguments,
 ): string {
-	if (args.length === 0) {
+	if (!cacheKey || args.length === 0) {
 		return name;
 	}
 
