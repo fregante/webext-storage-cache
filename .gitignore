@@ -8,7 +8,7 @@ Thumbs.db
 *.log
 logs
 *.map
-/index.js
-/cache-item.js
-/index.test-d.js
-*.d.ts
+/*.js
+/*.d.ts
+/*.test-d.js
+!/*.test.js
