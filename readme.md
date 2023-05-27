@@ -6,17 +6,12 @@ This module works on content scripts, background pages and option pages.
 
 ## Install
 
-You can download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-additional-permissions&global=getAdditionalPermissions) and include it in your `manifest.json`.
+You can download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-storage-cache&global=window) and include it in your `manifest.json`.
 
 Or use `npm`:
 
 ```sh
 npm install webext-storage-cache
-```
-
-```js
-// This module is only offered as a ES Module
-import storageCache from 'webext-storage-cache';
 ```
 
 ## Usage
@@ -40,27 +35,31 @@ This module requires the `storage` permission and it’s suggested to also use `
 ```
 
 ```js
-import cache from 'webext-storage-cache';
+import {CacheItem} from 'webext-storage-cache';
+
+const item = new CacheItem('unique', {
+	maxAge: {
+		days: 3,
+	},
+});
 
 (async () => {
-	if (!(await cache.has('unique'))) {
+	if (!(await item.isCached())) {
 		const cachableItem = await someFunction();
-		await cache.set('unique', cachableItem, {
-			days: 3,
-		});
+		await item.set(cachableItem);
 	}
 
-	console.log(await cache.get('unique'));
+	console.log(await item.get());
 })();
 ```
 
-The same code could also be written more effectively with `cache.function`:
+The same code could also be written more effectively with `UpdatableCacheItem`:
 
 ```js
-import cache from 'webext-storage-cache';
+import {UpdatableCacheItem} from 'webext-storage-cache';
 
-const cachedFunction = cache.function(someFunction, {
-	name: 'unique',
+const item = new CacheItem('unique', {
+	updater: someFunction,
 	maxAge: {
 		days: 3,
 	},
@@ -73,104 +72,141 @@ const cachedFunction = cache.function(someFunction, {
 
 ## API
 
-Similar to a `Map()`, but **all methods a return a `Promise`.** It also has a memoization method that hides the caching logic and makes it a breeze to use.
+### new CacheItem(key, options)
 
-### cache.has(key)
-
-Checks if the given key is in the cache, returns a `boolean`.
+This class lets you manage a specific value in the cache, preserving its type if you're using TypeScript
 
 ```js
-const isCached = await cache.has('cached-url');
-// true or false
+import {CacheItem} from 'webext-storage-cache';
+
+const url = new CacheItem('cached-url');
+
+// Or in TypeScript
+const url = new CacheItem<string>('cached-url');
+```
+
+> **Note**:
+> The name is unique but `webext-storage-cache` doesn't save you from bad usage. Avoid reusing the same key across the extension with different values, because it will cause conflicts:
+
+```ts
+const starNames = new CacheItem<string[]>('stars', {days: 1});
+const starCount = new CacheItem<number>('stars'); // Bad: they will override each other
 ```
 
 #### key
 
-Type: `string`
+Type: string
 
-### cache.get(key)
+The unique name that will be used in `chrome.storage.local` as `cache:${key}`
+
+#### options
+
+##### maxAge
+
+Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
+Default: `{days: 30}`
+
+The amount of time after which the cache item will expire after being each `.set()` call.
+
+
+### CacheItem#get()
 
 Returns the cached value of key if it exists and hasn't expired, returns `undefined` otherwise.
 
 ```js
-const url = await cache.get('cached-url');
+const cache = new CacheItem('cached-url');
+const url = await cache.get();
 // It will be `undefined` if it's not found.
 ```
 
-#### key
+### CacheItem#set(value)
 
-Type: `string`
-
-### cache.set(key, value, maxAge)
-
-Caches the given key and value for a given amount of time. It returns the value itself.
+Caches the value for the amount of time specified in the `CacheItem` constructor. It returns the value itself.
 
 ```js
+const cache = new CacheItem('core-info');
 const info = await getInfoObject();
-await cache.set('core-info', info); // Cached for 30 days by default
+await cache.set(info); // Cached for 30 days by default
 ```
-
-#### key
-
-Type: `string`
 
 #### value
 
 Type: `string | number | boolean` or `array | object` of those three types.
 
-`undefined` will remove the cached item. For this purpose it's best to use `cache.delete(key)` instead
+`undefined` will remove the cached item. For this purpose it's best to use [`CacheItem#delete()`](#cacheitem-delete) instead
 
-#### maxAge
+### CacheItem#isCached()
 
-Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
-Default: `{days: 30}`
+Checks whether the item is in the cache, returns a `boolean`.
 
-The amount of time after which the cache item will expire.
+```js
+const url = new CacheItem('url');
+const isCached = await url.isCached();
+// true or false
+```
 
-### cache.delete(key)
+### CacheItem.delete()
 
 Deletes the requested item from the cache.
 
 ```js
-await cache.delete('cached-url');
+const url = new CacheItem('url');
+
+await url.set('https://github.com');
+console.log(await url.isCached()); // true
+
+await url.delete();
+console.log(await url.isCached()); // false
 ```
+
+### UpdatableCacheItem(key, options)
+
+You can think of `UpdatableCacheItem` as an advanced "memoize" function that you can call with any arguments, but also:
+
+- verify whether a specific set of arguments is cached (`.isCached()`)
+- only get the cached value if it exists (`.getCached()`)
+- only get the fresh value, skipping the cache (but still caching the result) (`.getFresh()`)
+- delete a cached value (`.delete()`)
 
 #### key
 
-Type: `string`
+Type: string
 
-### cache.clear()
+The unique name that will be used in `chrome.storage.local` combined with the function arguments, like `cache:${key}:{arguments}`.
 
-Deletes the entire cache.
+For example, these two calls:
 
 ```js
-await cache.clear();
+const pages = new UpdatableCacheItem('pages', {updater: fetchText});
+
+await pages.get('./contacts');
+await pages.get('./about');
 ```
 
-### cache.function(getter, options)
+Will create two items in the cache:
 
-Caches the return value of the function based on the `cacheKey`. It works similarly to a memoization function:
-
-```js
-async function getHTML(url, options) {
-	const response = await fetch(url, options);
-	return response.text();
+```json
+{
+	"cache:pages:./contacts": "You're on the contacts page",
+	"cache:pages:./about": "You're on the about page"
 }
-
-const cachedGetHTML = cache.function(getHTML, {name: 'html'});
-
-const html = await cachedGetHTML('https://google.com', {});
-// The HTML of google.com will be saved with the key 'https://google.com'
-
-const freshHtml = await cachedGetHTML.fresh('https://google.com', {});
-// Escape hatch to ignore memoization and force a refresh of the cache
 ```
 
-#### getter
+#### options
 
+#### updater
+
+Required. <br>
 Type: `async function` that returns a cacheable value.
 
-Returning `undefined` will skip the cache, just like `cache.set()`.
+Returning `undefined` will make  the cache, just like `cache.set()`.
+
+##### maxAge
+
+Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
+Default: `{days: 30}`
+
+The amount of time after which the cache item will expire after being each `.set()` call.
 
 #### options
 
@@ -268,6 +304,18 @@ const cachedGetContent = cache.function(getContent, {
 
 const json = await cachedGetHTML('https://google.com');
 // The HTML of google.com will be saved with the key 'https://google.com'
+```
+
+### globalCache.clear()
+
+Clears the  cache. This is a special method that acts on the entire cache of the extension.
+
+```js
+import {globalCache} from 'webext-storage-cache';
+
+document.querySelector('.options .clear-cache').addEventListener('click', async () => {
+	await globalCache.clear()
+})
 ```
 
 ## Related
