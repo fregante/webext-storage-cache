@@ -75,6 +75,7 @@ const item = new CacheItem('unique', {
 - [CacheItem](./source/cache-item.md) - A simple API getter/setter
 - [UpdatableCacheItem](./source/updatable-cache-item.md) - A memoize-like API to cache your function calls without manually calling `isCached`/`get`/`set`
 - `globalCache` - Global helpers, documented below
+- `legacy` - The previous Map-like API, documented below, deprecated
 
 ### globalCache.clear()
 
@@ -87,6 +88,27 @@ document.querySelector('.options .clear-cache').addEventListener('click', async 
 	await globalCache.clear()
 })
 ```
+
+### legacy API
+
+The API used until v5 has been deprecated and you should migrate to:
+
+- `CacheItem` for simple `cache.get`/`cache.set` calls. This API makes more sense in a typed context because the type is preserved/enforced across calls.
+- `UpdatableCacheItem` for `cache.function`. It behaves in a similar fashion, but also has extra methods like `getCached` and it's a lot safer to use.
+
+You can:
+
+- [Migrate from v5 to v6](https://github.com/fregante/webext-storage-cache/releases/v6.0.0), or
+- Keep using the legacy API (except `cache.function`) by importing `webext-storage-cache/legacy.js`
+
+```js
+import cache from "webext-storage-cache/legacy.js";
+
+await cache.get('my-url');
+await cache.set('my-url', 'https://example.com');
+```
+
+The documentation for the legacy API can be found on the [v5 version of this readme](https://github.com/fregante/webext-storage-cache/blob/v5.1.1/readme.md#api).
 
 ## Related
 
