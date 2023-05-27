@@ -23,9 +23,10 @@ const pages = new UpdatableCacheItem('pages', {updater: fetchText});
 await pages.get();
 await pages.get('./contacts');
 await pages.get('./about', 2);
+await pages.get(); // Will be retrieved from cache
 ```
 
-Will create two items in the cache:
+Will call `fetchText` 3 times and create 3 items in the storage:
 
 ```json
 {
@@ -131,6 +132,62 @@ const posts = new UpdatableCacheItem('posts', {
 const user = {id: 123, name: 'Fregante'};
 await posts.get(user);
 // Its result will be stored in the key 'cache:fetchPosts:123'
+```
+
+## UpdatableCacheItem#get(...arguments)
+
+This method is equivalent to calling your `updater` function with the specified parameters, unless the result of a previous call is already in the cache:
+
+```js
+const repositories = new UpdatableCacheItem('repositories', {updater: repoApi});
+await repositories.get('fregante', 'doma'); // Will call repoApi('fregante', 'doma')
+await repositories.get('fregante', 'doma'); // Will return the item from the cache
+await repositories.get('fregante', 'webext-base-css'); // Will call repoApi('fregante', 'webext-base-css')
+```
+
+## UpdatableCacheItem#getFresh(...arguments)
+
+This updates the cache just like `.get()`, except it always calls `updater` regardless of cache state. It's meant to be used as a "refresh cache" action:
+
+```js
+const repositories = new UpdatableCacheItem('repositories', {updater: repoApi});
+await repositories.get('fregante', 'doma'); // Will call repoApi('fregante', 'doma')
+await repositories.getFresh('fregante', 'doma'); // Will call repoApi('fregante', 'doma') regardless of cache state
+```
+
+## UpdatableCacheItem#getCached(...arguments)
+
+This only returns the value of a previous `.get()` call with the same arguemnts, but it never calls your `updater`:
+
+```js
+const repositories = new UpdatableCacheItem('repositories', {updater: repoApi});
+await repositories.getCached('fregante', 'doma'); // It can be undefined
+```
+
+
+## UpdatableCacheItem#isCached(...arguments)
+
+```js
+const repositories = new UpdatableCacheItem('repositories', {updater: repoApi});
+await repositories.isCached('fregante', 'doma');
+// => true / false
+```
+
+## UpdatableCacheItem#delete(...arguments)
+
+```js
+const repositories = new UpdatableCacheItem('repositories', {updater: repoApi});
+await repositories.delete('fregante', 'doma');
+```
+
+## UpdatableCacheItem#set(value, ...arguments)
+
+This method should only be used if you want to override the cache with a custom value, but you should prefer `get` or `getFresh` instead, keeping the logic exclusively in your `updater` function.
+
+```js
+const repositories = new UpdatableCacheItem('repositories', {updater: repoApi});
+// Will override the local cache for the `repoApi('fregante', 'doma')` call
+await repositories.set({id: 134, lastUpdated: 199837738894}, 'fregante', 'doma');
 ```
 
 ## License

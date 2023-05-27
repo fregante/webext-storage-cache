@@ -1,8 +1,13 @@
 # webext-storage-cache [![](https://img.shields.io/npm/v/webext-storage-cache.svg)](https://www.npmjs.com/package/webext-storage-cache)
 
-> Map-like promised cache storage with expiration. WebExtensions module for Chrome, Firefox, Safari
+> Cache values in your Web Extension and clear them on expiration. Also includes a memoize-like API to cache any function results automatically.
 
-This module works on content scripts, background pages and option pages.
+- Browsers: Chrome, Firefox, and Safari
+- Manifest: v2 and v3
+- Context: They can be called from any context that has access to the `chrome.storage` APIs
+- Permissions: (with attached "reasons" for submission to the Chrome Web Store)
+	- `storage`: "The extension caches some values into the local storage"
+	- `alarms`: "The extension automatically clears its expired storage at certain intervals"
 
 ## Install
 

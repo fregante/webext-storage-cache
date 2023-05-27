@@ -1,7 +1,7 @@
 {
 	"name": "webext-storage-cache",
 	"version": "6.0.0-2",
-	"description": "Map-like promised cache storage with expiration. WebExtensions module for Chrome, Firefox, Safari",
+	"description": "Cache values in your Web Extension and clear them on expiration. Also includes a memoize-like API to cache any function results automatically.",
 	"keywords": [
 		"await",
 		"background page",
@@ -12,7 +12,9 @@
 		"expirating",
 		"extension",
 		"firefox",
-		"map",
+		"safari",
+		"memoize",
+		"memoization",
 		"options page",
 		"promises",
 		"self-cleaning",

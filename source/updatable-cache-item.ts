@@ -4,6 +4,7 @@ import {type CacheValue} from './cache-item.js';
 import cache, {getUserKey, type CacheKey, _get, timeInTheFuture} from './legacy.js';
 
 export default class UpdatableCacheItem<
+	// TODO: Review this type. While `undefined/null` can't be stored, the `updater` can return it to clear the cache
 	Updater extends ((...args: any[]) => Promise<CacheValue>),
 	ScopedValue extends AsyncReturnType<Updater>,
 	Arguments extends Parameters<Updater>,
