@@ -1,7 +1,7 @@
 import {type AsyncReturnType} from 'type-fest';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type CacheValue} from './cache-item.js';
-import cache, {getUserKey, type CacheKey, defaultSerializer, _get, timeInTheFuture} from './legacy.js';
+import cache, {getUserKey, type CacheKey, _get, timeInTheFuture} from './legacy.js';
 
 export default class UpdatableCacheItem<
 	Updater extends ((...args: any[]) => Promise<CacheValue>),
@@ -73,7 +73,7 @@ export default class UpdatableCacheItem<
 			shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 		},
 	) {
-		this.#cacheKey = options.cacheKey ?? defaultSerializer;
+		this.#cacheKey = options.cacheKey ?? JSON.stringify;
 		this.#updater = options.updater;
 		this.#shouldRevalidate = options.shouldRevalidate;
 		this.maxAge = options.maxAge ?? {days: 30};

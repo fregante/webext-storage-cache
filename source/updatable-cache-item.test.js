@@ -60,14 +60,14 @@ test('`updater` with empty cache', async () => {
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
-	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
+	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
 test('`updater` with cache', async () => {
 	createCache(10, {
-		'cache:spy:@anne': 'ANNE',
+		'cache:spy:["@anne"]': 'ANNE',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
@@ -75,23 +75,23 @@ test('`updater` with cache', async () => {
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 	assert.equal(chrome.storage.local.set.callCount, 0);
 	expect(spy).not.toHaveBeenCalled();
 });
 
 test('`updater` with expired cache', async () => {
 	createCache(-10, {
-		'cache:spy:@anne': 'ONNA-expired-name',
+		'cache:spy:["@anne"]': 'ONNA-expired-name',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
-	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
+	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
 test('`updater` with empty cache and staleWhileRevalidate', async () => {
@@ -107,20 +107,20 @@ test('`updater` with empty cache and staleWhileRevalidate', async () => {
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 	assert.equal(chrome.storage.local.set.callCount, 1);
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
-	assert.deepEqual(Object.keys(arguments_), ['cache:spy:@anne']);
-	assert.equal(arguments_['cache:spy:@anne'].data, 'ANNE');
+	assert.deepEqual(Object.keys(arguments_), ['cache:spy:["@anne"]']);
+	assert.equal(arguments_['cache:spy:["@anne"]'].data, 'ANNE');
 
 	const expectedExpiration = maxAge + staleWhileRevalidate;
-	assert.ok(arguments_['cache:spy:@anne'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
-	assert.ok(arguments_['cache:spy:@anne'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+	assert.ok(arguments_['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	assert.ok(arguments_['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
 test('`updater` with fresh cache and staleWhileRevalidate', async () => {
 	createCache(30, {
-		'cache:spy:@anne': 'ANNE',
+		'cache:spy:["@anne"]': 'ANNE',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
@@ -146,7 +146,7 @@ test('`updater` with fresh cache and staleWhileRevalidate', async () => {
 
 test('`updater` with stale cache and staleWhileRevalidate', async () => {
 	createCache(15, {
-		'cache:spy:@anne': 'ANNE',
+		'cache:spy:["@anne"]': 'ANNE',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
@@ -158,7 +158,7 @@ test('`updater` with stale cache and staleWhileRevalidate', async () => {
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 	assert.equal(chrome.storage.local.set.callCount, 0);
 
 	// It shouldn’t be called yet
@@ -171,12 +171,12 @@ test('`updater` with stale cache and staleWhileRevalidate', async () => {
 	// It should be revalidated
 	expect(spy).toHaveBeenCalledOnce();
 	assert.equal(chrome.storage.local.set.callCount, 1);
-	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
+	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
 test('`updater` varies cache by function argument', async () => {
 	createCache(10, {
-		'cache:spy:@anne': 'ANNE',
+		'cache:spy:["@anne"]': 'ANNE',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
@@ -191,20 +191,20 @@ test('`updater` varies cache by function argument', async () => {
 
 test('`updater` accepts custom cache key generator', async () => {
 	createCache(10, {
-		'cache:spy:@anne,1': 'ANNE,1',
+		'cache:spy:["@anne",1]': 'ANNE,1',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
 
-	await updaterItem.get('@anne', '1');
+	await updaterItem.get('@anne', 1);
 	expect(spy).not.toHaveBeenCalled();
 
-	await updaterItem.get('@anne', '2');
+	await updaterItem.get('@anne', 2);
 	expect(spy).toHaveBeenCalledOnce();
 
-	assert.equal(chrome.storage.local.get.firstCall.args[0], 'cache:spy:@anne,1');
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne,2');
+	assert.equal(chrome.storage.local.get.firstCall.args[0], 'cache:spy:["@anne",1]');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne",2]');
 });
 
 test('`updater` accepts custom string-based cache key', async () => {
@@ -255,8 +255,8 @@ test('`updater` verifies cache with shouldRevalidate callback', async () => {
 	});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
-	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
+	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 	expect(spy).toHaveBeenCalledOnce();
 });
 
@@ -307,7 +307,7 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 
 test('`updater` always loads the data from storage, not memory', async () => {
 	createCache(10, {
-		'cache:spy:@anne': 'ANNE',
+		'cache:spy:["@anne"]': 'ANNE',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
@@ -316,21 +316,21 @@ test('`updater` always loads the data from storage, not memory', async () => {
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
 	assert.equal(chrome.storage.local.get.callCount, 1);
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 
 	createCache(10, {
-		'cache:spy:@anne': 'NEW ANNE',
+		'cache:spy:["@anne"]': 'NEW ANNE',
 	});
 
 	assert.equal(await updaterItem.get('@anne'), 'NEW ANNE');
 
 	assert.equal(chrome.storage.local.get.callCount, 2);
-	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:@anne');
+	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
 });
 
 test('.getFresh() ignores cached value', async () => {
 	createCache(10, {
-		'cache:spy:@anne': 'OVERWRITE_ME',
+		'cache:spy:["@anne"]': 'OVERWRITE_ME',
 	});
 
 	const spy = vi.fn(getUsernameDemo);
@@ -339,5 +339,5 @@ test('.getFresh() ignores cached value', async () => {
 
 	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
 	assert.equal(chrome.storage.local.get.callCount, 0);
-	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:@anne'].data, 'ANNE');
+	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 });

@@ -108,7 +108,6 @@ Default: `{days: 30}`
 
 The amount of time after which the cache item will expire after being each `.set()` call.
 
-
 ### CacheItem#get()
 
 Returns the cached value of key if it exists and hasn't expired, returns `undefined` otherwise.
@@ -179,27 +178,29 @@ For example, these two calls:
 ```js
 const pages = new UpdatableCacheItem('pages', {updater: fetchText});
 
+await pages.get();
 await pages.get('./contacts');
-await pages.get('./about');
+await pages.get('./about', 2);
 ```
 
 Will create two items in the cache:
 
 ```json
 {
-	"cache:pages:./contacts": "You're on the contacts page",
-	"cache:pages:./about": "You're on the about page"
+	"cache:pages": "You're on the homepage",
+	"cache:pages:[\"./contacts\"]": "You're on the contacts page",
+	"cache:pages:[\"./about\",2]": "You're on the about page"
 }
 ```
 
 #### options
 
-#### updater
+##### updater
 
 Required. <br>
 Type: `async function` that returns a cacheable value.
 
-Returning `undefined` will make  the cache, just like `cache.set()`.
+Returning `undefined` will delete the item from the cache.
 
 ##### maxAge
 
@@ -208,60 +209,16 @@ Default: `{days: 30}`
 
 The amount of time after which the cache item will expire after being each `.set()` call.
 
-#### options
-
-##### name
-
-Type: `string`
-
-Required.
-
-The base name used to construct the key in the cache:
-
-```js
-const cachedOperate = cache.function(operate, {name: 'operate'});
-
-cachedOperate(1, 2, 3);
-// Its result will be stored in the key 'operate:[1,2,3]'
-```
-
-##### cacheKey
-
-Type: `(args: any[]) => string`
-Default: `JSON.stringify`
-
-By default, the function’s `arguments` JSON-stringified array will be used to create the cache key.
-
-You can pass a `cacheKey` function to customize how the key is generated:
-
-```js
-const cachedFetchPosts = cache.function(fetchPosts, {
-	name: 'fetchPosts',
-	cacheKey: (args) => args[0].id, // Use just the user ID
-});
-
-const user = {id: 123, name: 'Fregante'};
-cachedFetchPosts(user);
-// Its result will be stored in the key 'fetchPosts:[1,2,3]'
-```
-
-##### maxAge
-
-Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
-Default: `{days: 30}`
-
-The amount of time after which the cache item will expire.
-
 ##### staleWhileRevalidate
 
 Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
 Default: `{days: 0}` (disabled)
 
-Specifies how much longer an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call will return the updated and fresher item.
+Specifies how much longer an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `updater` will be also called asynchronously to update the cache. A later call will return the updated and fresher item.
 
 ```js
-const cachedOperate = cache.function(operate, {
-	name: 'operate',
+const operate = new UpdatableCacheItem('posts', {
+	updater: operate,
 	maxAge: {
 		days: 10,
 	},
@@ -270,22 +227,22 @@ const cachedOperate = cache.function(operate, {
 	},
 });
 
-cachedOperate(); // It will run `operate` and cache it for 10 days
-cachedOperate(); // It will return the cache
+await operate.get(); // It will run `operate` and cache it for 10 days
+await operate.get(); // It will return the cache
 
-/* 11 days later, cache is expired, but still there */
+/* 3 days later, cache is expired, but still there */
 
-cachedOperate(); // It will return the cache
+await operate.get(); // It will return the cache
 // Asynchronously, it will also run `operate` and cache the new value for 10 more days
 
 /* 13 days later, cache is expired and deleted */
 
-cachedOperate(); // It will run `operate` and cache it for 10 days
+await operate.get(); // It will run `operate` and cache it for 10 days
 ```
 
 ##### shouldRevalidate
 
-Type: `function` that returns a boolean<br>
+Type: `(cachedValue) => boolean`<br>
 Default: `() => false`
 
 You may want to have additional checks on the cached value, for example after updating its format.
@@ -296,19 +253,47 @@ async function getContent(url) {
 	return response.json(); // For example, you used to return plain text, now you return a JSON object
 }
 
-const cachedGetContent = cache.function(getContent, {
-	name: 'getContent',
+const content = new UpdatableCacheItem('content', {
+	updater: getContent,
+
 	// If it's a string, it's in the old format and a new value will be fetched and cached
 	shouldRevalidate: cachedValue => typeof cachedValue === 'string',
 });
 
-const json = await cachedGetHTML('https://google.com');
-// The HTML of google.com will be saved with the key 'https://google.com'
+const json = await content.get('https://google.com');
+// Even if it's cached as a regular string, the cache will be discarded and `getContent` will be called again
+```
+
+##### cacheKey
+
+Type: `(args: any[]) => string`
+Default: `JSON.stringify`
+
+By default, the function’s `arguments` JSON-stringified array will be used to create the cache key.
+
+```js
+const posts = new UpdatableCacheItem('posts', {updater: fetchPosts});
+const user = {id: 123, name: 'Fregante'};
+await posts.get(user);
+// Its result will be stored in the key 'cache:fetchPosts:[{"id":123,name:"Fregante"}]'
+```
+
+You can pass a `cacheKey` function to customize how the key is generated, saving storage and making it more sensible:
+
+```js
+const posts = new UpdatableCacheItem('posts', {
+	updater: fetchPosts,
+	cacheKey: (args) => args[0].id, // ✅ Use only the user ID
+});
+
+const user = {id: 123, name: 'Fregante'};
+await posts.get(user);
+// Its result will be stored in the key 'cache:fetchPosts:123'
 ```
 
 ### globalCache.clear()
 
-Clears the  cache. This is a special method that acts on the entire cache of the extension.
+Clears the cache. This is a special method that acts on the entire cache of the extension.
 
 ```js
 import {globalCache} from 'webext-storage-cache';
