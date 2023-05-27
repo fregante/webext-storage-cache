@@ -1,6 +1,7 @@
+/* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import {test, beforeEach, vi, assert, expect} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import {UpdatableCacheItem} from './updatable-cache-item.js';
+import UpdatableCacheItem from './updatable-cache-item.ts';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 

@@ -1,9 +1,9 @@
 import {type AsyncReturnType} from 'type-fest';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type CacheValue} from './cache-item.js';
-import cache, {getUserKey, type CacheKey, defaultSerializer, _get, timeInTheFuture} from './index.js';
+import cache, {getUserKey, type CacheKey, defaultSerializer, _get, timeInTheFuture} from './legacy.js';
 
-export class UpdatableCacheItem<
+export default class UpdatableCacheItem<
 	Updater extends ((...args: any[]) => Promise<CacheValue>),
 	ScopedValue extends AsyncReturnType<Updater>,
 	Arguments extends Parameters<Updater>,

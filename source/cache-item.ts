@@ -1,11 +1,11 @@
 import {type JsonValue} from 'type-fest';
 import {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
-import cache from './index.js';
+import cache from './legacy.js';
 
 // eslint-disable-next-line @typescript-eslint/ban-types -- It is a JSON value
 export type CacheValue = Exclude<JsonValue, null>;
 
-export class CacheItem<ScopedValue extends CacheValue> {
+export default class CacheItem<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;
 	constructor(
 		public name: string,

@@ -28,16 +28,26 @@
 		"Connor Love"
 	],
 	"type": "module",
-	"exports": "./index.js",
+	"types": "./distribution/index.d.ts",
+	"exports": "./distribution/index.js",
 	"files": [
-		"index.js",
-		"index.d.ts"
+		"distribution/index.js",
+		"distribution/index.d.ts",
+		"distribution/legacy.js",
+		"distribution/legacy.d.ts",
+		"distribution/cache-item.js",
+		"distribution/cache-item.d.ts",
+		"distribution/updatable-cache-item.js",
+		"distribution/updatable-cache-item.d.ts"
 	],
 	"scripts": {
 		"build": "tsc",
 		"prepack": "tsc --sourceMap false",
 		"test": "tsc && tsd && vitest && xo",
 		"watch": "tsc --watch"
+	},
+	"tsd": {
+		"directory": "source"
 	},
 	"xo": {
 		"envs": [

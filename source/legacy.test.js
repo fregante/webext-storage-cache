@@ -1,7 +1,8 @@
+/* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import nodeAssert from 'node:assert';
 import {test, beforeEach, vi, assert, expect} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import cache from './index.js';
+import cache from './legacy.ts';
 
 // Help migration away from AVA
 const t = {

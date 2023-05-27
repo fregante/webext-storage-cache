@@ -1,7 +1,8 @@
+/* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import nodeAssert from 'node:assert';
 import {test, beforeEach, assert} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import {CacheItem} from './cache-item.js';
+import CacheItem from './cache-item.ts';
 
 function timeInTheFuture(time) {
 	return Date.now() + toMilliseconds(time);

@@ -1,16 +1,10 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"outDir": ".",
-		"target": "ES2022",
-		"checkJs": true
+		"outDir": "distribution",
+		"target": "ES2022"
 	},
-	"files": [
-		"updatable-cache-item.test-d.ts",
-		"updatable-cache-item.ts",
-		"cache-item.test-d.ts",
-		"cache-item.ts",
-		"index.test-d.ts",
-		"index.ts",
+	"include": [
+		"source",
 	]
 }
