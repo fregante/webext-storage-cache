@@ -1,5 +1,5 @@
 env:
-  IMPORT_TEXT: import storageCache from
+  IMPORT_TEXT: import {CacheItem, UpdatableCacheItem, globalCache} from
   NPM_MODULE_NAME: webext-storage-cache
 
 # FILE GENERATED WITH: npx ghat fregante/ghatemplates/esm-lint
