@@ -50,7 +50,7 @@ Returning `undefined` will delete the item from the cache.
 Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
 Default: `{days: 30}`
 
-The amount of time after which the cache item will expire after being each `.set()` call.
+The amount of time after which the cache item will expire after being each cache update.
 
 ### staleWhileRevalidate
 
@@ -180,14 +180,14 @@ const repositories = new CachedFunction('repositories', {updater: repoApi});
 await repositories.delete('fregante', 'doma');
 ```
 
-## CachedFunction#set(value, ...arguments)
+## CachedFunction#applyOverride(arguments, newValue)
 
 This method should only be used if you want to override the cache with a custom value, but you should prefer `get` or `getFresh` instead, keeping the logic exclusively in your `updater` function.
 
 ```js
 const repositories = new CachedFunction('repositories', {updater: repoApi});
 // Will override the local cache for the `repoApi('fregante', 'doma')` call
-await repositories.set({id: 134, lastUpdated: 199837738894}, 'fregante', 'doma');
+await repositories.applyOverride(['fregante', 'doma'], {id: 134, lastUpdated: 199837738894});
 ```
 
 ## License
