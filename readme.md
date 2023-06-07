@@ -40,9 +40,9 @@ This module requires the `storage` permission and it’s suggested to also use `
 ```
 
 ```js
-import {CacheItem} from 'webext-storage-cache';
+import {CachedValue} from 'webext-storage-cache';
 
-const item = new CacheItem('unique', {
+const item = new CachedValue('unique', {
 	maxAge: {
 		days: 3,
 	},
@@ -58,12 +58,12 @@ const item = new CacheItem('unique', {
 })();
 ```
 
-The same code could also be written more effectively with `UpdatableCacheItem`:
+The same code could also be written more effectively with `CachedFunction`:
 
 ```js
-import {UpdatableCacheItem} from 'webext-storage-cache';
+import {CachedFunction} from 'webext-storage-cache';
 
-const item = new CacheItem('unique', {
+const item = new CachedValue('unique', {
 	updater: someFunction,
 	maxAge: {
 		days: 3,
@@ -77,8 +77,8 @@ const item = new CacheItem('unique', {
 
 ## API
 
-- [CacheItem](./source/cache-item.md) - A simple API getter/setter
-- [UpdatableCacheItem](./source/updatable-cache-item.md) - A memoize-like API to cache your function calls without manually calling `isCached`/`get`/`set`
+- [CachedValue](./source/cached-value.md) - A simple API getter/setter
+- [CachedFunction](./source/cached-function.md) - A memoize-like API to cache your function calls without manually calling `isCached`/`get`/`set`
 - `globalCache` - Global helpers, documented below
 - `legacy` - The previous Map-like API, documented below, deprecated
 
@@ -98,8 +98,8 @@ document.querySelector('.options .clear-cache').addEventListener('click', async 
 
 The API used until v5 has been deprecated and you should migrate to:
 
-- `CacheItem` for simple `cache.get`/`cache.set` calls. This API makes more sense in a typed context because the type is preserved/enforced across calls.
-- `UpdatableCacheItem` for `cache.function`. It behaves in a similar fashion, but also has extra methods like `getCached` and it's a lot safer to use.
+- `CachedValue` for simple `cache.get`/`cache.set` calls. This API makes more sense in a typed context because the type is preserved/enforced across calls.
+- `CachedFunction` for `cache.function`. It behaves in a similar fashion, but also has extra methods like `getCached` and it's a lot safer to use.
 
 You can:
 

@@ -1,7 +1,7 @@
 /* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import {test, beforeEach, vi, assert, expect} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import UpdatableCacheItem from './updatable-cache-item.ts';
+import CachedFunction from './cached-function.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 
@@ -29,14 +29,14 @@ beforeEach(() => {
 
 test('getCached() with empty cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const testItem = new UpdatableCacheItem('name', {updater: spy});
+	const testItem = new CachedFunction('name', {updater: spy});
 	assert.equal(await testItem.getCached(), undefined);
 	expect(spy).not.toHaveBeenCalled();
 });
 
 test('getCached() with cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const testItem = new UpdatableCacheItem('name', {updater: spy});
+	const testItem = new CachedFunction('name', {updater: spy});
 	createCache(10, {
 		'cache:name': 'Rico',
 	});
@@ -46,7 +46,7 @@ test('getCached() with cache', async () => {
 
 test('getCached() with expired cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const testItem = new UpdatableCacheItem('name', {updater: spy});
+	const testItem = new CachedFunction('name', {updater: spy});
 	createCache(-10, {
 		'cache:name': 'Rico',
 	});
@@ -56,7 +56,7 @@ test('getCached() with expired cache', async () => {
 
 test('`updater` with empty cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
@@ -71,7 +71,7 @@ test('`updater` with cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
@@ -86,7 +86,7 @@ test('`updater` with expired cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 	assert.equal(chrome.storage.local.get.lastCall.args[0], 'cache:spy:["@anne"]');
@@ -99,7 +99,7 @@ test('`updater` with empty cache and staleWhileRevalidate', async () => {
 	const staleWhileRevalidate = 29;
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {
+	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
@@ -124,7 +124,7 @@ test('`updater` with fresh cache and staleWhileRevalidate', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {
+	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
@@ -150,7 +150,7 @@ test('`updater` with stale cache and staleWhileRevalidate', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {
+	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
@@ -180,7 +180,7 @@ test('`updater` varies cache by function argument', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 	expect(spy).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ test('`updater` accepts custom cache key generator', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	await updaterItem.get('@anne', 1);
 	expect(spy).not.toHaveBeenCalled();
@@ -213,7 +213,7 @@ test('`updater` accepts custom string-based cache key', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('CUSTOM', {updater: spy});
+	const updaterItem = new CachedFunction('CUSTOM', {updater: spy});
 
 	await updaterItem.get('@anne', 1);
 	expect(spy).not.toHaveBeenCalled();
@@ -231,7 +231,7 @@ test('`updater` accepts custom string-based with non-primitive parameters', asyn
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('CUSTOM', {updater: spy});
+	const updaterItem = new CachedFunction('CUSTOM', {updater: spy});
 
 	await updaterItem.get('@anne', {user: [1]});
 	expect(spy).not.toHaveBeenCalled();
@@ -249,7 +249,7 @@ test('`updater` verifies cache with shouldRevalidate callback', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {
+	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		shouldRevalidate: value => value.endsWith('@'),
 	});
@@ -262,7 +262,7 @@ test('`updater` verifies cache with shouldRevalidate callback', async () => {
 
 test('`updater` avoids concurrent function calls', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	expect(spy).not.toHaveBeenCalled();
 
@@ -282,7 +282,7 @@ test('`updater` avoids concurrent function calls', async () => {
 test('`updater` avoids concurrent function calls with complex arguments via cacheKey', async () => {
 	const spy = vi.fn(async (transform, user) => transform(user.name));
 
-	const updaterItem = new UpdatableCacheItem('spy', {
+	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		cacheKey: ([fn, user]) => JSON.stringify([fn.name, user]),
 	});
@@ -311,7 +311,7 @@ test('`updater` always loads the data from storage, not memory', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	assert.equal(await updaterItem.get('@anne'), 'ANNE');
 
@@ -334,10 +334,12 @@ test('.getFresh() ignores cached value', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new UpdatableCacheItem('spy', {updater: spy});
+	const updaterItem = new CachedFunction('spy', {updater: spy});
 	assert.equal(await updaterItem.getFresh('@anne'), 'ANNE');
 
 	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
 	assert.equal(chrome.storage.local.get.callCount, 0);
 	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 });
+
+// TODO: Test .applyOverride

@@ -1,10 +1,10 @@
 import {expectType, expectNotAssignable, expectAssignable} from 'tsd';
-import CacheItem from './cache-item.js';
+import CachedValue from './cached-value.js';
 
 type Primitive = boolean | number | string;
 type Value = Primitive | Primitive[] | Record<string, any>;
 
-const item = new CacheItem<string>('key');
+const item = new CachedValue<string>('key');
 
 expectType<Promise<boolean>>(item.isCached());
 expectType<Promise<void>>(item.delete());

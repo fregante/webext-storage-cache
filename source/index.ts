@@ -1,7 +1,7 @@
 import cache from './legacy.js';
 
-export {default as CacheItem} from './cache-item.js';
-export {default as UpdatableCacheItem} from './updatable-cache-item.js';
+export {default as CachedValue} from './cached-value.js';
+export {default as CachedFunction} from './cached-function.js';
 
 export const globalCache = {
 	clear: cache.clear,

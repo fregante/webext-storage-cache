@@ -5,7 +5,7 @@ import cache from './legacy.js';
 // eslint-disable-next-line @typescript-eslint/ban-types -- It is a JSON value
 export type CacheValue = Exclude<JsonValue, null>;
 
-export default class CacheItem<ScopedValue extends CacheValue> {
+export default class CachedValue<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;
 	constructor(
 		public name: string,

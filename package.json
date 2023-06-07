@@ -40,10 +40,10 @@
 		"distribution/index.d.ts",
 		"distribution/legacy.js",
 		"distribution/legacy.d.ts",
-		"distribution/cache-item.js",
-		"distribution/cache-item.d.ts",
-		"distribution/updatable-cache-item.js",
-		"distribution/updatable-cache-item.d.ts"
+		"distribution/cached-value.js",
+		"distribution/cached-value.d.ts",
+		"distribution/cached-function.js",
+		"distribution/cached-function.d.ts"
 	],
 	"scripts": {
 		"build": "tsc",

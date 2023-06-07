@@ -13,12 +13,12 @@ type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
-type CacheItem<Value> = {
+type CachedValue<Value> = {
 	data: Value;
 	maxAge: number;
 };
 
-type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
+type Cache<ScopedValue extends Value = Value> = Record<string, CachedValue<ScopedValue>>;
 
 export function getUserKey<Arguments extends any[]>(
 	name: string,
@@ -39,7 +39,7 @@ async function has(key: string): Promise<boolean> {
 export async function _get<ScopedValue extends Value>(
 	key: string,
 	remove: boolean,
-): Promise<CacheItem<ScopedValue> | undefined> {
+): Promise<CachedValue<ScopedValue> | undefined> {
 	const internalKey = `cache:${key}`;
 	const storageData = await chromeP.storage.local.get(internalKey) as Cache<ScopedValue>;
 	const cachedItem = storageData[internalKey];
@@ -63,8 +63,8 @@ export async function _get<ScopedValue extends Value>(
 async function get<ScopedValue extends Value>(
 	key: string,
 ): Promise<ScopedValue | undefined> {
-	const cacheItem = await _get<ScopedValue>(key, true);
-	return cacheItem?.data;
+	const CachedValue = await _get<ScopedValue>(key, true);
+	return CachedValue?.data;
 }
 
 async function set<ScopedValue extends Value>(
@@ -97,7 +97,7 @@ async function delete_(userKey: string): Promise<void> {
 }
 
 async function deleteWithLogic(
-	logic?: (x: CacheItem<Value>) => boolean,
+	logic?: (x: CachedValue<Value>) => boolean,
 ): Promise<void> {
 	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
 	const removableItems: string[] = [];
@@ -130,7 +130,7 @@ export type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = 
 	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 };
 
-/** @deprecated Use CacheItem and UpdatableCacheItem instead */
+/** @deprecated Use CachedValue and CachedFunction instead */
 const cache = {
 	has,
 	get,

@@ -1,9 +1,9 @@
 import {type AsyncReturnType} from 'type-fest';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
-import {type CacheValue} from './cache-item.js';
+import {type CacheValue} from './cached-value.js';
 import cache, {getUserKey, type CacheKey, _get, timeInTheFuture} from './legacy.js';
 
-export default class UpdatableCacheItem<
+export default class CachedFunction<
 	// TODO: Review this type. While `undefined/null` can't be stored, the `updater` can return it to clear the cache
 	Updater extends ((...args: any[]) => Promise<CacheValue>),
 	ScopedValue extends AsyncReturnType<Updater>,
@@ -12,6 +12,7 @@ export default class UpdatableCacheItem<
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
 
+	// The only reason this is not a constructor method is TypeScript: `get` must be `typeof Updater`
 	get = (async (...args: Arguments) => {
 		const getSet = async (
 			userKey: string,
@@ -86,7 +87,7 @@ export default class UpdatableCacheItem<
 		return cache.get(userKey) as Promise<ScopedValue>;
 	}
 
-	async set(value: ScopedValue, ...args: Arguments) {
+	async applyOverride(args: Arguments, value: ScopedValue) {
 		if (arguments.length === 0) {
 			throw new TypeError('Expected a value to be stored');
 		}
@@ -95,13 +96,13 @@ export default class UpdatableCacheItem<
 		return cache.set(userKey, value, this.maxAge);
 	}
 
-	async getFresh(...args: Arguments) {
+	async getFresh(...args: Arguments): Promise<ScopedValue> {
 		if (this.#updater === undefined) {
 			throw new TypeError('Cannot get fresh value without updater');
 		}
 
 		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, args);
-		return cache.set(userKey, await this.#updater(...args));
+		return cache.set(userKey, await this.#updater(...args)) as Promise<ScopedValue>;
 	}
 
 	async delete(...args: Arguments) {

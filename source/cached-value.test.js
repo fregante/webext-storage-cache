@@ -2,13 +2,13 @@
 import nodeAssert from 'node:assert';
 import {test, beforeEach, assert} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import CacheItem from './cache-item.ts';
+import CachedValue from './cached-value.js';
 
 function timeInTheFuture(time) {
 	return Date.now() + toMilliseconds(time);
 }
 
-const testItem = new CacheItem('name');
+const testItem = new CachedValue('name');
 
 function createCache(daysFromToday, wholeCache) {
 	for (const [key, data] of Object.entries(wholeCache)) {
@@ -82,7 +82,7 @@ test.skip('set() with undefined', async () => {
 
 test('set() with value', async () => {
 	const maxAge = 20;
-	const customLimitItem = new CacheItem('name', {maxAge: {days: maxAge}});
+	const customLimitItem = new CachedValue('name', {maxAge: {days: maxAge}});
 	await customLimitItem.set('Anne');
 	const arguments_ = chrome.storage.local.set.lastCall.args[0];
 	assert.deepEqual(Object.keys(arguments_), ['cache:name']);
