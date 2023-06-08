@@ -33,7 +33,7 @@
 	"types": "./distribution/index.d.ts",
 	"exports": {
 		".": "./distribution/index.js",
-		"legacy.js": "./distribution/legacy.js"
+		"./legacy.js": "./distribution/legacy.js"
 	},
 	"files": [
 		"distribution/index.js",
