@@ -2,7 +2,7 @@
 import nodeAssert from 'node:assert';
 import {test, beforeEach, assert} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import CachedValue from './cached-value.js';
+import CachedValue from './cached-value.ts';
 
 function timeInTheFuture(time) {
 	return Date.now() + toMilliseconds(time);

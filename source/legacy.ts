@@ -63,8 +63,8 @@ export async function _get<ScopedValue extends Value>(
 async function get<ScopedValue extends Value>(
 	key: string,
 ): Promise<ScopedValue | undefined> {
-	const CachedValue = await _get<ScopedValue>(key, true);
-	return CachedValue?.data;
+	const cachedValue = await _get<ScopedValue>(key, true);
+	return cachedValue?.data;
 }
 
 async function set<ScopedValue extends Value>(
