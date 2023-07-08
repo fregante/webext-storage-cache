@@ -80,7 +80,7 @@ jobs:
       - uses: actions/download-artifact@v3
       - run: npm install ./artifact @sindresorhus/tsconfig
       - run: echo "${{ env.IMPORT_TEXT }} '${{ env.NPM_MODULE_NAME }}'" > index.ts
-      - run: echo '{extends:"@sindresorhus/tsconfig",files:["index.js"]}' > tsconfig.json
+      - run: echo '{"extends":"@sindresorhus/tsconfig","files":["index.ts"]}' > tsconfig.json
       - run: tsc
       - run: cat index.js
   Node:

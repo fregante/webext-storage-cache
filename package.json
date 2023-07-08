@@ -30,11 +30,11 @@
 		"Connor Love"
 	],
 	"type": "module",
-	"types": "./distribution/index.d.ts",
 	"exports": {
 		".": "./distribution/index.js",
 		"./legacy.js": "./distribution/legacy.js"
 	},
+	"types": "./distribution/index.d.ts",
 	"files": [
 		"distribution/index.js",
 		"distribution/index.d.ts",
@@ -50,9 +50,6 @@
 		"prepack": "tsc --sourceMap false",
 		"test": "tsc && tsd && vitest && xo",
 		"watch": "tsc --watch"
-	},
-	"tsd": {
-		"directory": "source"
 	},
 	"xo": {
 		"envs": [
@@ -75,5 +72,11 @@
 		"typescript": "^5.0.4",
 		"vitest": "^0.31.1",
 		"xo": "^0.54.2"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"tsd": {
+		"directory": "source"
 	}
 }
