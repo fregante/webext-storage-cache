@@ -1,7 +1,23 @@
 import {type AsyncReturnType} from 'type-fest';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type CacheValue} from './cached-value.js';
-import cache, {getUserKey, type CacheKey, _get, timeInTheFuture} from './legacy.js';
+import cache, {type CacheKey, _get, timeInTheFuture} from './legacy.js';
+
+function getUserKey<Arguments extends any[]>(
+	name: string,
+	cacheKey: CacheKey<Arguments> | undefined,
+	args: Arguments,
+): string {
+	if (!cacheKey) {
+		if (args.length === 0) {
+			return name;
+		}
+
+		cacheKey = JSON.stringify;
+	}
+
+	return `${name}:${cacheKey(args)}`;
+}
 
 export default class CachedFunction<
 	// TODO: Review this type. While `undefined/null` can't be stored, the `updater` can return it to clear the cache
@@ -75,7 +91,7 @@ export default class CachedFunction<
 			shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 		},
 	) {
-		this.#cacheKey = options.cacheKey ?? JSON.stringify;
+		this.#cacheKey = options.cacheKey;
 		this.#updater = options.updater;
 		this.#shouldRevalidate = options.shouldRevalidate;
 		this.maxAge = options.maxAge ?? {days: 30};

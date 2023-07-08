@@ -20,18 +20,6 @@ type CachedValue<Value> = {
 
 type Cache<ScopedValue extends Value = Value> = Record<string, CachedValue<ScopedValue>>;
 
-export function getUserKey<Arguments extends any[]>(
-	name: string,
-	cacheKey: CacheKey<Arguments> | undefined,
-	args: Arguments,
-): string {
-	if (!cacheKey || args.length === 0) {
-		return name;
-	}
-
-	return `${name}:${cacheKey(args)}`;
-}
-
 async function has(key: string): Promise<boolean> {
 	return (await _get(key, false)) !== undefined;
 }
