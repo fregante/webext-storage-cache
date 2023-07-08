@@ -305,6 +305,23 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 	expect(spy).toHaveBeenCalledTimes(4);
 });
 
+test('`updater` uses cacheKey at every call, regardless of arguments', async () => {
+	const cacheKey = vi.fn(arguments_ => arguments_.length);
+
+	const updaterItem = new CachedFunction('spy', {
+		updater() {},
+		cacheKey,
+	});
+
+	await updaterItem.get();
+	await updaterItem.get();
+	expect(cacheKey).toHaveBeenCalledTimes(2);
+
+	await updaterItem.get('@anne');
+	await updaterItem.get('@anne');
+	expect(cacheKey).toHaveBeenCalledTimes(4);
+});
+
 test('`updater` always loads the data from storage, not memory', async () => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
