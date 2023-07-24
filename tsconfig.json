@@ -1,12 +1,10 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"outDir": ".",
-		"target": "ES2022",
-		"checkJs": true
+		"outDir": "distribution",
+		"target": "ES2022"
 	},
-	"files": [
-		"index.test-d.ts",
-		"index.ts"
+	"include": [
+		"source",
 	]
 }

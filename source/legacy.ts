@@ -4,16 +4,8 @@ import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds
 
 const cacheDefault = {days: 30};
 
-function timeInTheFuture(time: TimeDescriptor): number {
+export function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
-}
-
-export function defaultSerializer(arguments_: unknown[]): string {
-	if (arguments_.every(arg => typeof arg === 'string')) {
-		return arguments_.join(',');
-	}
-
-	return JSON.stringify(arguments_);
 }
 
 type Primitive = boolean | number | string;
@@ -21,29 +13,21 @@ type Value = Primitive | Primitive[] | Record<string, any>;
 // No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
 // No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
 
-type CacheItem<Value> = {
+type CachedValue<Value> = {
 	data: Value;
 	maxAge: number;
 };
 
-type Cache<ScopedValue extends Value = Value> = Record<string, CacheItem<ScopedValue>>;
-
-function getUserKey<Arguments extends unknown[]>(
-	name: string,
-	cacheKey: CacheKey<Arguments>,
-	args: Arguments,
-): string {
-	return `${name}:${cacheKey(args)}`;
-}
+type Cache<ScopedValue extends Value = Value> = Record<string, CachedValue<ScopedValue>>;
 
 async function has(key: string): Promise<boolean> {
 	return (await _get(key, false)) !== undefined;
 }
 
-async function _get<ScopedValue extends Value>(
+export async function _get<ScopedValue extends Value>(
 	key: string,
 	remove: boolean,
-): Promise<CacheItem<ScopedValue> | undefined> {
+): Promise<CachedValue<ScopedValue> | undefined> {
 	const internalKey = `cache:${key}`;
 	const storageData = await chromeP.storage.local.get(internalKey) as Cache<ScopedValue>;
 	const cachedItem = storageData[internalKey];
@@ -67,8 +51,8 @@ async function _get<ScopedValue extends Value>(
 async function get<ScopedValue extends Value>(
 	key: string,
 ): Promise<ScopedValue | undefined> {
-	const cacheItem = await _get<ScopedValue>(key, true);
-	return cacheItem?.data;
+	const cachedValue = await _get<ScopedValue>(key, true);
+	return cachedValue?.data;
 }
 
 async function set<ScopedValue extends Value>(
@@ -95,13 +79,13 @@ async function set<ScopedValue extends Value>(
 	return value;
 }
 
-async function delete_(key: string): Promise<void> {
-	const internalKey = `cache:${key}`;
+async function delete_(userKey: string): Promise<void> {
+	const internalKey = `cache:${userKey}`;
 	return chromeP.storage.local.remove(internalKey);
 }
 
 async function deleteWithLogic(
-	logic?: (x: CacheItem<Value>) => boolean,
+	logic?: (x: CachedValue<Value>) => boolean,
 ): Promise<void> {
 	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
 	const removableItems: string[] = [];
@@ -125,90 +109,21 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-type CacheKey<Arguments> = (args: Arguments) => string;
+export type CacheKey<Arguments extends unknown[]> = (args: Arguments) => string;
 
-type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
+export type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
 	maxAge?: TimeDescriptor;
 	staleWhileRevalidate?: TimeDescriptor;
 	cacheKey?: CacheKey<Arguments>;
 	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 };
 
-function function_<
-	ScopedValue extends Value,
-	Getter extends (...args: any[]) => Promise<ScopedValue | undefined>,
-	Arguments extends Parameters<Getter>,
->(
-	name: string,
-	getter: Getter,
-	{
-		cacheKey = defaultSerializer,
-		maxAge = {days: 30},
-		staleWhileRevalidate = {days: 0},
-		shouldRevalidate,
-	}: MemoizedFunctionOptions<Arguments, ScopedValue> = {},
-): Getter & {fresh: Getter} {
-	const inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
-	const getSet = async (
-		key: string,
-		args: Arguments,
-	): Promise<ScopedValue | undefined> => {
-		const freshValue = await getter(...args);
-		if (freshValue === undefined) {
-			await delete_(key);
-			return;
-		}
-
-		const milliseconds = toMilliseconds(maxAge) + toMilliseconds(staleWhileRevalidate);
-
-		return set<ScopedValue>(key, freshValue, {milliseconds});
-	};
-
-	const memoizeStorage = async (userKey: string, ...args: Arguments) => {
-		const cachedItem = await _get<ScopedValue>(userKey, false);
-		if (cachedItem === undefined || shouldRevalidate?.(cachedItem.data)) {
-			return getSet(userKey, args);
-		}
-
-		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-		if (timeInTheFuture(staleWhileRevalidate) > cachedItem.maxAge) {
-			setTimeout(getSet, 0, userKey, args);
-		}
-
-		return cachedItem.data;
-	};
-
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Tests expect the same exact promise to be returned
-	function memoizePending(...args: Arguments) {
-		const userKey = getUserKey(name, cacheKey, args);
-		if (inFlightCache.has(userKey)) {
-			// Avoid calling the same function twice while pending
-			return inFlightCache.get(userKey);
-		}
-
-		const promise = memoizeStorage(userKey, ...args);
-		inFlightCache.set(userKey, promise);
-		const del = () => {
-			inFlightCache.delete(userKey);
-		};
-
-		promise.then(del, del);
-		return promise;
-	}
-
-	return Object.assign(memoizePending as Getter, {
-		fresh: (
-			async (...args: Arguments) => getSet(getUserKey(name, cacheKey, args), args)
-		) as Getter,
-	});
-}
-
+/** @deprecated Use CachedValue and CachedFunction instead */
 const cache = {
 	has,
 	get,
 	set,
 	clear,
-	function: function_,
 	delete: delete_,
 };
 

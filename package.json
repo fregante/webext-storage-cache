@@ -1,7 +1,7 @@
 {
 	"name": "webext-storage-cache",
-	"version": "6.0.0-2",
-	"description": "Map-like promised cache storage with expiration. WebExtensions module for Chrome, Firefox, Safari",
+	"version": "6.0.0-5",
+	"description": "Cache values in your Web Extension and clear them on expiration. Also includes a memoize-like API to cache any function results automatically.",
 	"keywords": [
 		"await",
 		"background page",
@@ -12,7 +12,9 @@
 		"expirating",
 		"extension",
 		"firefox",
-		"map",
+		"safari",
+		"memoize",
+		"memoization",
 		"options page",
 		"promises",
 		"self-cleaning",
@@ -28,10 +30,20 @@
 		"Connor Love"
 	],
 	"type": "module",
-	"exports": "./index.js",
+	"exports": {
+		".": "./distribution/index.js",
+		"./legacy.js": "./distribution/legacy.js"
+	},
+	"types": "./distribution/index.d.ts",
 	"files": [
-		"index.js",
-		"index.d.ts"
+		"distribution/index.js",
+		"distribution/index.d.ts",
+		"distribution/legacy.js",
+		"distribution/legacy.d.ts",
+		"distribution/cached-value.js",
+		"distribution/cached-value.d.ts",
+		"distribution/cached-function.js",
+		"distribution/cached-function.d.ts"
 	],
 	"scripts": {
 		"build": "tsc",
@@ -47,6 +59,7 @@
 	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
+		"type-fest": "^3.11.0",
 		"webext-detect-page": "^4.1.0",
 		"webext-polyfill-kinda": "^1.0.2"
 	},
@@ -59,5 +72,11 @@
 		"typescript": "^5.0.4",
 		"vitest": "^0.31.1",
 		"xo": "^0.54.2"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"tsd": {
+		"directory": "source"
 	}
 }

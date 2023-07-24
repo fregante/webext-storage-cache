@@ -1,22 +1,22 @@
 # webext-storage-cache [![](https://img.shields.io/npm/v/webext-storage-cache.svg)](https://www.npmjs.com/package/webext-storage-cache)
 
-> Map-like promised cache storage with expiration. WebExtensions module for Chrome, Firefox, Safari
+> Cache values in your Web Extension and clear them on expiration. Also includes a memoize-like API to cache any function results automatically.
 
-This module works on content scripts, background pages and option pages.
+- Browsers: Chrome, Firefox, and Safari
+- Manifest: v2 and v3
+- Context: They can be called from any context that has access to the `chrome.storage` APIs
+- Permissions: (with attached "reasons" for submission to the Chrome Web Store)
+	- `storage`: "The extension caches some values into the local storage"
+	- `alarms`: "The extension automatically clears its expired storage at certain intervals"
 
 ## Install
 
-You can download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-additional-permissions&global=getAdditionalPermissions) and include it in your `manifest.json`.
+You can download the [standalone bundle](https://bundle.fregante.com/?pkg=webext-storage-cache&global=window) and include it in your `manifest.json`.
 
 Or use `npm`:
 
 ```sh
 npm install webext-storage-cache
-```
-
-```js
-// This module is only offered as a ES Module
-import storageCache from 'webext-storage-cache';
 ```
 
 ## Usage
@@ -40,27 +40,31 @@ This module requires the `storage` permission and it’s suggested to also use `
 ```
 
 ```js
-import cache from 'webext-storage-cache';
+import {CachedValue} from 'webext-storage-cache';
+
+const item = new CachedValue('unique', {
+	maxAge: {
+		days: 3,
+	},
+});
 
 (async () => {
-	if (!(await cache.has('unique'))) {
+	if (!(await item.isCached())) {
 		const cachableItem = await someFunction();
-		await cache.set('unique', cachableItem, {
-			days: 3,
-		});
+		await item.set(cachableItem);
 	}
 
-	console.log(await cache.get('unique'));
+	console.log(await item.get());
 })();
 ```
 
-The same code could also be written more effectively with `cache.function`:
+The same code could also be written more effectively with `CachedFunction`:
 
 ```js
-import cache from 'webext-storage-cache';
+import {CachedFunction} from 'webext-storage-cache';
 
-const cachedFunction = cache.function(someFunction, {
-	name: 'unique',
+const item = new CachedValue('unique', {
+	updater: someFunction,
 	maxAge: {
 		days: 3,
 	},
@@ -73,202 +77,43 @@ const cachedFunction = cache.function(someFunction, {
 
 ## API
 
-Similar to a `Map()`, but **all methods a return a `Promise`.** It also has a memoization method that hides the caching logic and makes it a breeze to use.
+- [CachedValue](./source/cached-value.md) - A simple API getter/setter
+- [CachedFunction](./source/cached-function.md) - A memoize-like API to cache your function calls without manually calling `isCached`/`get`/`set`
+- `globalCache` - Global helpers, documented below
+- `legacy` - The previous Map-like API, documented below, deprecated
 
-### cache.has(key)
+### globalCache.clear()
 
-Checks if the given key is in the cache, returns a `boolean`.
-
-```js
-const isCached = await cache.has('cached-url');
-// true or false
-```
-
-#### key
-
-Type: `string`
-
-### cache.get(key)
-
-Returns the cached value of key if it exists and hasn't expired, returns `undefined` otherwise.
+Clears the cache. This is a special method that acts on the entire cache of the extension.
 
 ```js
-const url = await cache.get('cached-url');
-// It will be `undefined` if it's not found.
+import {globalCache} from 'webext-storage-cache';
+
+document.querySelector('.options .clear-cache').addEventListener('click', async () => {
+	await globalCache.clear()
+})
 ```
 
-#### key
+### legacy API
 
-Type: `string`
+The API used until v5 has been deprecated and you should migrate to:
 
-### cache.set(key, value, maxAge)
+- `CachedValue` for simple `cache.get`/`cache.set` calls. This API makes more sense in a typed context because the type is preserved/enforced across calls.
+- `CachedFunction` for `cache.function`. It behaves in a similar fashion, but it also has extra methods like `getCached` and `getFresh`
 
-Caches the given key and value for a given amount of time. It returns the value itself.
+You can:
+
+- [Migrate from v5 to v6](https://github.com/fregante/webext-storage-cache/releases/v6.0.0), or
+- Keep using the legacy API (except `cache.function`) by importing `webext-storage-cache/legacy.js` (until v7 is published)
 
 ```js
-const info = await getInfoObject();
-await cache.set('core-info', info); // Cached for 30 days by default
+import cache from "webext-storage-cache/legacy.js";
+
+await cache.get('my-url');
+await cache.set('my-url', 'https://example.com');
 ```
 
-#### key
-
-Type: `string`
-
-#### value
-
-Type: `string | number | boolean` or `array | object` of those three types.
-
-`undefined` will remove the cached item. For this purpose it's best to use `cache.delete(key)` instead
-
-#### maxAge
-
-Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
-Default: `{days: 30}`
-
-The amount of time after which the cache item will expire.
-
-### cache.delete(key)
-
-Deletes the requested item from the cache.
-
-```js
-await cache.delete('cached-url');
-```
-
-#### key
-
-Type: `string`
-
-### cache.clear()
-
-Deletes the entire cache.
-
-```js
-await cache.clear();
-```
-
-### cache.function(getter, options)
-
-Caches the return value of the function based on the `cacheKey`. It works similarly to a memoization function:
-
-```js
-async function getHTML(url, options) {
-	const response = await fetch(url, options);
-	return response.text();
-}
-
-const cachedGetHTML = cache.function(getHTML, {name: 'html'});
-
-const html = await cachedGetHTML('https://google.com', {});
-// The HTML of google.com will be saved with the key 'https://google.com'
-
-const freshHtml = await cachedGetHTML.fresh('https://google.com', {});
-// Escape hatch to ignore memoization and force a refresh of the cache
-```
-
-#### getter
-
-Type: `async function` that returns a cacheable value.
-
-Returning `undefined` will skip the cache, just like `cache.set()`.
-
-#### options
-
-##### name
-
-Type: `string`
-
-Required.
-
-The base name used to construct the key in the cache:
-
-```js
-const cachedOperate = cache.function(operate, {name: 'operate'});
-
-cachedOperate(1, 2, 3);
-// Its result will be stored in the key 'operate:[1,2,3]'
-```
-
-##### cacheKey
-
-Type: `(args: any[]) => string`
-Default: `JSON.stringify`
-
-By default, the function’s `arguments` JSON-stringified array will be used to create the cache key.
-
-You can pass a `cacheKey` function to customize how the key is generated:
-
-```js
-const cachedFetchPosts = cache.function(fetchPosts, {
-	name: 'fetchPosts',
-	cacheKey: (args) => args[0].id, // Use just the user ID
-});
-
-const user = {id: 123, name: 'Fregante'};
-cachedFetchPosts(user);
-// Its result will be stored in the key 'fetchPosts:[1,2,3]'
-```
-
-##### maxAge
-
-Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
-Default: `{days: 30}`
-
-The amount of time after which the cache item will expire.
-
-##### staleWhileRevalidate
-
-Type: [`TimeDescriptor`](https://github.com/sindresorhus/to-milliseconds#input)<br>
-Default: `{days: 0}` (disabled)
-
-Specifies how much longer an item should be kept in cache after its expiration. During this extra time, the item will still be served from cache instantly, but `getter` will be also called asynchronously to update the cache. A later call will return the updated and fresher item.
-
-```js
-const cachedOperate = cache.function(operate, {
-	name: 'operate',
-	maxAge: {
-		days: 10,
-	},
-	staleWhileRevalidate: {
-		days: 2,
-	},
-});
-
-cachedOperate(); // It will run `operate` and cache it for 10 days
-cachedOperate(); // It will return the cache
-
-/* 11 days later, cache is expired, but still there */
-
-cachedOperate(); // It will return the cache
-// Asynchronously, it will also run `operate` and cache the new value for 10 more days
-
-/* 13 days later, cache is expired and deleted */
-
-cachedOperate(); // It will run `operate` and cache it for 10 days
-```
-
-##### shouldRevalidate
-
-Type: `function` that returns a boolean<br>
-Default: `() => false`
-
-You may want to have additional checks on the cached value, for example after updating its format.
-
-```js
-async function getContent(url) {
-	const response = await fetch(url);
-	return response.json(); // For example, you used to return plain text, now you return a JSON object
-}
-
-const cachedGetContent = cache.function(getContent, {
-	name: 'getContent',
-	// If it's a string, it's in the old format and a new value will be fetched and cached
-	shouldRevalidate: cachedValue => typeof cachedValue === 'string',
-});
-
-const json = await cachedGetHTML('https://google.com');
-// The HTML of google.com will be saved with the key 'https://google.com'
-```
+The documentation for the legacy API can be found on the [v5 version of this readme](https://github.com/fregante/webext-storage-cache/blob/v5.1.1/readme.md#api).
 
 ## Related
 
