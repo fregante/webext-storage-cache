@@ -98,7 +98,7 @@ export default class CachedFunction<
 		this.staleWhileRevalidate = options.staleWhileRevalidate ?? {days: 0};
 	}
 
-	async getCached(...args: Arguments): Promise<ScopedValue> {
+	async getCached(...args: Arguments): Promise<ScopedValue | undefined> {
 		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, args);
 		return cache.get(userKey) as Promise<ScopedValue>;
 	}

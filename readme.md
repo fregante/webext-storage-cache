@@ -99,12 +99,12 @@ document.querySelector('.options .clear-cache').addEventListener('click', async 
 The API used until v5 has been deprecated and you should migrate to:
 
 - `CachedValue` for simple `cache.get`/`cache.set` calls. This API makes more sense in a typed context because the type is preserved/enforced across calls.
-- `CachedFunction` for `cache.function`. It behaves in a similar fashion, but also has extra methods like `getCached` and it's a lot safer to use.
+- `CachedFunction` for `cache.function`. It behaves in a similar fashion, but it also has extra methods like `getCached` and `getFresh`
 
 You can:
 
 - [Migrate from v5 to v6](https://github.com/fregante/webext-storage-cache/releases/v6.0.0), or
-- Keep using the legacy API (except `cache.function`) by importing `webext-storage-cache/legacy.js`
+- Keep using the legacy API (except `cache.function`) by importing `webext-storage-cache/legacy.js` (until v7 is published)
 
 ```js
 import cache from "webext-storage-cache/legacy.js";
