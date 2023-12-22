@@ -63,7 +63,7 @@ The same code could also be written more effectively with `CachedFunction`:
 ```js
 import {CachedFunction} from 'webext-storage-cache';
 
-const item = new CachedValue('unique', {
+const cachedFunction = new CachedFunction('unique', {
 	updater: someFunction,
 	maxAge: {
 		days: 3,
