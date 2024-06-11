@@ -1,5 +1,7 @@
 /* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
-import {test, beforeEach, vi, assert, expect} from 'vitest';
+import {
+	test, beforeEach, vi, assert, expect,
+} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
 import CachedFunction from './cached-function.ts';
 
@@ -13,10 +15,12 @@ function createCache(daysFromToday, wholeCache) {
 	for (const [key, data] of Object.entries(wholeCache)) {
 		chrome.storage.local.get
 			.withArgs(key)
-			.yields({[key]: {
-				data,
-				maxAge: timeInTheFuture({days: daysFromToday}),
-			}});
+			.yields({
+				[key]: {
+					data,
+					maxAge: timeInTheFuture({days: daysFromToday}),
+				},
+			});
 	}
 }
 
@@ -284,7 +288,7 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
-		cacheKey: ([fn, user]) => JSON.stringify([fn.name, user]),
+		cacheKey: ([function_, user]) => JSON.stringify([function_.name, user]),
 	});
 
 	expect(spy).not.toHaveBeenCalled();

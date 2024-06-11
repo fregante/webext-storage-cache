@@ -14,10 +14,12 @@ function createCache(daysFromToday, wholeCache) {
 	for (const [key, data] of Object.entries(wholeCache)) {
 		chrome.storage.local.get
 			.withArgs(key)
-			.yields({[key]: {
-				data,
-				maxAge: timeInTheFuture({days: daysFromToday}),
-			}});
+			.yields({
+				[key]: {
+					data,
+					maxAge: timeInTheFuture({days: daysFromToday}),
+				},
+			});
 	}
 }
 
