@@ -109,7 +109,7 @@ async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-export type CacheKey<Arguments extends unknown[]> = (args: Arguments) => string;
+export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;
 
 export type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
 	maxAge?: TimeDescriptor;
