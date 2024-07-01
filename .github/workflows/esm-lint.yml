@@ -1,5 +1,5 @@
 env:
-  IMPORT_STATEMENT: import {CachedValue, CachedFunction, globalCache} from "webext-storage-cache"
+  IMPORT_STATEMENT: export {CachedValue, CachedFunction, globalCache} from "webext-storage-cache"
 
 # FILE GENERATED WITH: npx ghat fregante/ghatemplates/esm-lint
 # SOURCE: https://github.com/fregante/ghatemplates
