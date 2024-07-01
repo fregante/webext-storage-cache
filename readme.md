@@ -117,7 +117,7 @@ The documentation for the legacy API can be found on the [v5 version of this rea
 
 ## Related
 
-- [webext-detect-page](https://github.com/fregante/webext-detect-page) - Detects where the current browser extension code is being run.
+- [webext-detect](https://github.com/fregante/webext-detect) - Detects where the current browser extension code is being run.
 - [webext-options-sync](https://github.com/fregante/webext-options-sync) - Helps you manage and autosave your extension's options.
 - [webext-base-css](https://github.com/fregante/webext-base-css) - Extremely minimal stylesheet/setup for Web Extensions’ options pages (also dark mode)
 - [webext-dynamic-content-scripts](https://github.com/fregante/webext-dynamic-content-scripts) - Automatically registers your content_scripts on domains added via permission.request
