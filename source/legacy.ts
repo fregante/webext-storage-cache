@@ -1,5 +1,5 @@
 import chromeP from 'webext-polyfill-kinda';
-import {isBackgroundPage, isExtensionContext} from 'webext-detect-page';
+import {isBackgroundPage, isExtensionContext} from 'webext-detect';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
 const cacheDefault = {days: 30};

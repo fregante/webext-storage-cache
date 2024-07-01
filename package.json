@@ -59,17 +59,17 @@
 	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
-		"type-fest": "^4.20.0",
-		"webext-detect-page": "^5.0.1",
+		"type-fest": "^4.20.1",
+		"webext-detect": "^5.0.2",
 		"webext-polyfill-kinda": "^1.0.2"
 	},
 	"devDependencies": {
-		"@sindresorhus/tsconfig": "^5.0.0",
+		"@sindresorhus/tsconfig": "^6.0.0",
 		"@types/chrome": "0.0.268",
 		"@types/sinon-chrome": "^2.2.15",
 		"sinon-chrome": "^3.0.1",
-		"tsd": "^0.31.0",
-		"typescript": "^5.4.5",
+		"tsd": "^0.31.1",
+		"typescript": "^5.5.2",
 		"vitest": "^1.6.0",
 		"xo": "^0.58.0"
 	},
