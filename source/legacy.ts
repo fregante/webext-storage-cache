@@ -1,5 +1,5 @@
 import chromeP from 'webext-polyfill-kinda';
-import {isBackgroundPage, isExtensionContext} from 'webext-detect';
+import {isBackground, isExtensionContext} from 'webext-detect';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 
 const cacheDefault = {days: 30};
@@ -134,7 +134,7 @@ function init(): void {
 	}
 
 	// Automatically clear cache every day
-	if (!isBackgroundPage()) {
+	if (!isBackground()) {
 		return;
 	}
 
