@@ -65,7 +65,7 @@
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^6.0.0",
-		"@types/chrome": "0.0.268",
+		"@types/chrome": "^0.0.287",
 		"@types/sinon-chrome": "^2.2.15",
 		"sinon-chrome": "^3.0.1",
 		"tsd": "^0.31.1",
