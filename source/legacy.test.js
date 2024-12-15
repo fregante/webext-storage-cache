@@ -1,6 +1,5 @@
 /* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import nodeAssert from 'node:assert';
-import sinon from 'sinon';
 import {test, beforeEach, assert} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
 import cache, {_deleteExpired} from './legacy.ts';
