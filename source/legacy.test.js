@@ -1,8 +1,9 @@
 /* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import nodeAssert from 'node:assert';
+import sinon from 'sinon';
 import {test, beforeEach, assert} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
-import cache from './legacy.ts';
+import cache, {_deleteExpired} from './legacy.ts';
 
 // Help migration away from AVA
 const t = {
@@ -95,4 +96,45 @@ test('set() with value', async () => {
 	t.is(arguments_['cache:name'].data, 'Anne');
 	t.true(arguments_['cache:name'].maxAge > timeInTheFuture({days: maxAge - 0.5}));
 	t.true(arguments_['cache:name'].maxAge < timeInTheFuture({days: maxAge + 0.5}));
+});
+
+test('clear() with empty storage', async () => {
+	await cache.clear();
+	t.is(chrome.storage.local.remove.callCount, 0);
+});
+
+test('clear() with empty cache', async () => {
+	chrome.storage.local.get
+		.withArgs()
+		.yields({
+			'unrelated-key': 'value',
+		});
+	await cache.clear();
+	t.is(chrome.storage.local.remove.callCount, 0);
+});
+
+test('clear() with cache', async () => {
+	chrome.storage.local.get
+		.withArgs()
+		.yields({
+			'unrelated-key': 'value',
+			'cache:name': {data: 'Rico', maxAge: timeInTheFuture({days: 10})},
+			'cache:age': {data: 20, maxAge: timeInTheFuture({days: 10})},
+		});
+	await cache.clear();
+	const arguments_ = chrome.storage.local.remove.lastCall.args[0];
+	t.deepEqual(arguments_, ['cache:name', 'cache:age']);
+});
+
+test('expired cache cleaning', async () => {
+	chrome.storage.local.get
+		.withArgs()
+		.yields({
+			'unrelated-key': 'value',
+			'cache:name': {data: 'Rico', maxAge: timeInTheFuture({days: 10})},
+			'cache:age': {data: 20, maxAge: timeInTheFuture({days: -10})},
+		});
+	await _deleteExpired();
+	const arguments_ = chrome.storage.local.remove.lastCall.args[0];
+	t.deepEqual(arguments_, ['cache:age']);
 });
