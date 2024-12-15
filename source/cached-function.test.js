@@ -1,4 +1,3 @@
-/* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import {
 	test, beforeEach, vi, assert, expect,
 } from 'vitest';

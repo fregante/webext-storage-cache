@@ -1,4 +1,3 @@
-/* eslint-disable n/file-extension-in-import -- No alternative until this file is changed to .test.ts */
 import nodeAssert from 'node:assert';
 import {test, beforeEach, assert} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';

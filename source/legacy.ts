@@ -29,7 +29,7 @@ export async function _get<ScopedValue extends Value>(
 	remove: boolean,
 ): Promise<CachedValue<ScopedValue> | undefined> {
 	const internalKey = `cache:${key}`;
-	const storageData = await chromeP.storage.local.get(internalKey) as Cache<ScopedValue>;
+	const storageData: Record<string, CachedValue<ScopedValue>> = await chromeP.storage.local.get(internalKey);
 	const cachedItem = storageData[internalKey];
 
 	if (cachedItem === undefined) {
@@ -87,10 +87,9 @@ async function delete_(userKey: string): Promise<void> {
 async function deleteWithLogic(
 	logic?: (x: CachedValue<Value>) => boolean,
 ): Promise<void> {
-	const wholeCache = (await chromeP.storage.local.get()) as Record<string, any>;
+	const wholeCache: Cache = await chromeP.storage.local.get();
 	const removableItems: string[] = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: value is any
 		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
 			removableItems.push(key);
 		}
