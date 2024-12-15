@@ -72,6 +72,7 @@ export default class CachedFunction<
 			this.#inFlightCache.delete(userKey);
 		};
 
+		// eslint-disable-next-line promise/prefer-await-to-then -- Just dealing with the primise
 		promise.then(del, del);
 		return promise as Promise<ScopedValue>;
 	}) as unknown as Updater;

@@ -107,7 +107,8 @@ async function deleteWithLogic(
 	}
 }
 
-async function deleteExpired(): Promise<void> {
+/** @deprecated Private API for testing only. This happens automatically via chrome.alarms */
+export async function _deleteExpired(): Promise<void> {
 	await deleteWithLogic(cachedItem => Date.now() > cachedItem.maxAge);
 }
 
@@ -157,12 +158,12 @@ function init(): void {
 				&& lastRun < Date.now() - 1000
 			) {
 				lastRun = Date.now();
-				void deleteExpired();
+				void _deleteExpired();
 			}
 		});
 	} else {
-		setTimeout(deleteExpired, 60_000); // Purge cache on launch, but wait a bit
-		setInterval(deleteExpired, 1000 * 3600 * 24);
+		setTimeout(_deleteExpired, 60_000); // Purge cache on launch, but wait a bit
+		setInterval(_deleteExpired, 1000 * 3600 * 24);
 	}
 }
 
