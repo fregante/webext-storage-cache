@@ -1,3 +1,4 @@
+import {type AsyncReturnType} from 'type-fest';
 import {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type CacheValue} from './cached-value.js';
 import CachedFunction from './cached-function.js';
@@ -37,6 +38,8 @@ export default class CachedMap<ScopedValue extends CacheValue> {
 			throw new TypeError('Expected a value to be stored');
 		}
 
+		// Type assertion is needed because CachedFunction expects the exact return type of the updater.
+		// Since we're manually setting the value via applyOverride, we know it's safe to cast.
 		return this.#cachedFunction.applyOverride([key], value as AsyncReturnType<(key: string) => Promise<ScopedValue>>);
 	}
 
@@ -48,5 +51,3 @@ export default class CachedMap<ScopedValue extends CacheValue> {
 		return (await this.#cachedFunction.getCached(key)) !== undefined;
 	}
 }
-
-type AsyncReturnType<T extends (...arguments_: any[]) => Promise<any>> = Awaited<ReturnType<T>>;
