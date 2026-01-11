@@ -43,7 +43,9 @@
 		"distribution/cached-value.js",
 		"distribution/cached-value.d.ts",
 		"distribution/cached-function.js",
-		"distribution/cached-function.d.ts"
+		"distribution/cached-function.d.ts",
+		"distribution/cached-map.js",
+		"distribution/cached-map.d.ts"
 	],
 	"scripts": {
 		"build": "tsc",

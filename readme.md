@@ -79,6 +79,7 @@ const cachedFunction = new CachedFunction('unique', {
 
 - [CachedValue](./source/cached-value.md) - A simple API getter/setter
 - [CachedFunction](./source/cached-function.md) - A memoize-like API to cache your function calls without manually calling `isCached`/`get`/`set`
+- [CachedMap](./source/cached-map.md) - A Map-like API for manually caching multiple related items
 - `globalCache` - Global helpers, documented below
 - `legacy` - The previous Map-like API, documented below, deprecated
 
