@@ -38,8 +38,9 @@ export default class CachedMap<ScopedValue extends CacheValue> {
 			throw new TypeError('Expected a value to be stored');
 		}
 
-		// Type assertion is needed because CachedFunction expects the exact return type of the updater.
-		// Since we're manually setting the value via applyOverride, we know it's safe to cast.
+		// The type assertion is necessary because CachedFunction's ScopedValue type parameter
+		// is AsyncReturnType<Updater> which TypeScript treats as Awaited<ScopedValue>.
+		// Since our ScopedValue extends CacheValue (not Promise<CacheValue>), the cast is safe.
 		return this.#cachedFunction.applyOverride([key], value as AsyncReturnType<(key: string) => Promise<ScopedValue>>);
 	}
 
