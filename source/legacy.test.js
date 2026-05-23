@@ -1,5 +1,10 @@
 import nodeAssert from 'node:assert';
-import {test, beforeEach, assert} from 'vitest';
+import {
+	test,
+	beforeEach,
+	assert,
+	vi,
+} from 'vitest';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
 import cache, {_deleteExpired} from './legacy.ts';
 
@@ -11,6 +16,8 @@ const t = {
 	deepEqual: assert.deepEqual,
 	throwsAsync: nodeAssert.rejects,
 };
+
+const storageLocalPrototype = Object.getPrototypeOf(chrome.storage.local);
 
 function timeInTheFuture(time) {
 	return Date.now() + toMilliseconds(time);
@@ -31,6 +38,9 @@ function createCache(daysFromToday, wholeCache) {
 
 beforeEach(() => {
 	chrome.flush();
+	storageLocalPrototype.getKeys = vi.fn(callback => {
+		callback([]);
+	});
 	chrome.storage.local.get.yields({});
 	chrome.storage.local.set.yields(undefined);
 	chrome.storage.local.remove.yields(undefined);
@@ -102,33 +112,31 @@ test('clear() with empty storage', async () => {
 });
 
 test('clear() with empty cache', async () => {
-	chrome.storage.local.get
-		.withArgs()
-		.yields({
-			'unrelated-key': 'value',
-		});
+	storageLocalPrototype.getKeys.mockImplementation(callback => {
+		callback(['unrelated-key']);
+	});
 	await cache.clear();
 	t.is(chrome.storage.local.remove.callCount, 0);
+	t.is(chrome.storage.local.get.callCount, 0);
 });
 
 test('clear() with cache', async () => {
-	chrome.storage.local.get
-		.withArgs()
-		.yields({
-			'unrelated-key': 'value',
-			'cache:name': {data: 'Rico', maxAge: timeInTheFuture({days: 10})},
-			'cache:age': {data: 20, maxAge: timeInTheFuture({days: 10})},
-		});
+	storageLocalPrototype.getKeys.mockImplementation(callback => {
+		callback(['unrelated-key', 'cache:name', 'cache:age']);
+	});
 	await cache.clear();
 	const arguments_ = chrome.storage.local.remove.lastCall.args[0];
 	t.deepEqual(arguments_, ['cache:name', 'cache:age']);
+	t.is(chrome.storage.local.get.callCount, 0);
 });
 
 test('expired cache cleaning', async () => {
+	storageLocalPrototype.getKeys.mockImplementation(callback => {
+		callback(['unrelated-key', 'cache:name', 'cache:age']);
+	});
 	chrome.storage.local.get
-		.withArgs()
+		.withArgs(['cache:name', 'cache:age'])
 		.yields({
-			'unrelated-key': 'value',
 			'cache:name': {data: 'Rico', maxAge: timeInTheFuture({days: 10})},
 			'cache:age': {data: 20, maxAge: timeInTheFuture({days: -10})},
 		});

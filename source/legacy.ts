@@ -87,10 +87,22 @@ async function delete_(userKey: string): Promise<void> {
 async function deleteWithLogic(
 	logic?: (x: CachedValue<Value>) => boolean,
 ): Promise<void> {
-	const wholeCache: Cache = await chromeP.storage.local.get();
-	const removableItems: string[] = [];
+	const storageKeys: string[] = await chromeP.storage.local.getKeys();
+	const cacheKeys = storageKeys.filter(key => key.startsWith('cache:'));
+
+	if (cacheKeys.length === 0) {
+		return;
+	}
+
+	if (logic === undefined) {
+		await chromeP.storage.local.remove(cacheKeys);
+		return;
+	}
+
+	const wholeCache: Cache = await chromeP.storage.local.get(cacheKeys);
+	const removableItems = [];
 	for (const [key, value] of Object.entries(wholeCache)) {
-		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
+		if (value !== undefined && logic(value)) {
 			removableItems.push(key);
 		}
 	}
