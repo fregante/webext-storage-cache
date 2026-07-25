@@ -1,18 +1,10 @@
 /* eslint-disable promise/prefer-await-to-then -- TODO */
-import chromeP from 'webext-polyfill-kinda';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
-import {type CacheValue} from './cached-value.js';
+import {
+	type CacheValue, readItem, writeItem, deleteItem, timeInTheFuture,
+} from './storage.js';
 
 export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;
-
-type CachedItem<Value> = {
-	data: Value;
-	maxAge: number;
-};
-
-function timeInTheFuture(time: TimeDescriptor): number {
-	return Date.now() + toMilliseconds(time);
-}
 
 function getUserKey<Arguments extends unknown[]>(
 	name: string,
@@ -28,25 +20,6 @@ function getUserKey<Arguments extends unknown[]>(
 	}
 
 	return `${name}:${cacheKey(arguments_)}`;
-}
-
-async function readItem<Value extends CacheValue>(userKey: string): Promise<CachedItem<Value> | undefined> {
-	const internalKey = `cache:${userKey}`;
-	const storageData: Record<string, CachedItem<Value>> = await chromeP.storage.local.get(internalKey);
-	const item = storageData[internalKey];
-	return item !== undefined && Date.now() <= item.maxAge ? item : undefined;
-}
-
-async function writeItem<Value extends CacheValue>(userKey: string, data: Value, maxAge: TimeDescriptor): Promise<Value> {
-	const internalKey = `cache:${userKey}`;
-	await chromeP.storage.local.set({
-		[internalKey]: {data, maxAge: timeInTheFuture(maxAge)},
-	});
-	return data;
-}
-
-async function deleteItem(userKey: string): Promise<void> {
-	await chromeP.storage.local.remove(`cache:${userKey}`);
 }
 
 export default class CachedFunction<
