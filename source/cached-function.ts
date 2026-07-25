@@ -1,9 +1,19 @@
-import {type AsyncReturnType} from 'type-fest';
+import chromeP from 'webext-polyfill-kinda';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type CacheValue} from './cached-value.js';
-import cache, {type CacheKey, _get, timeInTheFuture} from './legacy.js';
 
-function getUserKey<Arguments extends any[]>(
+export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;
+
+type CachedItem<Value> = {
+	data: Value;
+	maxAge: number;
+};
+
+function timeInTheFuture(time: TimeDescriptor): number {
+	return Date.now() + toMilliseconds(time);
+}
+
+function getUserKey<Arguments extends unknown[]>(
 	name: string,
 	cacheKey: CacheKey<Arguments> | undefined,
 	arguments_: Arguments,
@@ -19,72 +29,42 @@ function getUserKey<Arguments extends any[]>(
 	return `${name}:${cacheKey(arguments_)}`;
 }
 
+async function readItem<Value extends CacheValue>(userKey: string): Promise<CachedItem<Value> | undefined> {
+	const internalKey = `cache:${userKey}`;
+	const storageData: Record<string, CachedItem<Value>> = await chromeP.storage.local.get(internalKey);
+	const item = storageData[internalKey];
+	return item !== undefined && Date.now() <= item.maxAge ? item : undefined;
+}
+
+async function writeItem<Value extends CacheValue>(userKey: string, data: Value, maxAge: TimeDescriptor): Promise<Value> {
+	const internalKey = `cache:${userKey}`;
+	await chromeP.storage.local.set({
+		[internalKey]: {data, maxAge: timeInTheFuture(maxAge)},
+	});
+	return data;
+}
+
+async function deleteItem(userKey: string): Promise<void> {
+	await chromeP.storage.local.remove(`cache:${userKey}`);
+}
+
 export default class CachedFunction<
-	// TODO: Review this type. While `undefined/null` can't be stored, the `updater` can return it to clear the cache
-	Updater extends ((...arguments_: any[]) => Promise<CacheValue>),
-	ScopedValue extends AsyncReturnType<Updater>,
-	Arguments extends Parameters<Updater>,
+	Updater extends (...arguments_: any[]) => Promise<CacheValue>,
+	ScopedValue extends Awaited<ReturnType<Updater>> = Awaited<ReturnType<Updater>>,
+	Arguments extends Parameters<Updater> = Parameters<Updater>,
 > {
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
 
-	// The only reason this is not a constructor method is TypeScript: `get` must be `typeof Updater`
-	get = (async (...arguments_: Arguments) => {
-		const getSet = async (
-			userKey: string,
-			arguments__: Arguments,
-		): Promise<ScopedValue | undefined> => {
-			const freshValue = await this.#updater(...arguments__);
-			if (freshValue === undefined) {
-				await cache.delete(userKey);
-				return;
-			}
-
-			const milliseconds = toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate);
-
-			return cache.set(userKey, freshValue, {milliseconds}) as Promise<ScopedValue>;
-		};
-
-		const memoizeStorage = async (userKey: string, ...arguments__: Arguments) => {
-			const cachedItem = await _get<ScopedValue>(userKey, false);
-			if (cachedItem === undefined || this.#shouldRevalidate?.(cachedItem.data)) {
-				return getSet(userKey, arguments__);
-			}
-
-			// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
-			if (timeInTheFuture(this.staleWhileRevalidate) > cachedItem.maxAge) {
-				setTimeout(getSet, 0, userKey, arguments__);
-			}
-
-			return cachedItem.data;
-		};
-
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		const cached = this.#inFlightCache.get(userKey);
-		if (cached) {
-			// Avoid calling the same function twice while pending
-			return cached as Promise<ScopedValue>;
-		}
-
-		const promise = memoizeStorage(userKey, ...arguments_);
-		this.#inFlightCache.set(userKey, promise);
-		const del = () => {
-			this.#inFlightCache.delete(userKey);
-		};
-
-		// eslint-disable-next-line promise/prefer-await-to-then -- Just dealing with the primise
-		promise.then(del, del);
-		return promise as Promise<ScopedValue>;
-	}) as unknown as Updater;
-
+	readonly #totalMaxAge: TimeDescriptor;
 	readonly #updater: Updater;
 	readonly #cacheKey: CacheKey<Arguments> | undefined;
 	readonly #shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
-	readonly #inFlightCache = new Map<string, Promise<ScopedValue | undefined>>();
+	readonly #inFlight = new Map<string, Promise<ScopedValue | undefined>>();
 
 	constructor(
 		public name: string,
-		readonly options: {
+		options: {
 			updater: Updater;
 			maxAge?: TimeDescriptor;
 			staleWhileRevalidate?: TimeDescriptor;
@@ -92,42 +72,79 @@ export default class CachedFunction<
 			shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 		},
 	) {
-		this.#cacheKey = options.cacheKey;
 		this.#updater = options.updater;
+		this.#cacheKey = options.cacheKey;
 		this.#shouldRevalidate = options.shouldRevalidate;
 		this.maxAge = options.maxAge ?? {days: 30};
 		this.staleWhileRevalidate = options.staleWhileRevalidate ?? {days: 0};
+		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
 	}
+
+	get = (async (...arguments_: Arguments): Promise<ScopedValue | undefined> => {
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		const cached = await readItem<ScopedValue>(userKey);
+
+		if (cached === undefined || this.#shouldRevalidate?.(cached.data)) {
+			return this.#updateOnce(userKey, arguments_);
+		}
+
+		if (timeInTheFuture(this.staleWhileRevalidate) > cached.maxAge) {
+			setTimeout(() => {
+				this.#updateOnce(userKey, arguments_).catch(() => {});
+			}, 0);
+		}
+
+		return cached.data;
+	}) as unknown as Updater;
 
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
-		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, arguments_);
-		return cache.get(userKey) as Promise<ScopedValue>;
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		return (await readItem<ScopedValue>(userKey))?.data;
 	}
 
-	async applyOverride(arguments_: Arguments, value: ScopedValue) {
-		if (arguments.length === 0) {
+	async applyOverride(arguments_: Arguments, value: ScopedValue): Promise<ScopedValue> {
+		if (arguments_.length === 0) {
 			throw new TypeError('Expected a value to be stored');
 		}
 
-		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, arguments_);
-		return cache.set(userKey, value, this.maxAge);
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		return writeItem(userKey, value, this.#totalMaxAge);
 	}
 
 	async getFresh(...arguments_: Arguments): Promise<ScopedValue> {
-		if (this.#updater === undefined) {
-			throw new TypeError('Cannot get fresh value without updater');
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		const value = await this.#updater(...arguments_) as ScopedValue;
+		return writeItem(userKey, value, this.#totalMaxAge);
+	}
+
+	async delete(...arguments_: Arguments): Promise<void> {
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		await deleteItem(userKey);
+	}
+
+	async isCached(...arguments_: Arguments): Promise<boolean> {
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		return (await readItem<ScopedValue>(userKey)) !== undefined;
+	}
+
+	#updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue | undefined> {
+		let promise = this.#inFlight.get(userKey);
+		if (!promise) {
+			promise = this.#update(userKey, arguments_);
+			this.#inFlight.set(userKey, promise);
+			promise.finally(() => this.#inFlight.delete(userKey));
 		}
 
-		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, arguments_);
-		return cache.set(userKey, await this.#updater(...arguments_)) as Promise<ScopedValue>;
+		return promise;
 	}
 
-	async delete(...arguments_: Arguments) {
-		const userKey = getUserKey<Arguments>(this.name, this.#cacheKey, arguments_);
-		return cache.delete(userKey);
-	}
+	async #update(userKey: string, arguments_: Arguments): Promise<ScopedValue | undefined> {
+		const freshValue = await this.#updater(...arguments_) as ScopedValue | undefined;
+		if (freshValue === undefined) {
+			await deleteItem(userKey);
+			return undefined;
+		}
 
-	async isCached(...arguments_: Arguments) {
-		return (await this.get(...arguments_)) !== undefined;
+		return writeItem(userKey, freshValue, this.#totalMaxAge);
 	}
 }
