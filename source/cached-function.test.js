@@ -362,4 +362,154 @@ test('.getFresh() ignores cached value', async () => {
 	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
-// TODO: Test .applyOverride
+test('.getFresh() stores using maxAge + staleWhileRevalidate', async () => {
+	const maxAge = 1;
+	const staleWhileRevalidate = 29;
+
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {
+		updater: spy,
+		maxAge: {days: maxAge},
+		staleWhileRevalidate: {days: staleWhileRevalidate},
+	});
+
+	await updaterItem.getFresh('@anne');
+
+	const arguments_ = chrome.storage.local.set.lastCall.args[0];
+	const expectedExpiration = maxAge + staleWhileRevalidate;
+	assert.ok(arguments_['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	assert.ok(arguments_['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+});
+
+test('.applyOverride() throws without arguments', async () => {
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	await expect(updaterItem.applyOverride([], 'ANNE')).rejects.toThrow(TypeError);
+	assert.equal(chrome.storage.local.set.callCount, 0);
+});
+
+test('.applyOverride() stores the value under the computed key', async () => {
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	await updaterItem.applyOverride(['@anne'], 'OVERRIDDEN');
+
+	assert.equal(chrome.storage.local.set.lastCall.args[0]['cache:spy:["@anne"]'].data, 'OVERRIDDEN');
+	expect(spy).not.toHaveBeenCalled();
+});
+
+test('.applyOverride() stores using maxAge + staleWhileRevalidate', async () => {
+	const maxAge = 1;
+	const staleWhileRevalidate = 29;
+
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {
+		updater: spy,
+		maxAge: {days: maxAge},
+		staleWhileRevalidate: {days: staleWhileRevalidate},
+	});
+
+	await updaterItem.applyOverride(['@anne'], 'OVERRIDDEN');
+
+	const arguments_ = chrome.storage.local.set.lastCall.args[0];
+	const expectedExpiration = maxAge + staleWhileRevalidate;
+	assert.ok(arguments_['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	assert.ok(arguments_['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+});
+
+test('.isCached() is false for empty cache and never calls the updater', async () => {
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	assert.equal(await updaterItem.isCached('@anne'), false);
+	expect(spy).not.toHaveBeenCalled();
+	assert.equal(chrome.storage.local.set.callCount, 0);
+});
+
+test('.isCached() is true for a cached value', async () => {
+	createCache(10, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	assert.equal(await updaterItem.isCached('@anne'), true);
+	expect(spy).not.toHaveBeenCalled();
+});
+
+test('.isCached() is false for an expired cache', async () => {
+	createCache(-10, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	assert.equal(await updaterItem.isCached('@anne'), false);
+	expect(spy).not.toHaveBeenCalled();
+});
+
+test('background revalidation is deduped across overlapping calls', async () => {
+	createCache(15, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	const spy = vi.fn(getUsernameDemo);
+	const updaterItem = new CachedFunction('spy', {
+		updater: spy,
+		maxAge: {days: 1},
+		staleWhileRevalidate: {days: 29},
+	});
+
+	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
+
+	expect(spy).toHaveBeenCalledOnce();
+	assert.equal(chrome.storage.local.set.callCount, 1);
+});
+
+test('background revalidation failure does not crash or wedge the cache', async () => {
+	createCache(15, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	const spy = vi.fn()
+		.mockRejectedValueOnce(new Error('boom'))
+		.mockImplementation(getUsernameDemo);
+
+	const updaterItem = new CachedFunction('spy', {
+		updater: spy,
+		maxAge: {days: 1},
+		staleWhileRevalidate: {days: 29},
+	});
+
+	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
+
+	// The failed revalidation must not have touched the cache
+	expect(spy).toHaveBeenCalledOnce();
+	assert.equal(chrome.storage.local.set.callCount, 0);
+
+	createCache(15, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
+
+	// A later call must be able to revalidate again, not be stuck
+	expect(spy).toHaveBeenCalledTimes(2);
+	assert.equal(chrome.storage.local.set.callCount, 1);
+});
