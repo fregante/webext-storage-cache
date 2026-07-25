@@ -1,3 +1,4 @@
+import chrome from 'webext-polyfill-kinda';
 import {isBackground, isExtensionContext} from 'webext-detect';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type JsonValue} from 'type-fest';
@@ -61,6 +62,7 @@ export async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const ALARM_NAME = 'webext-storage-cache';
 
 function init(): void {
