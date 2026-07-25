@@ -1,3 +1,5 @@
+import chrome from 'webext-polyfill-kinda';
+import {isBackground, isExtensionContext} from 'webext-detect';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type JsonValue} from 'type-fest';
 
@@ -31,3 +33,65 @@ export async function writeItem<Value extends CacheValue>(userKey: string, data:
 export async function deleteItem(userKey: string): Promise<void> {
 	await chrome.storage.local.remove(`cache:${userKey}`);
 }
+
+export async function has(userKey: string): Promise<boolean> {
+	return (await readItem(userKey)) !== undefined;
+}
+
+async function deleteWithLogic(logic?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
+	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get();
+	const removableKeys: string[] = [];
+	for (const [key, item] of Object.entries(wholeCache)) {
+		if (key.startsWith('cache:') && (logic?.(item) ?? true)) {
+			removableKeys.push(key);
+		}
+	}
+
+	if (removableKeys.length > 0) {
+		await chrome.storage.local.remove(removableKeys);
+	}
+}
+
+/** Deletes every expired entry. Runs automatically in the background context; call manually elsewhere. */
+export async function deleteExpired(): Promise<void> {
+	await deleteWithLogic(item => Date.now() > item.maxAge);
+}
+
+/** Deletes every cache entry, expired or not. */
+export async function clear(): Promise<void> {
+	await deleteWithLogic();
+}
+
+const ALARM_NAME = 'webext-storage-cache';
+
+function init(): void {
+	// Make it available globally for ease of use
+	if (isExtensionContext()) {
+		(globalThis as any).webextStorageCache = {has, clear, deleteExpired};
+	}
+
+	// Automatically clear expired entries every day
+	if (!isBackground()) {
+		return;
+	}
+
+	if (chrome.alarms) {
+		void chrome.alarms.create(ALARM_NAME, {
+			delayInMinutes: 1,
+			periodInMinutes: 60 * 24,
+		});
+
+		let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
+		chrome.alarms.onAlarm.addListener(alarm => {
+			if (alarm.name === ALARM_NAME && lastRun < Date.now() - 1000) {
+				lastRun = Date.now();
+				void deleteExpired();
+			}
+		});
+	} else {
+		setTimeout(deleteExpired, 60_000); // Purge cache on launch, but wait a bit
+		setInterval(deleteExpired, 1000 * 3600 * 24);
+	}
+}
+
+init();
