@@ -1,3 +1,4 @@
+/* eslint-disable promise/prefer-await-to-then -- TODO */
 import chromeP from 'webext-polyfill-kinda';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type CacheValue} from './cached-value.js';
@@ -80,7 +81,7 @@ export default class CachedFunction<
 		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
 	}
 
-	get = (async (...arguments_: Arguments): Promise<ScopedValue | undefined> => {
+	async get(...arguments_: Arguments): Promise<ScopedValue | undefined> {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
 		const cached = await readItem<ScopedValue>(userKey);
 
@@ -90,16 +91,17 @@ export default class CachedFunction<
 
 		if (timeInTheFuture(this.staleWhileRevalidate) > cached.maxAge) {
 			setTimeout(() => {
-				this.#updateOnce(userKey, arguments_).catch(() => {});
+				this.#updateOnce(userKey, arguments_).catch(() => undefined);
 			}, 0);
 		}
 
 		return cached.data;
-	}) as unknown as Updater;
+	}
 
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		return (await readItem<ScopedValue>(userKey))?.data;
+		const cached = await readItem<ScopedValue>(userKey);
+		return cached?.data;
 	}
 
 	async applyOverride(arguments_: Arguments, value: ScopedValue): Promise<ScopedValue> {
@@ -127,12 +129,12 @@ export default class CachedFunction<
 		return (await readItem<ScopedValue>(userKey)) !== undefined;
 	}
 
-	#updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue | undefined> {
+	async #updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue | undefined> {
 		let promise = this.#inFlight.get(userKey);
 		if (!promise) {
 			promise = this.#update(userKey, arguments_);
 			this.#inFlight.set(userKey, promise);
-			promise.finally(() => this.#inFlight.delete(userKey)).catch(() => {});
+			promise.finally(() => this.#inFlight.delete(userKey)).catch(() => undefined);
 		}
 
 		return promise;
