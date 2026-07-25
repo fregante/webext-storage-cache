@@ -2,7 +2,7 @@
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {
 	type CacheValue, readItem, writeItem, deleteItem, timeInTheFuture,
-} from './storage.js';
+} from './legacy.js';
 
 export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;
 
