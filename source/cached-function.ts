@@ -132,7 +132,7 @@ export default class CachedFunction<
 		if (!promise) {
 			promise = this.#update(userKey, arguments_);
 			this.#inFlight.set(userKey, promise);
-			promise.finally(() => this.#inFlight.delete(userKey));
+			promise.finally(() => this.#inFlight.delete(userKey)).catch(() => {});
 		}
 
 		return promise;

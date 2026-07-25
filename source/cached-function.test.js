@@ -456,7 +456,12 @@ test('background revalidation is deduped across overlapping calls', async () => 
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	// A slow updater keeps the first revalidation in flight long enough
+	// for the second one's trigger to observe it and dedupe against it.
+	const spy = vi.fn(async () => new Promise(resolve => {
+		setTimeout(() => resolve('ANNE'), 20);
+	}));
+
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: 1},
