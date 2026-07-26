@@ -54,7 +54,7 @@ export default class CachedFunction<
 		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
 	}
 
-	async get(...arguments_: Arguments): Promise<ScopedValue | undefined> {
+	get = (async (...arguments_: Arguments): Promise<ScopedValue | undefined> => {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
 		const cached = await readItem<ScopedValue>(userKey);
 
@@ -69,7 +69,7 @@ export default class CachedFunction<
 		}
 
 		return cached.data;
-	}
+	}) as unknown as Updater;
 
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
