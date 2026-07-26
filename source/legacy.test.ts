@@ -29,11 +29,6 @@ vi.mock('webext-polyfill-kinda', () => ({
 	},
 }));
 
-vi.mock('webext-detect', () => ({
-	isBackground: () => false,
-	isExtensionContext: () => false,
-}));
-
 vi.mock('@sindresorhus/to-milliseconds', () => ({
 	default: vi.fn(() => 1000),
 }));
