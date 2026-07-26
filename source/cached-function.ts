@@ -110,7 +110,8 @@ export default class CachedFunction<
 		if (!promise) {
 			promise = this.#update(userKey, arguments_);
 			this.#inFlight.set(userKey, promise);
-			promise.finally(() => this.#inFlight.delete(userKey)).catch(() => undefined);
+			const clear = () => this.#inFlight.delete(userKey);
+			promise.then(clear, clear);
 		}
 
 		return promise;
@@ -120,7 +121,7 @@ export default class CachedFunction<
 		const freshValue = await this.#updater(...arguments_) as ScopedValue | undefined;
 		if (freshValue === undefined) {
 			await deleteItem(userKey);
-			return undefined;
+			return;
 		}
 
 		return writeItem(userKey, freshValue, this.#totalMaxAge);
