@@ -1,5 +1,4 @@
 import chrome from 'webext-polyfill-kinda';
-import {isBackground, isExtensionContext} from 'webext-detect';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type JsonValue} from 'type-fest';
 
@@ -65,17 +64,7 @@ export async function clear(): Promise<void> {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const ALARM_NAME = 'webext-storage-cache';
 
-function init(): void {
-	// Make it available globally for ease of use
-	if (isExtensionContext()) {
-		(globalThis as any).webextStorageCache = {has, clear, deleteExpired};
-	}
-
-	// Automatically clear expired entries every day
-	if (!isBackground()) {
-		return;
-	}
-
+export function init(): void {
 	if (chrome.alarms) {
 		void chrome.alarms.create(ALARM_NAME, {
 			delayInMinutes: 1,
@@ -94,5 +83,3 @@ function init(): void {
 		setInterval(deleteExpired, 1000 * 3600 * 24);
 	}
 }
-
-init();
