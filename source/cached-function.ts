@@ -32,7 +32,7 @@ export default class CachedFunction<
 	readonly staleWhileRevalidate: TimeDescriptor;
 
 	// The only reason this is not a constructor method is TypeScript: `get` must be `typeof Updater`
-	get = (async (...arguments_: Arguments): Promise<ScopedValue | undefined> => {
+	get = (async (...arguments_: Arguments) => {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
 		const cached = await readItem<ScopedValue>(userKey);
 
@@ -50,11 +50,11 @@ export default class CachedFunction<
 		return cached.data;
 	}) as unknown as Updater;
 
-	readonly #totalMaxAge: TimeDescriptor;
-	readonly #cacheKey: CacheKey<Arguments> | undefined;
 	readonly #updater: Updater;
+	readonly #cacheKey: CacheKey<Arguments> | undefined;
 	readonly #shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
 	readonly #inFlight = new Map<string, Promise<ScopedValue | undefined>>();
+	readonly #totalMaxAge: TimeDescriptor;
 
 	constructor(
 		public name: string,
@@ -66,8 +66,8 @@ export default class CachedFunction<
 			shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 		},
 	) {
-		this.#updater = options.updater;
 		this.#cacheKey = options.cacheKey;
+		this.#updater = options.updater;
 		this.#shouldRevalidate = options.shouldRevalidate;
 		this.maxAge = options.maxAge ?? {days: 30};
 		this.staleWhileRevalidate = options.staleWhileRevalidate ?? {days: 0};
@@ -80,7 +80,7 @@ export default class CachedFunction<
 		return cached?.data;
 	}
 
-	async applyOverride(arguments_: Arguments, value: ScopedValue): Promise<ScopedValue> {
+	async applyOverride(arguments_: Arguments, value: ScopedValue) {
 		if (arguments_.length === 0) {
 			throw new TypeError('Expected a value to be stored');
 		}
@@ -95,12 +95,12 @@ export default class CachedFunction<
 		return writeItem(userKey, value, this.#totalMaxAge);
 	}
 
-	async delete(...arguments_: Arguments): Promise<void> {
+	async delete(...arguments_: Arguments) {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
 		await deleteItem(userKey);
 	}
 
-	async isCached(...arguments_: Arguments): Promise<boolean> {
+	async isCached(...arguments_: Arguments) {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
 		return (await readItem<ScopedValue>(userKey)) !== undefined;
 	}
