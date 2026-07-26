@@ -1,4 +1,3 @@
-import chrome from 'webext-polyfill-kinda';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type JsonValue} from 'type-fest';
 

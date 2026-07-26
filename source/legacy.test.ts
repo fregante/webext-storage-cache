@@ -20,14 +20,11 @@ const {storage} = vi.hoisted(() => ({
 	},
 }));
 
-vi.mock('webext-polyfill-kinda', () => ({
-	default: {
-		storage: {
-			local: storage,
-		},
-		alarms: undefined,
+vi.stubGlobal('chrome', {
+	storage: {
+		local: storage,
 	},
-}));
+});
 
 vi.mock('@sindresorhus/to-milliseconds', () => ({
 	default: vi.fn(() => 1000),

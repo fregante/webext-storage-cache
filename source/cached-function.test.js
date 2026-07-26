@@ -12,14 +12,11 @@ const {storage} = vi.hoisted(() => ({
 	},
 }));
 
-vi.mock('webext-polyfill-kinda', () => ({
-	default: {
-		storage: {
-			local: storage,
-		},
-		alarms: undefined,
+vi.stubGlobal('chrome', {
+	storage: {
+		local: storage,
 	},
-}));
+});
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 
@@ -484,7 +481,6 @@ test('.applyOverride() stores using maxAge + staleWhileRevalidate', async () => 
 	assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
 	assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
-
 
 test('.isCached() is false for empty cache and never calls the updater', async () => {
 	const spy = vi.fn(getUsernameDemo);
