@@ -23,6 +23,7 @@ function getUserKey<Arguments extends unknown[]>(
 }
 
 export default class CachedFunction<
+	// TODO: Review this type. While `undefined/null` can't be stored, the `updater` can return it to clear the cache
 	Updater extends (...arguments_: any[]) => Promise<CacheValue>,
 	ScopedValue extends Awaited<ReturnType<Updater>> = Awaited<ReturnType<Updater>>,
 	Arguments extends Parameters<Updater> = Parameters<Updater>,
@@ -30,15 +31,34 @@ export default class CachedFunction<
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
 
+	// The only reason this is not a constructor method is TypeScript: `get` must be `typeof Updater`
+	get = (async (...arguments_: Arguments): Promise<ScopedValue | undefined> => {
+		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		const cached = await readItem<ScopedValue>(userKey);
+
+		if (cached === undefined || this.#shouldRevalidate?.(cached.data)) {
+			return this.#updateOnce(userKey, arguments_);
+		}
+
+		// When the expiration is earlier than the number of days specified by `staleWhileRevalidate`, it means `maxAge` has already passed and therefore the cache is stale.
+		if (timeInTheFuture(this.staleWhileRevalidate) > cached.maxAge) {
+			setTimeout(() => {
+				this.#updateOnce(userKey, arguments_).catch(() => undefined);
+			}, 0);
+		}
+
+		return cached.data;
+	}) as unknown as Updater;
+
 	readonly #totalMaxAge: TimeDescriptor;
-	readonly #updater: Updater;
 	readonly #cacheKey: CacheKey<Arguments> | undefined;
+	readonly #updater: Updater;
 	readonly #shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
 	readonly #inFlight = new Map<string, Promise<ScopedValue | undefined>>();
 
 	constructor(
 		public name: string,
-		options: {
+		readonly options: {
 			updater: Updater;
 			maxAge?: TimeDescriptor;
 			staleWhileRevalidate?: TimeDescriptor;
@@ -53,23 +73,6 @@ export default class CachedFunction<
 		this.staleWhileRevalidate = options.staleWhileRevalidate ?? {days: 0};
 		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
 	}
-
-	get = (async (...arguments_: Arguments): Promise<ScopedValue | undefined> => {
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		const cached = await readItem<ScopedValue>(userKey);
-
-		if (cached === undefined || this.#shouldRevalidate?.(cached.data)) {
-			return this.#updateOnce(userKey, arguments_);
-		}
-
-		if (timeInTheFuture(this.staleWhileRevalidate) > cached.maxAge) {
-			setTimeout(() => {
-				this.#updateOnce(userKey, arguments_).catch(() => undefined);
-			}, 0);
-		}
-
-		return cached.data;
-	}) as unknown as Updater;
 
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
