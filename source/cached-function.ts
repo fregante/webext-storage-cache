@@ -23,9 +23,8 @@ function getUserKey<Arguments extends unknown[]>(
 }
 
 export default class CachedFunction<
-	// TODO: Review this type. While `undefined/null` can't be stored, the `updater` can return it to clear the cache
-	Updater extends (...arguments_: any[]) => Promise<CacheValue>,
-	ScopedValue extends Awaited<ReturnType<Updater>> = Awaited<ReturnType<Updater>>,
+	Updater extends (...arguments_: any[]) => Promise<CacheValue | undefined>,
+	ScopedValue extends CacheValue = Exclude<Awaited<ReturnType<Updater>>, undefined>,
 	Arguments extends Parameters<Updater> = Parameters<Updater>,
 > {
 	readonly maxAge: TimeDescriptor;
@@ -81,7 +80,7 @@ export default class CachedFunction<
 	}
 
 	async applyOverride(arguments_: Arguments, value: ScopedValue) {
-		if (arguments_.length === 0) {
+		if (value === undefined) {
 			throw new TypeError('Expected a value to be stored');
 		}
 
@@ -89,10 +88,15 @@ export default class CachedFunction<
 		return writeItem(userKey, value, this.#totalMaxAge);
 	}
 
-	async getFresh(...arguments_: Arguments): Promise<ScopedValue> {
+	async getFresh(...arguments_: Arguments): Promise<ScopedValue | undefined> {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		const value = await this.#updater(...arguments_) as ScopedValue;
-		return writeItem(userKey, value, this.#totalMaxAge);
+		const freshValue = await this.#updater(...arguments_) as ScopedValue | undefined;
+		if (freshValue === undefined) {
+			await deleteItem(userKey);
+			return;
+		}
+
+		return writeItem(userKey, freshValue, this.#totalMaxAge);
 	}
 
 	async delete(...arguments_: Arguments) {
