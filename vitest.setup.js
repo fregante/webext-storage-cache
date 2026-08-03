@@ -1,2 +1,11 @@
-globalThis.location = new URL('chrome://1234/_generated_background_page.html');
-globalThis.window = {};
+import {vi} from 'vitest';
+
+vi.stubGlobal('chrome', {
+	storage: {
+		local: {
+			get: vi.fn(),
+			set: vi.fn(),
+			remove: vi.fn(),
+		},
+	},
+});

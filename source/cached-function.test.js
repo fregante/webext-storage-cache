@@ -1,67 +1,18 @@
 import {
-	test, beforeEach, vi, assert, expect,
+	test, vi, assert, expect, beforeEach,
 } from 'vitest';
-import toMilliseconds from '@sindresorhus/to-milliseconds';
 import CachedFunction from './cached-function.ts';
-
-const {storage} = vi.hoisted(() => ({
-	storage: {
-		get: vi.fn(),
-		set: vi.fn(),
-		remove: vi.fn(),
-	},
-}));
-
-vi.stubGlobal('chrome', {
-	storage: {
-		local: storage,
-	},
-});
+import {
+	createCache,
+	timeInTheFuture,
+} from './test-utils.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
-
-function timeInTheFuture(time) {
-	return Date.now() + toMilliseconds(time);
-}
-
-function createCache(daysFromToday, wholeCache) {
-	const store = {};
-
-	for (const [key, data] of Object.entries(wholeCache)) {
-		store[key] = {
-			data,
-			maxAge: timeInTheFuture({days: daysFromToday}),
-		};
-	}
-
-	storage.get.mockImplementation(async key => {
-		if (key === undefined) {
-			return store;
-		}
-
-		return key in store ? {[key]: store[key]} : {};
-	});
-
-	storage.set.mockImplementation(async items => {
-		Object.assign(store, items);
-	});
-
-	storage.remove.mockImplementation(async keys => {
-		for (const key of [keys].flat()) {
-			delete store[key];
-		}
-	});
-
-	return store;
-}
+const storage = chrome.storage.local;
 
 beforeEach(() => {
-	vi.clearAllMocks();
-	vi.restoreAllMocks();
-
-	storage.get.mockResolvedValue({});
-	storage.set.mockResolvedValue(undefined);
-	storage.remove.mockResolvedValue(undefined);
+	vi.resetAllMocks();
+	createCache(30, {});
 });
 
 test('getCached() with empty cache', async () => {

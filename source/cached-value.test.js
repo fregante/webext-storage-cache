@@ -2,48 +2,18 @@ import nodeAssert from 'node:assert';
 import {
 	assert, expect, beforeEach, test, vi,
 } from 'vitest';
-import toMilliseconds from '@sindresorhus/to-milliseconds';
 import CachedValue from './cached-value.ts';
+import {
+	createCache,
+	timeInTheFuture,
+} from './test-utils.js';
 
-const {storage} = vi.hoisted(() => ({
-	storage: {
-		get: vi.fn(),
-		set: vi.fn(),
-		remove: vi.fn(),
-	},
-}));
-
-vi.stubGlobal('chrome', {
-	storage: {
-		local: storage,
-	},
-});
-
-function timeInTheFuture(time) {
-	return Date.now() + toMilliseconds(time);
-}
-
+const storage = chrome.storage.local;
 const testItem = new CachedValue('name');
 
-function createCache(daysFromToday, wholeCache) {
-	for (const [key, data] of Object.entries(wholeCache)) {
-		storage.get
-			.mockResolvedValueOnce({
-				[key]: {
-					data,
-					maxAge: timeInTheFuture({days: daysFromToday}),
-				},
-			});
-	}
-}
-
 beforeEach(() => {
-	vi.clearAllMocks();
-	vi.restoreAllMocks();
-
-	storage.get.mockResolvedValue({});
-	storage.set.mockResolvedValue(undefined);
-	storage.remove.mockResolvedValue(undefined);
+	vi.resetAllMocks();
+	createCache(30, {});
 });
 
 test('get() with empty cache', async () => {
@@ -94,7 +64,7 @@ test('set() without a value', async () => {
 	});
 });
 
-test.skip('set() with undefined', async () => {
+test('set() with undefined', async () => {
 	await testItem.set('Anne');
 	assert.equal(await testItem.isCached(), true);
 
