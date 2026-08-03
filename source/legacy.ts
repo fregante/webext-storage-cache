@@ -1,165 +1,84 @@
-import chromeP from 'webext-polyfill-kinda';
-import {isBackground, isExtensionContext} from 'webext-detect';
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
+import {type JsonValue} from 'type-fest';
 
-const cacheDefault = {days: 30};
+// eslint-disable-next-line @typescript-eslint/ban-types -- It is a JSON value
+export type CacheValue = Exclude<JsonValue, null>;
+
+export type CachedItem<Value> = {
+	data: Value;
+	maxAge: number;
+};
 
 export function timeInTheFuture(time: TimeDescriptor): number {
 	return Date.now() + toMilliseconds(time);
 }
 
-type Primitive = boolean | number | string;
-type Value = Primitive | Primitive[] | Record<string, any>;
-// No circular references: Record<string, Value> https://github.com/Microsoft/TypeScript/issues/14174
-// No index signature: {[key: string]: Value} https://github.com/microsoft/TypeScript/issues/15300#issuecomment-460226926
-
-type CachedValue<Value> = {
-	data: Value;
-	maxAge: number;
-};
-
-type Cache<ScopedValue extends Value = Value> = Record<string, CachedValue<ScopedValue>>;
-
-async function has(key: string): Promise<boolean> {
-	return (await _get(key, false)) !== undefined;
-}
-
-export async function _get<ScopedValue extends Value>(
-	key: string,
-	remove: boolean,
-): Promise<CachedValue<ScopedValue> | undefined> {
-	const internalKey = `cache:${key}`;
-	const storageData: Record<string, CachedValue<ScopedValue>> = await chromeP.storage.local.get(internalKey);
-	const cachedItem = storageData[internalKey];
-
-	if (cachedItem === undefined) {
-		// `undefined` means not in cache
-		return;
-	}
-
-	if (Date.now() > cachedItem.maxAge) {
-		if (remove) {
-			await chromeP.storage.local.remove(internalKey);
-		}
-
-		return;
-	}
-
-	return cachedItem;
-}
-
-async function get<ScopedValue extends Value>(
-	key: string,
-): Promise<ScopedValue | undefined> {
-	const cachedValue = await _get<ScopedValue>(key, true);
-	return cachedValue?.data;
-}
-
-async function set<ScopedValue extends Value>(
-	key: string,
-	value: ScopedValue,
-	maxAge: TimeDescriptor = cacheDefault,
-): Promise<ScopedValue> {
-	if (arguments.length < 2) {
-		throw new TypeError('Expected a value as the second argument');
-	}
-
-	if (value === undefined) {
-		await delete_(key);
-	} else {
-		const internalKey = `cache:${key}`;
-		await chromeP.storage.local.set({
-			[internalKey]: {
-				data: value,
-				maxAge: timeInTheFuture(maxAge),
-			},
-		});
-	}
-
-	return value;
-}
-
-async function delete_(userKey: string): Promise<void> {
+export async function readItem<Value extends CacheValue>(userKey: string): Promise<CachedItem<Value> | undefined> {
 	const internalKey = `cache:${userKey}`;
-	return chromeP.storage.local.remove(internalKey);
+	const storageData: Record<string, CachedItem<Value>> = await chrome.storage.local.get(internalKey);
+	const item = storageData[internalKey];
+	return item !== undefined && Date.now() <= item.maxAge ? item : undefined;
 }
 
-async function deleteWithLogic(
-	logic?: (x: CachedValue<Value>) => boolean,
-): Promise<void> {
-	const wholeCache: Cache = await chromeP.storage.local.get();
-	const removableItems: string[] = [];
-	for (const [key, value] of Object.entries(wholeCache)) {
-		if (key.startsWith('cache:') && (logic?.(value) ?? true)) {
-			removableItems.push(key);
+export async function writeItem<Value extends CacheValue>(userKey: string, data: Value, maxAge: TimeDescriptor): Promise<Value> {
+	const internalKey = `cache:${userKey}`;
+	await chrome.storage.local.set({
+		[internalKey]: {data, maxAge: timeInTheFuture(maxAge)},
+	});
+	return data;
+}
+
+export async function deleteItem(userKey: string): Promise<void> {
+	await chrome.storage.local.remove(`cache:${userKey}`);
+}
+
+export async function has(userKey: string): Promise<boolean> {
+	return (await readItem(userKey)) !== undefined;
+}
+
+async function deleteWithLogic(logic?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
+	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get();
+	const removableKeys: string[] = [];
+	for (const [key, item] of Object.entries(wholeCache)) {
+		if (key.startsWith('cache:') && (logic?.(item) ?? true)) {
+			removableKeys.push(key);
 		}
 	}
 
-	if (removableItems.length > 0) {
-		await chromeP.storage.local.remove(removableItems);
+	if (removableKeys.length > 0) {
+		await chrome.storage.local.remove(removableKeys);
 	}
 }
 
-/** @deprecated Private API for testing only. This happens automatically via chrome.alarms */
-export async function _deleteExpired(): Promise<void> {
-	await deleteWithLogic(cachedItem => Date.now() > cachedItem.maxAge);
+/** Deletes every expired entry. Runs automatically in the background context; call manually elsewhere. */
+export async function deleteExpired(): Promise<void> {
+	await deleteWithLogic(item => Date.now() > item.maxAge);
 }
 
-async function clear(): Promise<void> {
+/** Deletes every cache entry, expired or not. */
+export async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const ALARM_NAME = 'webext-storage-cache';
 
-export type MemoizedFunctionOptions<Arguments extends unknown[], ScopedValue> = {
-	maxAge?: TimeDescriptor;
-	staleWhileRevalidate?: TimeDescriptor;
-	cacheKey?: CacheKey<Arguments>;
-	shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
-};
-
-/** @deprecated Use CachedValue and CachedFunction instead */
-const cache = {
-	has,
-	get,
-	set,
-	clear,
-	delete: delete_,
-};
-
-function init(): void {
-	// Make it available globally for ease of use
-	if (isExtensionContext()) {
-		(globalThis as any).webextStorageCache = cache;
-	}
-
-	// Automatically clear cache every day
-	if (!isBackground()) {
-		return;
-	}
-
+export function init(): void {
 	if (chrome.alarms) {
-		void chrome.alarms.create('webext-storage-cache', {
+		void chrome.alarms.create(ALARM_NAME, {
 			delayInMinutes: 1,
 			periodInMinutes: 60 * 24,
 		});
 
 		let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
 		chrome.alarms.onAlarm.addListener(alarm => {
-			if (
-				alarm.name === 'webext-storage-cache'
-				&& lastRun < Date.now() - 1000
-			) {
+			if (alarm.name === ALARM_NAME && lastRun < Date.now() - 1000) {
 				lastRun = Date.now();
-				void _deleteExpired();
+				void deleteExpired();
 			}
 		});
 	} else {
-		setTimeout(_deleteExpired, 60_000); // Purge cache on launch, but wait a bit
-		setInterval(_deleteExpired, 1000 * 3600 * 24);
+		setTimeout(deleteExpired, 60_000); // Purge cache on launch, but wait a bit
+		setInterval(deleteExpired, 1000 * 3600 * 24);
 	}
 }
-
-init();
-
-export default cache;

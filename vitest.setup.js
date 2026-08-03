@@ -1,5 +1,11 @@
-import chrome from 'sinon-chrome';
+import {vi} from 'vitest';
 
-globalThis.location = new URL('chrome://1234/_generated_background_page.html');
-globalThis.chrome = chrome;
-globalThis.window = {};
+vi.stubGlobal('chrome', {
+	storage: {
+		local: {
+			get: vi.fn(),
+			set: vi.fn(),
+			remove: vi.fn(),
+		},
+	},
+});

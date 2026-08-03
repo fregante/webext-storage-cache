@@ -94,27 +94,6 @@ document.querySelector('.options .clear-cache').addEventListener('click', async 
 })
 ```
 
-### legacy API
-
-The API used until v5 has been deprecated and you should migrate to:
-
-- `CachedValue` for simple `cache.get`/`cache.set` calls. This API makes more sense in a typed context because the type is preserved/enforced across calls.
-- `CachedFunction` for `cache.function`. It behaves in a similar fashion, but it also has extra methods like `getCached` and `getFresh`
-
-You can:
-
-- [Migrate from v5 to v6](https://github.com/fregante/webext-storage-cache/releases/v6.0.0), or
-- Keep using the legacy API (except `cache.function`) by importing `webext-storage-cache/legacy.js` (until v7 is published)
-
-```js
-import cache from "webext-storage-cache/legacy.js";
-
-await cache.get('my-url');
-await cache.set('my-url', 'https://example.com');
-```
-
-The documentation for the legacy API can be found on the [v5 version of this readme](https://github.com/fregante/webext-storage-cache/blob/v5.1.1/readme.md#api).
-
 ## Related
 
 - [webext-detect](https://github.com/fregante/webext-detect) - Detects where the current browser extension code is being run.

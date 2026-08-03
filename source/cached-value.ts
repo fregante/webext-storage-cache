@@ -1,14 +1,15 @@
-import {type JsonValue} from 'type-fest';
 import {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
-import cache from './legacy.js';
+import {
+	type CacheValue, readItem, writeItem, deleteItem,
+} from './legacy.js';
 
-// eslint-disable-next-line @typescript-eslint/ban-types -- It is a JSON value
-export type CacheValue = Exclude<JsonValue, null>;
+export {type CacheValue} from './legacy.js';
 
 export default class CachedValue<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;
+
 	constructor(
-		public name: string,
+		public readonly name: string,
 		options: {
 			maxAge?: TimeDescriptor;
 		} = {},
@@ -17,7 +18,8 @@ export default class CachedValue<ScopedValue extends CacheValue> {
 	}
 
 	async get(): Promise<ScopedValue | undefined> {
-		return cache.get<ScopedValue>(this.name);
+		const item = await readItem<ScopedValue>(this.name);
+		return item?.data;
 	}
 
 	async set(value: ScopedValue): Promise<ScopedValue> {
@@ -25,14 +27,14 @@ export default class CachedValue<ScopedValue extends CacheValue> {
 			throw new TypeError('Expected a value to be stored');
 		}
 
-		return cache.set(this.name, value, this.maxAge);
+		return writeItem(this.name, value, this.maxAge);
 	}
 
 	async delete(): Promise<void> {
-		return cache.delete(this.name);
+		await deleteItem(this.name);
 	}
 
-	async isCached() {
-		return (await this.get()) !== undefined;
+	async isCached(): Promise<boolean> {
+		return (await readItem<ScopedValue>(this.name)) !== undefined;
 	}
 }
