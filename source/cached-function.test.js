@@ -43,6 +43,39 @@ function createCache(daysFromToday, wholeCache) {
 	});
 }
 
+// Unlike `createCache`, `storage.set`/`storage.remove` actually mutate the backing store here,
+// so `isCached()` reflects real writes/deletes instead of a static snapshot.
+function createLiveCache(daysFromToday, wholeCache) {
+	const store = {};
+
+	for (const [key, data] of Object.entries(wholeCache)) {
+		store[key] = {
+			data,
+			maxAge: timeInTheFuture({days: daysFromToday}),
+		};
+	}
+
+	storage.get.mockImplementation(async key => {
+		if (key === undefined) {
+			return store;
+		}
+
+		return key in store ? {[key]: store[key]} : {};
+	});
+
+	storage.set.mockImplementation(async items => {
+		Object.assign(store, items);
+	});
+
+	storage.remove.mockImplementation(async keys => {
+		for (const key of [keys].flat()) {
+			delete store[key];
+		}
+	});
+
+	return store;
+}
+
 beforeEach(() => {
 	vi.clearAllMocks();
 	vi.restoreAllMocks();
@@ -445,7 +478,7 @@ test('.applyOverride() throws without arguments', async () => {
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	await expect(updaterItem.applyOverride([], 'ANNE')).rejects.toThrow(TypeError);
+	await expect(updaterItem.applyOverride()).rejects.toThrow(TypeError);
 
 	expect(storage.set).not.toHaveBeenCalled();
 });
@@ -584,4 +617,71 @@ test('background revalidation failure does not crash or wedge the cache', async 
 	// A later call must be able to revalidate again, not be stuck
 	expect(spy).toHaveBeenCalledTimes(2);
 	expect(storage.set).toHaveBeenCalledTimes(1);
+});
+
+test('`updater` returning undefined on empty cache leaves the entry uncached', async () => {
+	const spy = vi.fn(async () => undefined);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	await updaterItem.get('@anne');
+
+	assert.equal(await updaterItem.isCached('@anne'), false);
+	expect(spy).toHaveBeenCalledOnce();
+});
+
+test('`updater` returning undefined deletes an existing cache entry', async () => {
+	createLiveCache(10, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	const spy = vi.fn(async () => undefined);
+	const updaterItem = new CachedFunction('spy', {
+		updater: spy,
+		shouldRevalidate: () => true,
+	});
+
+	assert.equal(await updaterItem.isCached('@anne'), true);
+
+	await updaterItem.get('@anne');
+
+	assert.equal(await updaterItem.isCached('@anne'), false);
+});
+
+test('background revalidation returning undefined deletes the stale entry', async () => {
+	createLiveCache(15, {
+		'cache:spy:["@anne"]': 'ANNE',
+	});
+
+	const spy = vi.fn(async () => undefined);
+	const updaterItem = new CachedFunction('spy', {
+		updater: spy,
+		maxAge: {days: 1},
+		staleWhileRevalidate: {days: 29},
+	});
+
+	// Stale cache is still served synchronously
+	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem.isCached('@anne'), true);
+
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
+
+	expect(spy).toHaveBeenCalledOnce();
+	assert.equal(await updaterItem.isCached('@anne'), false);
+});
+
+test('.getFresh() returning undefined deletes any existing cache entry', async () => {
+	createLiveCache(10, {
+		'cache:spy:["@anne"]': 'OLD',
+	});
+
+	const spy = vi.fn(async () => undefined);
+	const updaterItem = new CachedFunction('spy', {updater: spy});
+
+	assert.equal(await updaterItem.isCached('@anne'), true);
+
+	await updaterItem.getFresh('@anne');
+
+	assert.equal(await updaterItem.isCached('@anne'), false);
 });

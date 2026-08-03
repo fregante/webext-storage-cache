@@ -80,7 +80,7 @@ export default class CachedFunction<
 	}
 
 	async applyOverride(arguments_: Arguments, value: ScopedValue) {
-		if (value === undefined) {
+		if (arguments.length < 2) {
 			throw new TypeError('Expected a value to be stored');
 		}
 

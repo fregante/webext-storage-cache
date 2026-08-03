@@ -18,7 +18,6 @@ async function identity(x: number | string): Promise<number | string> {
 expectType<Promise<number>>(new CachedFunction('identity', {updater: identity}).get(1));
 expectType<Promise<string>>(new CachedFunction('identity', {updater: identity}).get('1'));
 
-// @ts-expect-error -- If a function returns undefined, it's not cacheable
 new CachedFunction('identity', {updater: async (n: undefined[]) => n[1]});
 
 expectNotAssignable<Promise<string>>(new CachedFunction('identity', {updater: identity}).get(1));
