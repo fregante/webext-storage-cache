@@ -25,27 +25,6 @@ function timeInTheFuture(time) {
 }
 
 function createCache(daysFromToday, wholeCache) {
-	const cache = {};
-
-	for (const [key, data] of Object.entries(wholeCache)) {
-		cache[key] = {
-			data,
-			maxAge: timeInTheFuture({days: daysFromToday}),
-		};
-	}
-
-	storage.get.mockImplementation(async key => {
-		if (key === undefined) {
-			return cache;
-		}
-
-		return key in cache ? {[key]: cache[key]} : {};
-	});
-}
-
-// Unlike `createCache`, `storage.set`/`storage.remove` actually mutate the backing store here,
-// so `isCached()` reflects real writes/deletes instead of a static snapshot.
-function createLiveCache(daysFromToday, wholeCache) {
 	const store = {};
 
 	for (const [key, data] of Object.entries(wholeCache)) {
@@ -630,7 +609,7 @@ test('`updater` returning undefined on empty cache leaves the entry uncached', a
 });
 
 test('`updater` returning undefined deletes an existing cache entry', async () => {
-	createLiveCache(10, {
+	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
@@ -648,7 +627,7 @@ test('`updater` returning undefined deletes an existing cache entry', async () =
 });
 
 test('background revalidation returning undefined deletes the stale entry', async () => {
-	createLiveCache(15, {
+	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
@@ -672,7 +651,7 @@ test('background revalidation returning undefined deletes the stale entry', asyn
 });
 
 test('.getFresh() returning undefined deletes any existing cache entry', async () => {
-	createLiveCache(10, {
+	createCache(10, {
 		'cache:spy:["@anne"]': 'OLD',
 	});
 
