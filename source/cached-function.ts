@@ -77,35 +77,6 @@ export default class CachedFunction<
 		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
 	}
 
-	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
-		const {cached} = await this.#readCached(arguments_);
-		return cached?.data;
-	}
-
-	async applyOverride(arguments_: Arguments, value: ScopedValue) {
-		if (arguments.length < 2) {
-			throw new TypeError('Expected a value to be stored');
-		}
-
-		const userKey = this.#getUserKey(arguments_);
-		return writeItem(userKey, value, this.#totalMaxAge);
-	}
-
-	async getFresh(...arguments_: Arguments): Promise<ScopedValue> {
-		const userKey = this.#getUserKey(arguments_);
-		return this.#refresh(userKey, arguments_);
-	}
-
-	async delete(...arguments_: Arguments) {
-		const userKey = this.#getUserKey(arguments_);
-		await deleteItem(userKey);
-	}
-
-	async isCached(...arguments_: Arguments) {
-		const {cached} = await this.#readCached(arguments_);
-		return cached !== undefined;
-	}
-
 	#getUserKey(arguments_: Arguments): string {
 		return getUserKey(this.name, this.#cacheKey, arguments_);
 	}
@@ -133,5 +104,34 @@ export default class CachedFunction<
 		}
 
 		return promise;
+	}
+
+	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
+		const {cached} = await this.#readCached(arguments_);
+		return cached?.data;
+	}
+
+	async applyOverride(arguments_: Arguments, value: ScopedValue) {
+		if (arguments.length < 2) {
+			throw new TypeError('Expected a value to be stored');
+		}
+
+		const userKey = this.#getUserKey(arguments_);
+		return writeItem(userKey, value, this.#totalMaxAge);
+	}
+
+	async getFresh(...arguments_: Arguments): Promise<ScopedValue> {
+		const userKey = this.#getUserKey(arguments_);
+		return this.#refresh(userKey, arguments_);
+	}
+
+	async delete(...arguments_: Arguments) {
+		const userKey = this.#getUserKey(arguments_);
+		await deleteItem(userKey);
+	}
+
+	async isCached(...arguments_: Arguments) {
+		const {cached} = await this.#readCached(arguments_);
+		return cached !== undefined;
 	}
 }
