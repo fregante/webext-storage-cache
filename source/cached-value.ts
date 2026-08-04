@@ -1,7 +1,7 @@
-import {CachedMap} from './cached-map.js';
+import CachedMap from './cached-map.js';
 
-export default class CachedValue<Value> extends CachedMap<Value> {
-	protected override getStorageKey(): string {
+export default class CachedValue<Value> extends CachedMap<() => Value> {
+	protected override getStorageKey(_key: string): string {
 		return this.name;
 	}
 
