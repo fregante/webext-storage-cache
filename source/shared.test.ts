@@ -5,6 +5,8 @@ import {
 	it,
 	vi,
 } from 'vitest';
+// @ts-expect-error untyped
+import {createCache} from './test-utils.js';
 import {
 	timeInTheFuture,
 	readItem,
@@ -15,32 +17,24 @@ import {
 	clear,
 } from './shared.js';
 
-const {storage} = vi.hoisted(() => ({
-	storage: {
-		get: vi.fn(),
-		set: vi.fn(),
-		remove: vi.fn(),
-	},
-}));
-
-vi.stubGlobal('chrome', {
-	storage: {
-		local: storage,
-	},
-});
-
 vi.mock('@sindresorhus/to-milliseconds', () => ({
 	default: vi.fn(() => 1000),
 }));
 
 beforeEach(() => {
-	vi.clearAllMocks();
-	vi.restoreAllMocks();
-
-	storage.get.mockResolvedValue({});
-	storage.set.mockResolvedValue(undefined);
-	storage.remove.mockResolvedValue(undefined);
+	vi.resetAllMocks();
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call -- untyped
+	createCache(30, {});
 });
+
+type MockedStorage = {
+	[K in keyof typeof chrome.storage.local]:
+		typeof chrome.storage.local[K] extends (...args: any[]) => any
+			? ReturnType<typeof vi.fn>
+			: typeof chrome.storage.local[K];
+};
+
+const storage = chrome.storage.local as MockedStorage;
 
 describe('timeInTheFuture()', () => {
 	it('returns the current time plus the duration', () => {
@@ -99,6 +93,8 @@ describe('readItem()', () => {
 	});
 
 	it('returns undefined when the item does not exist', async () => {
+		storage.get.mockResolvedValue({});
+
 		await expect(readItem('foo')).resolves.toBeUndefined();
 	});
 });
@@ -160,6 +156,12 @@ describe('deleteExpired()', () => {
 	it('removes only expired cache entries', async () => {
 		vi.spyOn(Date, 'now').mockReturnValue(1000);
 
+		storage.getKeys.mockResolvedValue([
+			'cache:expired',
+			'cache:fresh',
+			'other',
+		]);
+
 		storage.get.mockResolvedValue({
 			'cache:expired': {
 				data: 1,
@@ -168,10 +170,6 @@ describe('deleteExpired()', () => {
 			'cache:fresh': {
 				data: 2,
 				maxAge: 1001,
-			},
-			other: {
-				data: 3,
-				maxAge: 0,
 			},
 		});
 
@@ -183,14 +181,15 @@ describe('deleteExpired()', () => {
 	it('does nothing when there are no expired cache entries', async () => {
 		vi.spyOn(Date, 'now').mockReturnValue(1000);
 
+		storage.getKeys.mockResolvedValue([
+			'cache:fresh',
+			'other',
+		]);
+
 		storage.get.mockResolvedValue({
 			'cache:fresh': {
 				data: 1,
 				maxAge: 2000,
-			},
-			other: {
-				data: 2,
-				maxAge: 0,
 			},
 		});
 
@@ -200,6 +199,8 @@ describe('deleteExpired()', () => {
 	});
 
 	it('does nothing when storage is empty', async () => {
+		storage.getKeys.mockResolvedValue([]);
+
 		await deleteExpired();
 
 		expect(storage.remove).not.toHaveBeenCalled();
@@ -208,10 +209,15 @@ describe('deleteExpired()', () => {
 
 describe('clear()', () => {
 	it('removes every cache entry', async () => {
+		storage.getKeys.mockResolvedValue([
+			'cache:a',
+			'cache:b',
+			'other',
+		]);
+
 		storage.get.mockResolvedValue({
 			'cache:a': {},
 			'cache:b': {},
-			other: {},
 		});
 
 		await clear();
@@ -223,9 +229,7 @@ describe('clear()', () => {
 	});
 
 	it('does nothing when there are no cache entries', async () => {
-		storage.get.mockResolvedValue({
-			other: {},
-		});
+		storage.getKeys.mockResolvedValue(['other']);
 
 		await clear();
 
@@ -233,6 +237,8 @@ describe('clear()', () => {
 	});
 
 	it('does nothing when storage is completely empty', async () => {
+		storage.getKeys.mockResolvedValue([]);
+
 		await clear();
 
 		expect(storage.remove).not.toHaveBeenCalled();
