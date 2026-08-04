@@ -14,7 +14,7 @@ import {
 	deleteItem,
 	has,
 	deleteExpired,
-	clear,
+	deleteWithLogic as clear,
 } from './shared.js';
 
 vi.mock('@sindresorhus/to-milliseconds', () => ({
