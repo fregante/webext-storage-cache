@@ -43,7 +43,7 @@ Will call `fetchText` 3 times and create 3 items in the storage:
 Required. <br>
 Type: `async function` that returns a cacheable value.
 
-Returning `undefined` will delete the item from the cache.
+The returned value will be cached.
 
 ### maxAge
 

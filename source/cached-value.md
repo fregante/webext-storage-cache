@@ -58,9 +58,7 @@ await cache.set(info); // Cached for 30 days by default
 
 ## value
 
-Type: `string | number | boolean` or `array | object` of those three types.
-
-`undefined` will remove the cached item. For this purpose it's best to use [`CachedValue#delete()`](#CachedValue-delete) instead
+Type: `JsonValue | undefined` (any value that can be serialized as JSON, or `undefined`)
 
 # CachedValue#isCached()
 

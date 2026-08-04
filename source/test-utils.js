@@ -36,13 +36,7 @@ export function createCache(daysFromToday, wholeCache) {
 	});
 
 	chrome.storage.local.set.mockImplementation(async items => {
-		for (const [key, value] of Object.entries(items)) {
-			if (value?.data === undefined) {
-				delete store[key];
-			} else {
-				store[key] = value;
-			}
-		}
+		Object.assign(store, items);
 	});
 
 	chrome.storage.local.remove.mockImplementation(async keys => {

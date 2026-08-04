@@ -22,7 +22,7 @@ export default class CachedValue<ScopedValue extends CacheValue> {
 		return item?.data;
 	}
 
-	async set(value: ScopedValue): Promise<ScopedValue> {
+	async set<Value extends ScopedValue>(value: Value): Promise<Value> {
 		if (arguments.length === 0) {
 			throw new TypeError('Expected a value to be stored');
 		}
