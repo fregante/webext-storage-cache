@@ -20,12 +20,12 @@ export default class CachedMap<ScopedValue extends CacheValue> {
 		this.maxAge = options.maxAge ?? {days: 30};
 	}
 
-	protected getStorageKey(key: string): string {
+	#key(key: string): string {
 		return `${this.name}:${key}`;
 	}
 
 	async get(key: string): Promise<ScopedValue | undefined> {
-		const item = await readItem<ScopedValue>(this.getStorageKey(key));
+		const item = await readItem<ScopedValue>(this.#key(key));
 		return item?.data;
 	}
 
@@ -34,14 +34,14 @@ export default class CachedMap<ScopedValue extends CacheValue> {
 			throw new TypeError('Expected a value to be stored');
 		}
 
-		return writeItem(this.getStorageKey(key), value, this.maxAge);
+		return writeItem(this.#key(key), value, this.maxAge);
 	}
 
 	async delete(key: string): Promise<void> {
-		await deleteItem(this.getStorageKey(key));
+		await deleteItem(this.#key(key));
 	}
 
 	async has(key: string): Promise<boolean> {
-		return (await readItem<ScopedValue>(this.getStorageKey(key))) !== undefined;
+		return (await readItem<ScopedValue>(this.#key(key))) !== undefined;
 	}
 }
