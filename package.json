@@ -45,6 +45,16 @@
 		"test": "tsc && tsd && vitest run && xo",
 		"watch": "tsc --watch"
 	},
+	"xo": {
+		"languageOptions": {
+			"globals": {
+				"chrome": true
+			}
+		},
+		"rules": {
+			"import-x/extensions": "off"
+		}
+	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
 		"type-fest": "^5.8.0",

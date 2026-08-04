@@ -6,7 +6,7 @@ import {
 	test,
 	vi,
 } from 'vitest';
-import CachedValue from './cached-value.ts';
+import CachedValue from './cached-value.js';
 import {
 	createCache,
 	timeInTheFuture,

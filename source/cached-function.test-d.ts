@@ -1,4 +1,4 @@
-/* eslint-disable no-new  */
+/* eslint-disable no-new -- testing */
 import {expectType, expectNotAssignable, expectNotType} from 'tsd';
 import CachedFunction from './cached-function.js';
 

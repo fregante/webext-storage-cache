@@ -35,11 +35,11 @@ export async function has(userKey: string): Promise<boolean> {
 	return (await readItem(userKey)) !== undefined;
 }
 
-async function deleteWithLogic(logic?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
+async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
 	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get();
 	const removableKeys: string[] = [];
 	for (const [key, item] of Object.entries(wholeCache)) {
-		if (key.startsWith('cache:') && (logic?.(item) ?? true)) {
+		if (key.startsWith('cache:') && (shouldDelete?.(item) ?? true)) {
 			removableKeys.push(key);
 		}
 	}
@@ -62,6 +62,7 @@ export async function clear(): Promise<void> {
 const ALARM_NAME = 'webext-storage-cache';
 
 export function init(): void {
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- Wrong, env-dependent
 	if (chrome.alarms) {
 		void chrome.alarms.create(ALARM_NAME, {
 			delayInMinutes: 1,

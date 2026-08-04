@@ -36,7 +36,7 @@ Default: `{days: 30}`
 
 The amount of time after which the cache item will expire after being each `.set()` call.
 
-# CachedValue#get()
+## CachedValue#get()
 
 Returns the cached value of key if it exists and hasn't expired, returns `undefined` otherwise.
 
@@ -46,7 +46,7 @@ const url = await cache.get();
 // It will be `undefined` if it's not found.
 ```
 
-# CachedValue#set(value)
+## CachedValue#set(value)
 
 Caches the value for the amount of time specified in the `CachedValue` constructor. It returns the value itself.
 
@@ -60,7 +60,7 @@ await cache.set(info); // Cached for 30 days by default
 
 Type: `JsonValue | undefined` (any value that can be serialized as JSON, or `undefined`)
 
-# CachedValue#isCached()
+## CachedValue#isCached()
 
 Checks whether the item is in the cache, returns a `boolean`.
 
@@ -70,7 +70,7 @@ const isCached = await url.isCached();
 // true or false
 ```
 
-# CachedValue.delete()
+## CachedValue.delete()
 
 Deletes the requested item from the cache.
 

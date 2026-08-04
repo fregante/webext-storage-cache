@@ -30,6 +30,11 @@ export default class CachedFunction<
 	ScopedValue extends CacheValue = Awaited<ReturnType<Updater>>,
 	Arguments extends Parameters<Updater> = Parameters<Updater>,
 > {
+	readonly #updater: Updater;
+	readonly #cacheKey: CacheKey<Arguments> | undefined;
+	readonly #shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
+	readonly #inFlight = new Map<string, Promise<ScopedValue>>();
+	readonly #totalMaxAge: TimeDescriptor;
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
 
@@ -52,15 +57,11 @@ export default class CachedFunction<
 		return cached.data;
 	}) as unknown as Updater;
 
-	readonly #updater: Updater;
-	readonly #cacheKey: CacheKey<Arguments> | undefined;
-	readonly #shouldRevalidate: ((cachedValue: ScopedValue) => boolean) | undefined;
-	readonly #inFlight = new Map<string, Promise<ScopedValue>>();
-	readonly #totalMaxAge: TimeDescriptor;
+	readonly name: string;
 
 	constructor(
-		public name: string,
-		readonly options: {
+		name: string,
+		options: {
 			updater: Updater;
 			maxAge?: TimeDescriptor;
 			staleWhileRevalidate?: TimeDescriptor;
@@ -68,12 +69,33 @@ export default class CachedFunction<
 			shouldRevalidate?: (cachedValue: ScopedValue) => boolean;
 		},
 	) {
+		this.name = name;
 		this.#cacheKey = options.cacheKey;
 		this.#updater = options.updater;
 		this.#shouldRevalidate = options.shouldRevalidate;
 		this.maxAge = options.maxAge ?? {days: 30};
 		this.staleWhileRevalidate = options.staleWhileRevalidate ?? {days: 0};
 		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
+	}
+
+	async #updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
+		let promise = this.#inFlight.get(userKey);
+		if (!promise) {
+			promise = this.#update(userKey, arguments_);
+			this.#inFlight.set(userKey, promise);
+			const clear = () => {
+				this.#inFlight.delete(userKey);
+			};
+
+			promise.then(clear, clear);
+		}
+
+		return promise;
+	}
+
+	async #update(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
+		const freshValue = await this.#updater(...arguments_) as ScopedValue;
+		return writeItem(userKey, freshValue, this.#totalMaxAge);
 	}
 
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
@@ -105,22 +127,5 @@ export default class CachedFunction<
 	async isCached(...arguments_: Arguments) {
 		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
 		return (await readItem<ScopedValue>(userKey)) !== undefined;
-	}
-
-	async #updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
-		let promise = this.#inFlight.get(userKey);
-		if (!promise) {
-			promise = this.#update(userKey, arguments_);
-			this.#inFlight.set(userKey, promise);
-			const clear = () => this.#inFlight.delete(userKey);
-			promise.then(clear, clear);
-		}
-
-		return promise;
-	}
-
-	async #update(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
-		const freshValue = await this.#updater(...arguments_) as ScopedValue;
-		return writeItem(userKey, freshValue, this.#totalMaxAge);
 	}
 }

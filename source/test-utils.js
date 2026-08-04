@@ -19,13 +19,15 @@ export function createCache(daysFromToday, wholeCache) {
 		}
 
 		if (typeof key === 'string') {
-			return key in store ? {[key]: store[key]} : {};
+			return Object.hasOwn(store, key)
+				? {[key]: store[key]}
+				: {};
 		}
 
 		if (Array.isArray(key)) {
 			return Object.fromEntries(key
-				.filter(key => key in store)
-				.map(key => [key, store[key]]));
+				.filter(cacheKey => Object.hasOwn(store, cacheKey))
+				.map(cacheKey => [cacheKey, store[cacheKey]]));
 		}
 
 		return {};
@@ -36,8 +38,8 @@ export function createCache(daysFromToday, wholeCache) {
 	});
 
 	chrome.storage.local.remove.mockImplementation(async keys => {
-		for (const key of [keys].flat()) {
-			delete store[key];
+		for (const cacheKey of [keys].flat()) {
+			delete store[cacheKey];
 		}
 	});
 
