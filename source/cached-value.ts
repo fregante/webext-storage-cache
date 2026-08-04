@@ -1,23 +1,43 @@
-import CachedMap from './cached-map.js';
+import {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
+import {
+	type CacheValue,
+	readItem,
+	writeItem,
+	deleteItem,
+} from './shared.js';
 
-export default class CachedValue<Value> extends CachedMap<() => Value> {
-	protected override getStorageKey(_key: string): string {
-		return this.name;
+export default class CachedValue<ScopedValue extends CacheValue> {
+	readonly maxAge: TimeDescriptor;
+	readonly name: string;
+
+	constructor(
+		name: string,
+		options: {
+			maxAge?: TimeDescriptor;
+		} = {},
+	) {
+		this.name = name;
+		this.maxAge = options.maxAge ?? {days: 30};
 	}
 
-	get(): Promise<Value | undefined> {
-		return super.get('');
+	async get(): Promise<ScopedValue | undefined> {
+		const item = await readItem<ScopedValue>(this.name);
+		return item?.data;
 	}
 
-	set(value: Value): Promise<Value> {
-		return super.set('', value);
+	async set<Value extends ScopedValue>(value: Value): Promise<Value> {
+		if (arguments.length === 0) {
+			throw new TypeError('Expected a value to be stored');
+		}
+
+		return writeItem(this.name, value, this.maxAge);
 	}
 
-	delete(): Promise<void> {
-		return super.delete('');
+	async delete(): Promise<void> {
+		await deleteItem(this.name);
 	}
 
-	isCached(): Promise<boolean> {
-		return super.isCached('');
+	async isCached(): Promise<boolean> {
+		return (await readItem<ScopedValue>(this.name)) !== undefined;
 	}
 }
