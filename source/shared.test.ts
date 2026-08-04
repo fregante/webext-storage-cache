@@ -114,6 +114,80 @@ describe('writeItem()', () => {
 			},
 		});
 	});
+
+	it('deletes expired entries and retries when storing fails', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(1000);
+
+		const value = {hello: 'world'};
+		const error = new Error('Quota exceeded');
+
+		storage.set
+			.mockRejectedValueOnce(error)
+			.mockResolvedValueOnce(undefined);
+
+		storage.getKeys.mockResolvedValue([
+			'cache:expired',
+			'cache:fresh',
+			'other',
+		]);
+
+		storage.get.mockResolvedValue({
+			'cache:expired': {
+				data: 1,
+				maxAge: 999,
+			},
+			'cache:fresh': {
+				data: 2,
+				maxAge: 1001,
+			},
+		});
+
+		await expect(writeItem('foo', value, {seconds: 1})).resolves.toBe(value);
+
+		expect(storage.remove).toHaveBeenCalledWith(['cache:expired']);
+
+		expect(storage.set).toHaveBeenCalledTimes(2);
+		expect(storage.set).toHaveBeenNthCalledWith(1, {
+			'cache:foo': {
+				data: value,
+				maxAge: 2000,
+			},
+		});
+		expect(storage.set).toHaveBeenNthCalledWith(2, {
+			'cache:foo': {
+				data: value,
+				maxAge: 2000,
+			},
+		});
+	});
+
+	it('throws when storing still fails after deleting expired entries', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(1000);
+
+		const value = {hello: 'world'};
+		const firstError = new Error('Quota exceeded');
+		const retryError = new Error('Still full');
+
+		storage.set
+			.mockRejectedValueOnce(firstError)
+			.mockRejectedValueOnce(retryError);
+
+		storage.getKeys.mockResolvedValue([
+			'cache:expired',
+		]);
+
+		storage.get.mockResolvedValue({
+			'cache:expired': {
+				data: 1,
+				maxAge: 999,
+			},
+		});
+
+		await expect(writeItem('foo', value, {seconds: 1})).rejects.toThrow(retryError);
+
+		expect(storage.remove).toHaveBeenCalledWith(['cache:expired']);
+		expect(storage.set).toHaveBeenCalledTimes(2);
+	});
 });
 
 describe('deleteItem()', () => {
