@@ -3,9 +3,11 @@
 	"compilerOptions": {
 		"types": [
 			"chrome"
-		]
+		],
+		"rootDir": "source",
 	},
 	"include": [
 		"source",
+		"*.d.ts"
 	]
 }

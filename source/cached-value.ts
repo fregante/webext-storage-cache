@@ -10,13 +10,15 @@ export {type CacheValue} from './shared.js';
 
 export default class CachedValue<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;
+	readonly name: string;
 
 	constructor(
-		public readonly name: string,
+		name: string,
 		options: {
 			maxAge?: TimeDescriptor;
 		} = {},
 	) {
+		this.name = name;
 		this.maxAge = options.maxAge ?? {days: 30};
 	}
 
