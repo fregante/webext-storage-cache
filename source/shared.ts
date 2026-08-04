@@ -19,11 +19,29 @@ export async function readItem<Value extends CacheValue>(userKey: string): Promi
 	return item !== undefined && Date.now() <= item.maxAge ? item : undefined;
 }
 
-export async function writeItem<Value extends CacheValue>(userKey: string, data: Value, maxAge: TimeDescriptor): Promise<Value> {
-	const internalKey = `cache:${userKey}`;
-	await chrome.storage.local.set({
-		[internalKey]: {data, maxAge: timeInTheFuture(maxAge)},
-	});
+export async function writeItem<Value extends CacheValue>(
+	userKey: string,
+	data: Value,
+	maxAge: TimeDescriptor,
+): Promise<Value> {
+	const set = async () => {
+		await chrome.storage.local.set({
+			[`cache:${userKey}`]: {
+				data,
+				maxAge: timeInTheFuture(maxAge),
+			},
+		});
+	};
+
+	try {
+		await set();
+	} catch {
+		// Storage may be full. Remove expired entries and retry once.
+		await deleteExpired();
+
+		await set();
+	}
+
 	return data;
 }
 
