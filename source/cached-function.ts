@@ -38,10 +38,23 @@ export default class CachedFunction<
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
 
+	#getUserKey(arguments_: Arguments): string {
+		return getUserKey(this.name, this.#cacheKey, arguments_);
+	}
+
+	async #readCached(arguments_: Arguments) {
+		const userKey = this.#getUserKey(arguments_);
+		return {userKey, cached: await readItem<ScopedValue>(userKey)};
+	}
+
+	async #refresh(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
+		const freshValue = await this.#updater(...arguments_) as ScopedValue;
+		return writeItem(userKey, freshValue, this.#totalMaxAge);
+	}
+
 	// The only reason this is not a constructor method is TypeScript: `get` must be `typeof Updater`
 	get = (async (...arguments_: Arguments) => {
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		const cached = await readItem<ScopedValue>(userKey);
+		const {userKey, cached} = await this.#readCached(arguments_);
 
 		if (!cached || this.#shouldRevalidate?.(cached.data)) {
 			return this.#updateOnce(userKey, arguments_);
@@ -81,7 +94,7 @@ export default class CachedFunction<
 	async #updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
 		let promise = this.#inFlight.get(userKey);
 		if (!promise) {
-			promise = this.#update(userKey, arguments_);
+			promise = this.#refresh(userKey, arguments_);
 			this.#inFlight.set(userKey, promise);
 			const clear = () => {
 				this.#inFlight.delete(userKey);
@@ -93,14 +106,8 @@ export default class CachedFunction<
 		return promise;
 	}
 
-	async #update(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
-		const freshValue = await this.#updater(...arguments_) as ScopedValue;
-		return writeItem(userKey, freshValue, this.#totalMaxAge);
-	}
-
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		const cached = await readItem<ScopedValue>(userKey);
+		const {cached} = await this.#readCached(arguments_);
 		return cached?.data;
 	}
 
@@ -109,23 +116,22 @@ export default class CachedFunction<
 			throw new TypeError('Expected a value to be stored');
 		}
 
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		const userKey = this.#getUserKey(arguments_);
 		return writeItem(userKey, value, this.#totalMaxAge);
 	}
 
 	async getFresh(...arguments_: Arguments): Promise<ScopedValue> {
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		const freshValue = await this.#updater(...arguments_) as ScopedValue;
-		return writeItem(userKey, freshValue, this.#totalMaxAge);
+		const userKey = this.#getUserKey(arguments_);
+		return this.#refresh(userKey, arguments_);
 	}
 
 	async delete(...arguments_: Arguments) {
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
+		const userKey = this.#getUserKey(arguments_);
 		await deleteItem(userKey);
 	}
 
 	async isCached(...arguments_: Arguments) {
-		const userKey = getUserKey(this.name, this.#cacheKey, arguments_);
-		return (await readItem<ScopedValue>(userKey)) !== undefined;
+		const {cached} = await this.#readCached(arguments_);
+		return cached !== undefined;
 	}
 }
