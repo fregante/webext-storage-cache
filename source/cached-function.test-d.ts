@@ -63,3 +63,13 @@ expectType<Promise<string>>(stringItem.applyOverride([1], 'override'));
 
 // @ts-expect-error value must match ScopedValue
 void stringItem.applyOverride([1], 123);
+
+// Caches `undefined`
+const undefinedItem = new CachedFunction('undefined', {
+	updater: async () => undefined,
+});
+
+expectType<Promise<undefined>>(undefinedItem.get());
+expectType<Promise<undefined>>(undefinedItem.getFresh());
+expectType<Promise<undefined>>(undefinedItem.getCached());
+expectType<Promise<boolean>>(undefinedItem.isCached());

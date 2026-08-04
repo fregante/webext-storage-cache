@@ -619,3 +619,26 @@ test('.getFresh() returning undefined overwrites any existing cache entry', asyn
 	assert.equal(await updaterItem.isCached('@anne'), true);
 	assert.equal(await updaterItem.getCached('@anne'), undefined);
 });
+
+test('caches undefined values', async () => {
+	const updater = vi.fn().mockResolvedValue(undefined);
+	const cache = new CachedFunction('test', {updater});
+
+	await expect(cache.get()).resolves.toBeUndefined();
+	await expect(cache.get()).resolves.toBeUndefined();
+
+	expect(updater).toHaveBeenCalledTimes(1);
+});
+
+test('considers cached undefined values as cached', async () => {
+	const updater = vi.fn().mockResolvedValue(undefined);
+	const cache = new CachedFunction('test', {updater});
+
+	await cache.get();
+
+	await expect(cache.isCached()).resolves.toBe(true);
+
+	await cache.delete();
+
+	await expect(cache.isCached()).resolves.toBe(false);
+});

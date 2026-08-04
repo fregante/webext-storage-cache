@@ -28,3 +28,16 @@ await item.set({wow: [true, 'string']});
 
 // @ts-expect-error Type is string
 await item.set(1, {days: 1});
+
+// Stores `undefined`
+const undefinedItem = new CachedValue<string | undefined>('key');
+
+expectType<Promise<string | undefined>>(undefinedItem.get());
+expectType<Promise<undefined>>(undefinedItem.set(undefined));
+
+// .set preserves the input alue
+const maybeString = new CachedValue<string | undefined>('key');
+
+expectType<Promise<string>>(maybeString.set('hello'));
+expectType<Promise<undefined>>(maybeString.set(undefined));
+expectType<Promise<string | undefined>>(maybeString.set(Math.random() > 0.5 ? 'x' : undefined));
