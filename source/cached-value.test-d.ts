@@ -12,7 +12,7 @@ expectType<Promise<void>>(item.delete());
 expectAssignable<Promise<Value | undefined>>(item.get());
 expectNotAssignable<Promise<number | undefined>>(item.get());
 expectType<Promise<string | undefined>>(item.get());
-expectType<Promise<string>>(item.set('some string'));
+expectType<Promise<'some string'>>(item.set('some string'));
 
 // @ts-expect-error Type is string
 await item.set(1);
@@ -35,9 +35,9 @@ const undefinedItem = new CachedValue<string | undefined>('key');
 expectType<Promise<string | undefined>>(undefinedItem.get());
 expectType<Promise<undefined>>(undefinedItem.set(undefined));
 
-// .set preserves the input alue
+// .set preserves the input value
 const maybeString = new CachedValue<string | undefined>('key');
 
-expectType<Promise<string>>(maybeString.set('hello'));
+expectType<Promise<'hello'>>(maybeString.set('hello'));
 expectType<Promise<undefined>>(maybeString.set(undefined));
-expectType<Promise<string | undefined>>(maybeString.set(Math.random() > 0.5 ? 'x' : undefined));
+expectType<Promise<'x' | undefined>>(maybeString.set(Math.random() > 0.5 ? 'x' : undefined));
