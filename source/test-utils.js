@@ -5,15 +5,13 @@ export function timeInTheFuture(time) {
 }
 
 export function createCache(daysFromToday, wholeCache) {
-	const store = Object.fromEntries(
-		Object.entries(wholeCache).map(([key, data]) => [
-			key,
-			{
-				data,
-				maxAge: timeInTheFuture({days: daysFromToday}),
-			},
-		]),
-	);
+	const store = Object.fromEntries(Object.entries(wholeCache).map(([key, data]) => [
+		key,
+		{
+			data,
+			maxAge: timeInTheFuture({days: daysFromToday}),
+		},
+	]));
 
 	chrome.storage.local.get.mockImplementation(async key => {
 		if (key === undefined) {
@@ -25,11 +23,9 @@ export function createCache(daysFromToday, wholeCache) {
 		}
 
 		if (Array.isArray(key)) {
-			return Object.fromEntries(
-				key
-					.filter(key => key in store)
-					.map(key => [key, store[key]]),
-			);
+			return Object.fromEntries(key
+				.filter(key => key in store)
+				.map(key => [key, store[key]]));
 		}
 
 		return {};

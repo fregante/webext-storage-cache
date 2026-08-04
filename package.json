@@ -26,13 +26,8 @@
 	"funding": "https://github.com/sponsors/fregante",
 	"license": "MIT",
 	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
-	"contributors": [
-		"Connor Love"
-	],
 	"type": "module",
-	"exports": {
-		".": "./distribution/index.js"
-	},
+	"exports": "./distribution/index.js",
 	"types": "./distribution/index.d.ts",
 	"files": [
 		"distribution/index.js",
@@ -49,12 +44,6 @@
 		"prepack": "tsc --sourceMap false",
 		"test": "tsc && tsd && vitest run && xo",
 		"watch": "tsc --watch"
-	},
-	"xo": {
-		"envs": [
-			"browser",
-			"webextensions"
-		]
 	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",

@@ -59,7 +59,6 @@ export async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const ALARM_NAME = 'webext-storage-cache';
 
 export function init(): void {
@@ -71,10 +70,12 @@ export function init(): void {
 
 		let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
 		chrome.alarms.onAlarm.addListener(alarm => {
-			if (alarm.name === ALARM_NAME && lastRun < Date.now() - 1000) {
-				lastRun = Date.now();
-				void deleteExpired();
+			if (!(alarm.name === ALARM_NAME && lastRun < Date.now() - 1000)) {
+				return;
 			}
+
+			lastRun = Date.now();
+			void deleteExpired();
 		});
 	} else {
 		setTimeout(deleteExpired, 60_000); // Purge cache on launch, but wait a bit

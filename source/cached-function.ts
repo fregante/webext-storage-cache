@@ -1,7 +1,10 @@
-/* eslint-disable promise/prefer-await-to-then -- TODO */
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {
-	type CacheValue, readItem, writeItem, deleteItem, timeInTheFuture,
+	type CacheValue,
+	readItem,
+	writeItem,
+	deleteItem,
+	timeInTheFuture,
 } from './shared.js';
 
 export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;

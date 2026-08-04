@@ -1,6 +1,9 @@
 import {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {
-	type CacheValue, readItem, writeItem, deleteItem,
+	type CacheValue,
+	readItem,
+	writeItem,
+	deleteItem,
 } from './shared.js';
 
 export {type CacheValue} from './shared.js';
