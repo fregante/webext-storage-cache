@@ -6,6 +6,7 @@ vi.stubGlobal('chrome', {
 			get: vi.fn(),
 			set: vi.fn(),
 			remove: vi.fn(),
+			getKeys: vi.fn(),
 		},
 	},
 });

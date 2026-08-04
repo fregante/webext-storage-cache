@@ -5,5 +5,8 @@ export default defineConfig({
 		setupFiles: [
 			'./vitest.setup.js',
 		],
+		include: [
+			'source/**/*.test.ts',
+		],
 	},
 });
