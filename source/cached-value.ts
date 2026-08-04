@@ -1,9 +1,9 @@
 import {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {
 	type CacheValue, readItem, writeItem, deleteItem,
-} from './legacy.js';
+} from './shared.js';
 
-export {type CacheValue} from './legacy.js';
+export {type CacheValue} from './shared.js';
 
 export default class CachedValue<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;

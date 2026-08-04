@@ -10,7 +10,7 @@ import {
 	has,
 	deleteExpired,
 	clear,
-} from './legacy.js';
+} from './shared.js';
 
 const {storage} = vi.hoisted(() => ({
 	storage: {

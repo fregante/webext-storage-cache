@@ -31,15 +31,14 @@
 	],
 	"type": "module",
 	"exports": {
-		".": "./distribution/index.js",
-		"./legacy.js": "./distribution/legacy.js"
+		".": "./distribution/index.js"
 	},
 	"types": "./distribution/index.d.ts",
 	"files": [
 		"distribution/index.js",
 		"distribution/index.d.ts",
-		"distribution/legacy.js",
-		"distribution/legacy.d.ts",
+		"distribution/shared.js",
+		"distribution/shared.d.ts",
 		"distribution/cached-value.js",
 		"distribution/cached-value.d.ts",
 		"distribution/cached-function.js",
