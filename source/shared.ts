@@ -36,10 +36,22 @@ export async function has(userKey: string): Promise<boolean> {
 }
 
 async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
-	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get();
+	const storageKeys: string[] = await chrome.storage.local.getKeys();
+	const cacheKeys = storageKeys.filter(key => key.startsWith('cache:'));
+
+	if (cacheKeys.length === 0) {
+		return;
+	}
+
+	if (shouldDelete === undefined) {
+		await chrome.storage.local.remove(cacheKeys);
+		return;
+	}
+
+	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get(cacheKeys);
 	const removableKeys: string[] = [];
 	for (const [key, item] of Object.entries(wholeCache)) {
-		if (key.startsWith('cache:') && (shouldDelete?.(item) ?? true)) {
+		if ((shouldDelete(item))) {
 			removableKeys.push(key);
 		}
 	}

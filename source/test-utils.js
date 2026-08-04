@@ -33,6 +33,8 @@ export function createCache(daysFromToday, wholeCache) {
 		return {};
 	});
 
+	chrome.storage.local.getKeys.mockImplementation(async () => Object.keys(store));
+
 	chrome.storage.local.set.mockImplementation(async items => {
 		Object.assign(store, items);
 	});
