@@ -1,8 +1,12 @@
 import nodeAssert from 'node:assert';
 import {
-	assert, expect, beforeEach, test, vi,
+	assert,
+	expect,
+	beforeEach,
+	test,
+	vi,
 } from 'vitest';
-import CachedValue from './cached-value.ts';
+import CachedValue from './cached-value.js';
 import {
 	createCache,
 	timeInTheFuture,

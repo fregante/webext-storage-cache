@@ -1,7 +1,11 @@
 import {
-	test, vi, assert, expect, beforeEach,
+	test,
+	vi,
+	assert,
+	expect,
+	beforeEach,
 } from 'vitest';
-import CachedFunction from './cached-function.ts';
+import CachedFunction from './cached-function.js';
 import {
 	createCache,
 	timeInTheFuture,

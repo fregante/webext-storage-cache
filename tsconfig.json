@@ -1,13 +1,13 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"outDir": "distribution",
-		"target": "ES2022",
 		"types": [
 			"chrome"
-		]
+		],
+		"rootDir": "source",
 	},
 	"include": [
 		"source",
+		"*.d.ts"
 	]
 }

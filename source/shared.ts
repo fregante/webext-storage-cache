@@ -35,11 +35,11 @@ export async function has(userKey: string): Promise<boolean> {
 	return (await readItem(userKey)) !== undefined;
 }
 
-async function deleteWithLogic(logic?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
+async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
 	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get();
 	const removableKeys: string[] = [];
 	for (const [key, item] of Object.entries(wholeCache)) {
-		if (key.startsWith('cache:') && (logic?.(item) ?? true)) {
+		if (key.startsWith('cache:') && (shouldDelete?.(item) ?? true)) {
 			removableKeys.push(key);
 		}
 	}
@@ -59,10 +59,10 @@ export async function clear(): Promise<void> {
 	await deleteWithLogic();
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const ALARM_NAME = 'webext-storage-cache';
 
 export function init(): void {
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- Wrong, env-dependent
 	if (chrome.alarms) {
 		void chrome.alarms.create(ALARM_NAME, {
 			delayInMinutes: 1,
@@ -71,10 +71,12 @@ export function init(): void {
 
 		let lastRun = 0; // Homemade debouncing due to `chrome.alarms` potentially queueing this function
 		chrome.alarms.onAlarm.addListener(alarm => {
-			if (alarm.name === ALARM_NAME && lastRun < Date.now() - 1000) {
-				lastRun = Date.now();
-				void deleteExpired();
+			if (!(alarm.name === ALARM_NAME && lastRun < Date.now() - 1000)) {
+				return;
 			}
+
+			lastRun = Date.now();
+			void deleteExpired();
 		});
 	} else {
 		setTimeout(deleteExpired, 60_000); // Purge cache on launch, but wait a bit

@@ -3,7 +3,7 @@
 > Cache values in your Web Extension and clear them on expiration. Also includes a memoize-like API to cache any function results automatically.
 
 - Browsers: Chrome, Firefox, and Safari
-- Manifest: v2 and v3
+- Manifest: v3
 - Context: They can be called from any context that has access to the `chrome.storage` APIs
 - Permissions: (with attached "reasons" for submission to the Chrome Web Store)
 	- `storage`: "The extension caches some values into the local storage"
