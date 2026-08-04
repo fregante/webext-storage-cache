@@ -38,20 +38,6 @@ export default class CachedFunction<
 	readonly maxAge: TimeDescriptor;
 	readonly staleWhileRevalidate: TimeDescriptor;
 
-	#getUserKey(arguments_: Arguments): string {
-		return getUserKey(this.name, this.#cacheKey, arguments_);
-	}
-
-	async #readCached(arguments_: Arguments) {
-		const userKey = this.#getUserKey(arguments_);
-		return {userKey, cached: await readItem<ScopedValue>(userKey)};
-	}
-
-	async #refresh(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
-		const freshValue = await this.#updater(...arguments_) as ScopedValue;
-		return writeItem(userKey, freshValue, this.#totalMaxAge);
-	}
-
 	// The only reason this is not a constructor method is TypeScript: `get` must be `typeof Updater`
 	get = (async (...arguments_: Arguments) => {
 		const {userKey, cached} = await this.#readCached(arguments_);
@@ -91,21 +77,6 @@ export default class CachedFunction<
 		this.#totalMaxAge = {milliseconds: toMilliseconds(this.maxAge) + toMilliseconds(this.staleWhileRevalidate)};
 	}
 
-	async #updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
-		let promise = this.#inFlight.get(userKey);
-		if (!promise) {
-			promise = this.#refresh(userKey, arguments_);
-			this.#inFlight.set(userKey, promise);
-			const clear = () => {
-				this.#inFlight.delete(userKey);
-			};
-
-			promise.then(clear, clear);
-		}
-
-		return promise;
-	}
-
 	async getCached(...arguments_: Arguments): Promise<ScopedValue | undefined> {
 		const {cached} = await this.#readCached(arguments_);
 		return cached?.data;
@@ -133,5 +104,34 @@ export default class CachedFunction<
 	async isCached(...arguments_: Arguments) {
 		const {cached} = await this.#readCached(arguments_);
 		return cached !== undefined;
+	}
+
+	#getUserKey(arguments_: Arguments): string {
+		return getUserKey(this.name, this.#cacheKey, arguments_);
+	}
+
+	async #readCached(arguments_: Arguments) {
+		const userKey = this.#getUserKey(arguments_);
+		return {userKey, cached: await readItem<ScopedValue>(userKey)};
+	}
+
+	async #refresh(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
+		const freshValue = await this.#updater(...arguments_) as ScopedValue;
+		return writeItem(userKey, freshValue, this.#totalMaxAge);
+	}
+
+	async #updateOnce(userKey: string, arguments_: Arguments): Promise<ScopedValue> {
+		let promise = this.#inFlight.get(userKey);
+		if (!promise) {
+			promise = this.#refresh(userKey, arguments_);
+			this.#inFlight.set(userKey, promise);
+			const clear = () => {
+				this.#inFlight.delete(userKey);
+			};
+
+			promise.then(clear, clear);
+		}
+
+		return promise;
 	}
 }
