@@ -6,8 +6,6 @@ import {
 	deleteItem,
 } from './shared.js';
 
-export {type CacheValue} from './shared.js';
-
 export default class CachedValue<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;
 	readonly name: string;
