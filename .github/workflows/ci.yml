@@ -8,10 +8,8 @@ jobs:
   Lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
       - name: install
         run: npm install
       - name: XO
@@ -20,10 +18,8 @@ jobs:
   Test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
       - name: install
         run: npm install
       - name: build
@@ -34,10 +30,8 @@ jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
       - name: install
         run: npm install
       - name: build
@@ -46,10 +40,8 @@ jobs:
   Types:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
       - name: install
         run: npm install
       - run: npm run build
