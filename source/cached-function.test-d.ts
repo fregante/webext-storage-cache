@@ -43,3 +43,23 @@ new CachedFunction('number', {
 	updater: async (date: Date) => String(date.getHours()),
 	shouldRevalidate: date => typeof date === 'string',
 });
+
+// .getCached() resolves to the value or undefined, never the args
+const stringItem = new CachedFunction('str', {updater: async (n: number) => String(n)});
+expectType<Promise<string | undefined>>(stringItem.getCached(1));
+expectNotAssignable<Promise<string>>(stringItem.getCached(1));
+
+// .getFresh() always resolves to the scoped value, bypassing the cache
+expectType<Promise<string>>(stringItem.getFresh(1));
+
+// .delete() resolves to void regardless of updater return type
+expectType<Promise<void>>(stringItem.delete(1));
+
+// .isCached() always resolves to a boolean
+expectType<Promise<boolean>>(stringItem.isCached(1));
+
+// .applyOverride() takes the args tuple and a matching value, resolves to that value
+expectType<Promise<string>>(stringItem.applyOverride([1], 'override'));
+
+// @ts-expect-error value must match ScopedValue
+void stringItem.applyOverride([1], 123);

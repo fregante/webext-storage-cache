@@ -69,7 +69,8 @@ test('set() with undefined', async () => {
 	assert.equal(await testItem.isCached(), true);
 
 	await testItem.set(undefined);
-	assert.equal(await testItem.isCached(), false);
+	assert.equal(await testItem.isCached(), true);
+	assert.equal(await testItem.get(), undefined);
 });
 
 test('set() with value', async () => {

@@ -1,8 +1,7 @@
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
 import {type JsonValue} from 'type-fest';
 
-// eslint-disable-next-line @typescript-eslint/ban-types -- It is a JSON value
-export type CacheValue = Exclude<JsonValue, null>;
+export type CacheValue = JsonValue | undefined;
 
 export type CachedItem<Value> = {
 	data: Value;

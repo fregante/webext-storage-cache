@@ -549,17 +549,18 @@ test('background revalidation failure does not crash or wedge the cache', async 
 	expect(storage.set).toHaveBeenCalledTimes(1);
 });
 
-test('`updater` returning undefined on empty cache leaves the entry uncached', async () => {
+test('`updater` returning undefined caches the entry', async () => {
 	const spy = vi.fn(async () => undefined);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	await updaterItem.get('@anne');
 
-	assert.equal(await updaterItem.isCached('@anne'), false);
+	assert.equal(await updaterItem.isCached('@anne'), true);
+	assert.equal(await updaterItem.getCached('@anne'), undefined);
 	expect(spy).toHaveBeenCalledOnce();
 });
 
-test('`updater` returning undefined deletes an existing cache entry', async () => {
+test('`updater` returning undefined overwrites an existing cache entry', async () => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
@@ -574,10 +575,11 @@ test('`updater` returning undefined deletes an existing cache entry', async () =
 
 	await updaterItem.get('@anne');
 
-	assert.equal(await updaterItem.isCached('@anne'), false);
+	assert.equal(await updaterItem.isCached('@anne'), true);
+	assert.equal(await updaterItem.getCached('@anne'), undefined);
 });
 
-test('background revalidation returning undefined deletes the stale entry', async () => {
+test('background revalidation returning undefined overwrites the stale entry', async () => {
 	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
@@ -598,10 +600,11 @@ test('background revalidation returning undefined deletes the stale entry', asyn
 	});
 
 	expect(spy).toHaveBeenCalledOnce();
-	assert.equal(await updaterItem.isCached('@anne'), false);
+	assert.equal(await updaterItem.isCached('@anne'), true);
+	assert.equal(await updaterItem.getCached('@anne'), undefined);
 });
 
-test('.getFresh() returning undefined deletes any existing cache entry', async () => {
+test('.getFresh() returning undefined overwrites any existing cache entry', async () => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'OLD',
 	});
@@ -613,5 +616,6 @@ test('.getFresh() returning undefined deletes any existing cache entry', async (
 
 	await updaterItem.getFresh('@anne');
 
-	assert.equal(await updaterItem.isCached('@anne'), false);
+	assert.equal(await updaterItem.isCached('@anne'), true);
+	assert.equal(await updaterItem.getCached('@anne'), undefined);
 });
