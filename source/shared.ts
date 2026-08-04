@@ -35,11 +35,27 @@ export async function has(userKey: string): Promise<boolean> {
 	return (await readItem(userKey)) !== undefined;
 }
 
-async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
-	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get();
+/**
+Deletes every cache entry, expired or not.
+@param shouldDelete - Optional function to determine which items to delete. If not provided, all items will be deleted.
+*/
+export async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValue>) => boolean): Promise<void> {
+	const storageKeys: string[] = await chrome.storage.local.getKeys();
+	const cacheKeys = storageKeys.filter(key => key.startsWith('cache:'));
+
+	if (cacheKeys.length === 0) {
+		return;
+	}
+
+	if (shouldDelete === undefined) {
+		await chrome.storage.local.remove(cacheKeys);
+		return;
+	}
+
+	const wholeCache: Record<string, CachedItem<CacheValue>> = await chrome.storage.local.get(cacheKeys);
 	const removableKeys: string[] = [];
 	for (const [key, item] of Object.entries(wholeCache)) {
-		if (key.startsWith('cache:') && (shouldDelete?.(item) ?? true)) {
+		if ((shouldDelete(item))) {
 			removableKeys.push(key);
 		}
 	}
@@ -52,11 +68,6 @@ async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValue>) => 
 /** Deletes every expired entry. Runs automatically in the background context; call manually elsewhere. */
 export async function deleteExpired(): Promise<void> {
 	await deleteWithLogic(item => Date.now() > item.maxAge);
-}
-
-/** Deletes every cache entry, expired or not. */
-export async function clear(): Promise<void> {
-	await deleteWithLogic();
 }
 
 const ALARM_NAME = 'webext-storage-cache';
