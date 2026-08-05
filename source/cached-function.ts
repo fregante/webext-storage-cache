@@ -111,8 +111,9 @@ export default class CachedFunction<
 		return cached?.data;
 	}
 
-	async applyOverride(arguments_: Arguments, value: ScopedValue) {
-		if (arguments.length < 2) {
+	async setCached(value: ScopedValue, ...arguments_: Arguments) {
+		// This must be `arguments`, not `arguments_`
+		if (arguments.length === 0) {
 			throw new TypeError('Expected a value to be stored');
 		}
 

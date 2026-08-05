@@ -180,14 +180,14 @@ const repositories = new CachedFunction('repositories', {updater: repoApi});
 await repositories.delete('fregante', 'doma');
 ```
 
-## CachedFunction#applyOverride(arguments, newValue)
+## CachedFunction#setCached(newValue, ...arguments)
 
 This method should only be used if you want to override the cache with a custom value, but you should prefer `get` or `getFresh` instead, keeping the logic exclusively in your `updater` function.
 
 ```js
 const repositories = new CachedFunction('repositories', {updater: repoApi});
 // Will override the local cache for the `repoApi('fregante', 'doma')` call
-await repositories.applyOverride(['fregante', 'doma'], {id: 134, lastUpdated: 199837738894});
+await repositories.setCached({id: 134, type: 'admin'}, 'fregante', 'doma');
 ```
 
 ## License

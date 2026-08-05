@@ -58,11 +58,11 @@ expectType<Promise<void>>(stringItem.delete(1));
 // .isCached() always resolves to a boolean
 expectType<Promise<boolean>>(stringItem.isCached(1));
 
-// .applyOverride() takes the args tuple and a matching value, resolves to that value
-expectType<Promise<string>>(stringItem.applyOverride([1], 'override'));
+// .setCached() takes the new value and then the arguments
+expectType<Promise<string>>(stringItem.setCached('override', 1));
 
 // @ts-expect-error value must match ScopedValue
-void stringItem.applyOverride([1], 123);
+void stringItem.setCached(123, 1);
 
 // Caches `undefined`
 const undefinedItem = new CachedFunction('undefined', {
