@@ -5,7 +5,7 @@ import {
 	expect,
 	beforeEach,
 } from 'vitest';
-import CachedFunction from './cached-function.js';
+import memoize from './cached-function.js';
 import {
 	createCache,
 	timeInTheFuture,
@@ -21,7 +21,7 @@ beforeEach(() => {
 
 test('getCached() with empty cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const testItem = new CachedFunction('name', {updater: spy});
+	const testItem = memoize(spy, {key: 'name'});
 
 	assert.equal(await testItem.getCached(), undefined);
 
@@ -34,7 +34,7 @@ test('getCached() with cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const testItem = new CachedFunction('name', {updater: spy});
+	const testItem = memoize(spy, {key: 'name'});
 
 	assert.equal(await testItem.getCached(), 'Rico');
 
@@ -47,7 +47,7 @@ test('getCached() with expired cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const testItem = new CachedFunction('name', {updater: spy});
+	const testItem = memoize(spy, {key: 'name'});
 
 	assert.equal(await testItem.getCached(), undefined);
 
@@ -56,9 +56,9 @@ test('getCached() with expired cache', async () => {
 
 test('`updater` with empty cache', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
 	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
@@ -76,9 +76,9 @@ test('`updater` with cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
 	expect(storage.set).not.toHaveBeenCalled();
@@ -91,9 +91,9 @@ test('`updater` with expired cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
 	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
@@ -108,13 +108,13 @@ test('`updater` with empty cache and staleWhileRevalidate', async () => {
 	const staleWhileRevalidate = 29;
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
 	expect(storage.set).toHaveBeenCalledTimes(1);
@@ -135,13 +135,13 @@ test('`updater` with fresh cache and staleWhileRevalidate', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	// Cache is still fresh, it should be used
 	expect(spy).not.toHaveBeenCalled();
@@ -161,13 +161,13 @@ test('`updater` with stale cache and staleWhileRevalidate', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
 	expect(storage.set).not.toHaveBeenCalled();
@@ -194,12 +194,12 @@ test('`updater` varies cache by function argument', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 	expect(spy).not.toHaveBeenCalled();
 
-	assert.equal(await updaterItem.get('@mari'), 'MARI');
+	assert.equal(await updaterItem('@mari'), 'MARI');
 	expect(spy).toHaveBeenCalledOnce();
 });
 
@@ -209,12 +209,12 @@ test('`updater` accepts custom cache key generator', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	await updaterItem.get('@anne', 1);
+	await updaterItem('@anne', 1);
 	expect(spy).not.toHaveBeenCalled();
 
-	await updaterItem.get('@anne', 2);
+	await updaterItem('@anne', 2);
 	expect(spy).toHaveBeenCalledOnce();
 
 	assert.equal(storage.get.mock.calls[0][0], 'cache:spy:["@anne",1]');
@@ -227,12 +227,12 @@ test('`updater` accepts custom string-based cache key', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('CUSTOM', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'CUSTOM'});
 
-	await updaterItem.get('@anne', 1);
+	await updaterItem('@anne', 1);
 	expect(spy).not.toHaveBeenCalled();
 
-	await updaterItem.get('@anne', 2);
+	await updaterItem('@anne', 2);
 	expect(spy).toHaveBeenCalledOnce();
 
 	assert.equal(storage.get.mock.calls[0][0], 'cache:CUSTOM:["@anne",1]');
@@ -245,12 +245,12 @@ test('`updater` accepts custom string-based with non-primitive parameters', asyn
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('CUSTOM', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'CUSTOM'});
 
-	await updaterItem.get('@anne', {user: [1]});
+	await updaterItem('@anne', {user: [1]});
 	expect(spy).not.toHaveBeenCalled();
 
-	await updaterItem.get('@anne', {user: [2]});
+	await updaterItem('@anne', {user: [2]});
 	expect(spy).toHaveBeenCalledOnce();
 
 	assert.equal(storage.get.mock.calls[0][0], 'cache:CUSTOM:["@anne",{"user":[1]}]');
@@ -263,12 +263,12 @@ test('`updater` verifies cache with shouldRevalidate callback', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		shouldRevalidate: value => value.endsWith('@'),
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
 
@@ -280,21 +280,21 @@ test('`updater` verifies cache with shouldRevalidate callback', async () => {
 
 test('`updater` avoids concurrent function calls', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
 	expect(spy).not.toHaveBeenCalled();
 
 	// Parallel calls
-	updaterItem.get('@anne');
-	updaterItem.get('@anne');
-	await updaterItem.get('@anne');
+	updaterItem('@anne');
+	updaterItem('@anne');
+	await updaterItem('@anne');
 
 	expect(spy).toHaveBeenCalledOnce();
 
 	// Parallel calls
-	updaterItem.get('@new');
-	updaterItem.get('@other');
-	await updaterItem.get('@idk');
+	updaterItem('@new');
+	updaterItem('@other');
+	await updaterItem('@idk');
 
 	expect(spy).toHaveBeenCalledTimes(4);
 });
@@ -302,8 +302,8 @@ test('`updater` avoids concurrent function calls', async () => {
 test('`updater` avoids concurrent function calls with complex arguments via cacheKey', async () => {
 	const spy = vi.fn(async (transform, user) => transform(user.name));
 
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		cacheKey: ([function_, user]) => JSON.stringify([function_.name, user]),
 	});
 
@@ -312,18 +312,18 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 	const cacheMePlease = name => name.slice(1).toUpperCase();
 
 	// Parallel calls
-	updaterItem.get(cacheMePlease, {name: '@anne'});
-	updaterItem.get(cacheMePlease, {name: '@anne'});
+	updaterItem(cacheMePlease, {name: '@anne'});
+	updaterItem(cacheMePlease, {name: '@anne'});
 
-	await updaterItem.get(cacheMePlease, {name: '@anne'});
+	await updaterItem(cacheMePlease, {name: '@anne'});
 
 	expect(spy).toHaveBeenCalledOnce();
 
 	// Parallel calls
-	updaterItem.get(cacheMePlease, {name: '@new'});
-	updaterItem.get(cacheMePlease, {name: '@other'});
+	updaterItem(cacheMePlease, {name: '@new'});
+	updaterItem(cacheMePlease, {name: '@other'});
 
-	await updaterItem.get(cacheMePlease, {name: '@idk'});
+	await updaterItem(cacheMePlease, {name: '@idk'});
 
 	expect(spy).toHaveBeenCalledTimes(4);
 });
@@ -331,18 +331,18 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 test('`updater` uses cacheKey at every call, regardless of arguments', async () => {
 	const cacheKey = vi.fn(arguments_ => arguments_.length);
 
-	const updaterItem = new CachedFunction('spy', {
-		updater() {},
+	const updaterItem = memoize(async () => {}, {
+		key: 'spy',
 		cacheKey,
 	});
 
-	await updaterItem.get();
-	await updaterItem.get();
+	await updaterItem();
+	await updaterItem();
 
 	expect(cacheKey).toHaveBeenCalledTimes(2);
 
-	await updaterItem.get('@anne');
-	await updaterItem.get('@anne');
+	await updaterItem('@anne');
+	await updaterItem('@anne');
 
 	expect(cacheKey).toHaveBeenCalledTimes(4);
 });
@@ -353,9 +353,9 @@ test('`updater` always loads the data from storage, not memory', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	expect(storage.get).toHaveBeenCalledTimes(1);
 	expect(storage.get).toHaveBeenLastCalledWith('cache:spy:["@anne"]');
@@ -364,7 +364,7 @@ test('`updater` always loads the data from storage, not memory', async () => {
 		'cache:spy:["@anne"]': 'NEW ANNE',
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'NEW ANNE');
+	assert.equal(await updaterItem('@anne'), 'NEW ANNE');
 
 	expect(storage.get).toHaveBeenCalledTimes(2);
 	expect(storage.get).toHaveBeenLastCalledWith('cache:spy:["@anne"]');
@@ -376,7 +376,7 @@ test('.getFresh() ignores cached value', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
 	assert.equal(await updaterItem.getFresh('@anne'), 'ANNE');
 
@@ -393,8 +393,8 @@ test('.getFresh() stores using maxAge + staleWhileRevalidate', async () => {
 	const staleWhileRevalidate = 29;
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
@@ -408,20 +408,21 @@ test('.getFresh() stores using maxAge + staleWhileRevalidate', async () => {
 	assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
-test('.applyOverride() throws without arguments', async () => {
+test('.setCached() throws without arguments', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	await expect(updaterItem.applyOverride()).rejects.toThrow(TypeError);
+	// @ts-expect-error testing invalid arguments
+	await expect(updaterItem.setCached('OVERRIDDEN')).rejects.toThrow(TypeError);
 
 	expect(storage.set).not.toHaveBeenCalled();
 });
 
-test('.applyOverride() stores the value under the computed key', async () => {
+test('.setCached() stores the value under the computed key', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	await updaterItem.applyOverride(['@anne'], 'OVERRIDDEN');
+	await updaterItem.setCached('OVERRIDDEN', '@anne');
 
 	const argument = storage.set.mock.calls.at(-1)[0];
 
@@ -429,18 +430,18 @@ test('.applyOverride() stores the value under the computed key', async () => {
 	expect(spy).not.toHaveBeenCalled();
 });
 
-test('.applyOverride() stores using maxAge + staleWhileRevalidate', async () => {
+test('.setCached() stores using maxAge + staleWhileRevalidate', async () => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
 
-	await updaterItem.applyOverride(['@anne'], 'OVERRIDDEN');
+	await updaterItem.setCached('OVERRIDDEN', '@anne');
 
 	const argument = storage.set.mock.calls.at(-1)[0];
 	const expectedExpiration = maxAge + staleWhileRevalidate;
@@ -451,7 +452,7 @@ test('.applyOverride() stores using maxAge + staleWhileRevalidate', async () => 
 
 test('.isCached() is false for empty cache and never calls the updater', async () => {
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
 	assert.equal(await updaterItem.isCached('@anne'), false);
 
@@ -465,7 +466,7 @@ test('.isCached() is true for a cached value', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
 	assert.equal(await updaterItem.isCached('@anne'), true);
 
@@ -478,7 +479,7 @@ test('.isCached() is false for an expired cache', async () => {
 	});
 
 	const spy = vi.fn(getUsernameDemo);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
 	assert.equal(await updaterItem.isCached('@anne'), false);
 
@@ -496,14 +497,14 @@ test('background revalidation is deduped across overlapping calls', async () => 
 		setTimeout(() => resolve('ANNE'), 20);
 	}));
 
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
@@ -522,13 +523,13 @@ test('background revalidation failure does not crash or wedge the cache', async 
 		.mockRejectedValueOnce(new Error('boom'))
 		.mockImplementation(getUsernameDemo);
 
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
@@ -542,7 +543,7 @@ test('background revalidation failure does not crash or wedge the cache', async 
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
@@ -555,9 +556,9 @@ test('background revalidation failure does not crash or wedge the cache', async 
 
 test('`updater` returning undefined caches the entry', async () => {
 	const spy = vi.fn(async () => undefined);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
-	await updaterItem.get('@anne');
+	await updaterItem('@anne');
 
 	assert.equal(await updaterItem.isCached('@anne'), true);
 	assert.equal(await updaterItem.getCached('@anne'), undefined);
@@ -570,14 +571,14 @@ test('`updater` returning undefined overwrites an existing cache entry', async (
 	});
 
 	const spy = vi.fn(async () => undefined);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		shouldRevalidate: () => true,
 	});
 
 	assert.equal(await updaterItem.isCached('@anne'), true);
 
-	await updaterItem.get('@anne');
+	await updaterItem('@anne');
 
 	assert.equal(await updaterItem.isCached('@anne'), true);
 	assert.equal(await updaterItem.getCached('@anne'), undefined);
@@ -589,14 +590,14 @@ test('background revalidation returning undefined overwrites the stale entry', a
 	});
 
 	const spy = vi.fn(async () => undefined);
-	const updaterItem = new CachedFunction('spy', {
-		updater: spy,
+	const updaterItem = memoize(spy, {
+		key: 'spy',
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
 	// Stale cache is still served synchronously
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	assert.equal(await updaterItem('@anne'), 'ANNE');
 	assert.equal(await updaterItem.isCached('@anne'), true);
 
 	await new Promise(resolve => {
@@ -614,7 +615,7 @@ test('.getFresh() returning undefined overwrites any existing cache entry', asyn
 	});
 
 	const spy = vi.fn(async () => undefined);
-	const updaterItem = new CachedFunction('spy', {updater: spy});
+	const updaterItem = memoize(spy, {key: 'spy'});
 
 	assert.equal(await updaterItem.isCached('@anne'), true);
 
@@ -626,19 +627,19 @@ test('.getFresh() returning undefined overwrites any existing cache entry', asyn
 
 test('caches undefined values', async () => {
 	const updater = vi.fn().mockResolvedValue(undefined);
-	const cache = new CachedFunction('test', {updater});
+	const cache = memoize(updater, {key: 'test'});
 
-	await expect(cache.get()).resolves.toBeUndefined();
-	await expect(cache.get()).resolves.toBeUndefined();
+	await expect(cache()).resolves.toBeUndefined();
+	await expect(cache()).resolves.toBeUndefined();
 
 	expect(updater).toHaveBeenCalledTimes(1);
 });
 
 test('considers cached undefined values as cached', async () => {
 	const updater = vi.fn().mockResolvedValue(undefined);
-	const cache = new CachedFunction('test', {updater});
+	const cache = memoize(updater, {key: 'test'});
 
-	await cache.get();
+	await cache();
 
 	await expect(cache.isCached()).resolves.toBe(true);
 
