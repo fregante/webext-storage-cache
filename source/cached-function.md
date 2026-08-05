@@ -187,7 +187,7 @@ This method should only be used if you want to override the cache with a custom 
 ```js
 const repositories = new CachedFunction('repositories', {updater: repoApi});
 // Will override the local cache for the `repoApi('fregante', 'doma')` call
-await repositories.setCached({id: 134, lastUpdated: 199837738894}, 'fregante', 'doma');
+await repositories.setCached({id: 134, type: 'admin'}, 'fregante', 'doma');
 ```
 
 ## License
