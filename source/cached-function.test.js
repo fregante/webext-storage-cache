@@ -408,20 +408,20 @@ test('.getFresh() stores using maxAge + staleWhileRevalidate', async () => {
 	assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
-test('.applyOverride() throws without arguments', async () => {
+test('.setCached() throws without arguments', async () => {
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	await expect(updaterItem.applyOverride()).rejects.toThrow(TypeError);
+	await expect(updaterItem.setCached()).rejects.toThrow(TypeError);
 
 	expect(storage.set).not.toHaveBeenCalled();
 });
 
-test('.applyOverride() stores the value under the computed key', async () => {
+test('.setCached() stores the value under the computed key', async () => {
 	const spy = vi.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	await updaterItem.applyOverride(['@anne'], 'OVERRIDDEN');
+	await updaterItem.setCached('OVERRIDDEN', '@anne');
 
 	const argument = storage.set.mock.calls.at(-1)[0];
 
@@ -429,7 +429,7 @@ test('.applyOverride() stores the value under the computed key', async () => {
 	expect(spy).not.toHaveBeenCalled();
 });
 
-test('.applyOverride() stores using maxAge + staleWhileRevalidate', async () => {
+test('.setCached() stores using maxAge + staleWhileRevalidate', async () => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
 
@@ -440,7 +440,7 @@ test('.applyOverride() stores using maxAge + staleWhileRevalidate', async () => 
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
 
-	await updaterItem.applyOverride(['@anne'], 'OVERRIDDEN');
+	await updaterItem.setCached('OVERRIDDEN', '@anne');
 
 	const argument = storage.set.mock.calls.at(-1)[0];
 	const expectedExpiration = maxAge + staleWhileRevalidate;
