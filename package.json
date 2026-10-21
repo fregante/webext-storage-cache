@@ -2,6 +2,30 @@
 	"name": "webext-storage-cache",
 	"version": "7.0.0",
 	"description": "Cache values in your Web Extension and clear them on expiration. Also includes a memoize-like API to cache any function results automatically.",
+	"license": "MIT",
+	"repository": "fregante/webext-storage-cache",
+	"funding": "https://github.com/sponsors/fregante",
+	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
+	"type": "module",
+	"exports": {
+		"types": "./distribution/index.d.ts",
+		"default": "./distribution/index.js"
+	},
+	"sideEffects": [
+		"./distribution/index.js"
+	],
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"build": "tsc",
+		"prepack": "tsc --sourceMap false",
+		"test": "tsc && tsd --typings distribution/index.d.ts && vitest run && xo",
+		"watch": "tsc --watch"
+	},
+	"files": [
+		"distribution"
+	],
 	"keywords": [
 		"await",
 		"background page",
@@ -22,54 +46,18 @@
 		"web-ext",
 		"webext"
 	],
-	"repository": "fregante/webext-storage-cache",
-	"funding": "https://github.com/sponsors/fregante",
-	"license": "MIT",
-	"author": "Federico Brigante <me@fregante.com> (https://fregante.com)",
-	"type": "module",
-	"exports": "./distribution/index.js",
-	"types": "./distribution/index.d.ts",
-	"files": [
-		"distribution/index.js",
-		"distribution/index.d.ts",
-		"distribution/shared.js",
-		"distribution/shared.d.ts",
-		"distribution/cached-value.js",
-		"distribution/cached-value.d.ts",
-		"distribution/cached-function.js",
-		"distribution/cached-function.d.ts"
-	],
-	"scripts": {
-		"build": "tsc",
-		"prepack": "tsc --sourceMap false",
-		"test": "tsc && tsd && vitest run && xo",
-		"watch": "tsc --watch"
-	},
-	"xo": {
-		"languageOptions": {
-			"globals": {
-				"chrome": true
-			}
-		},
-		"rules": {
-			"import-x/extensions": "off"
-		}
-	},
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
-		"type-fest": "^5.8.0",
+		"type-fest": "^5.10.0",
 		"webext-detect": "^6.0.0"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^8.1.0",
-		"@types/chrome": "0.2.5",
+		"@types/chrome": "^0.3.6",
 		"tsd": "^0.33.0",
 		"typescript": "^6.0.3",
-		"vitest": "^4.1.10",
-		"xo": "^4.0.0"
-	},
-	"engines": {
-		"node": ">=22"
+		"vitest": "^5.0.5",
+		"xo": "^5.0.1"
 	},
 	"tsd": {
 		"directory": "source"

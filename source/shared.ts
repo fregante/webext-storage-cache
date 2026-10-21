@@ -49,6 +49,7 @@ export async function deleteItem(userKey: string): Promise<void> {
 	await chrome.storage.local.remove(`cache:${userKey}`);
 }
 
+// eslint-disable-next-line unicorn/consistent-boolean-name -- Mirrors the public `has` method name
 export async function has(userKey: string): Promise<boolean> {
 	return (await readItem(userKey)) !== undefined;
 }
@@ -83,7 +84,9 @@ export async function deleteWithLogic(shouldDelete?: (item: CachedItem<CacheValu
 	}
 }
 
-/** Deletes every expired entry. Runs automatically in the background context; call manually elsewhere. */
+/**
+Deletes every expired entry. Runs automatically in the background context; call manually elsewhere.
+*/
 export async function deleteExpired(): Promise<void> {
 	await deleteWithLogic(item => Date.now() > item.maxAge);
 }
