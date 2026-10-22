@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
       - name: install
         run: npm install
       - name: XO
@@ -20,6 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
       - name: install
         run: npm install
       - name: build
@@ -32,6 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
       - name: install
         run: npm install
       - name: build
@@ -42,7 +48,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
       - name: install
         run: npm install
       - run: npm run build
-      - run: npx tsd
+      - run: npx tsd --typings distribution/index.d.ts

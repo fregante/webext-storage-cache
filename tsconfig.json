@@ -4,7 +4,8 @@
 		"types": [
 			"chrome"
 		],
-		"rootDir": "source",
+		"rootDir": "./source",
+		"outDir": "./distribution",
 	},
 	"include": [
 		"source",

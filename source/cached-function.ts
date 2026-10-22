@@ -100,7 +100,7 @@ export default class CachedFunction<
 				this.#inFlight.delete(userKey);
 			};
 
-			promise.then(clear, clear);
+			promise.then(clear).catch(clear);
 		}
 
 		return promise;
