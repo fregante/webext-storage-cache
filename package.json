@@ -48,7 +48,6 @@
 	],
 	"dependencies": {
 		"@sindresorhus/to-milliseconds": "^2.0.0",
-		"type-fest": "^5.10.0",
 		"webext-detect": "^6.0.0"
 	},
 	"devDependencies": {
