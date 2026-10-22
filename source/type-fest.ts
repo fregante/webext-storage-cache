@@ -7,21 +7,22 @@ This type can be useful to enforce some input to be JSON-compatible or as a supe
 
 @category JSON
 */
-export type JsonObject = {[Key in string]: JsonValue};
+type JsonObject = {[Key in string]: JsonValue};
 
 /**
 Matches a JSON array.
 
 @category JSON
 */
-export type JsonArray = JsonValue[] | readonly JsonValue[];
+type JsonArray = JsonValue[] | readonly JsonValue[];
 
 /**
 Matches any valid JSON primitive value.
 
 @category JSON
 */
-export type JsonPrimitive = string | number | boolean | null;
+// eslint-disable-next-line @typescript-eslint/no-restricted-types -- JSON
+type JsonPrimitive = string | number | boolean | null;
 
 /**
 Matches any valid JSON value.
@@ -32,4 +33,3 @@ Matches any valid JSON value.
 */
 export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 
-export {};
