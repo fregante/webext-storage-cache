@@ -4,7 +4,7 @@ import {
 	readItem,
 	writeItem,
 	deleteItem,
-} from './shared.js';
+} from './shared.ts';
 
 export default class CachedValue<ScopedValue extends CacheValue> {
 	readonly maxAge: TimeDescriptor;

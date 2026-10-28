@@ -6,6 +6,7 @@
 		],
 		"rootDir": "./source",
 		"outDir": "./distribution",
+		"rewriteRelativeImportExtensions": true,
 	},
 	"include": [
 		"source",

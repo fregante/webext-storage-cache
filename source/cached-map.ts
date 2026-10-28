@@ -4,7 +4,7 @@ import {
 	readItem,
 	writeItem,
 	deleteItem,
-} from './shared.js';
+} from './shared.ts';
 
 export default class CachedMap<ScopedValue extends CacheValue> {
 	readonly name: string;

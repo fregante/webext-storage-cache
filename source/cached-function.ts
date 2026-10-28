@@ -5,7 +5,7 @@ import {
 	writeItem,
 	deleteItem,
 	timeInTheFuture,
-} from './shared.js';
+} from './shared.ts';
 
 export type CacheKey<Arguments extends unknown[]> = (arguments_: Arguments) => string;
 

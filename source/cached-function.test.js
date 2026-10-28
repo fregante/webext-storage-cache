@@ -1,313 +1,312 @@
 import {
-	test,
-	vi,
-	assert,
-	expect,
 	beforeEach,
-} from 'vitest';
-import CachedFunction from './cached-function.js';
+	test,
+} from 'node:test';
+import CachedFunction from './cached-function.ts';
 import {
+	calledWith,
 	createCache,
+	resetMocks,
 	timeInTheFuture,
-} from './test-utils.js';
+} from './testing-utils.js';
 
 const getUsernameDemo = async name => name.slice(1).toUpperCase();
 const storage = chrome.storage.local;
 
 beforeEach(() => {
-	vi.resetAllMocks();
+	resetMocks();
 	createCache(30, {});
 });
 
-test('getCached() with empty cache', async () => {
-	const spy = vi.fn(getUsernameDemo);
+test('getCached() with empty cache', async t => {
+	const spy = t.mock.fn(getUsernameDemo);
 	const testItem = new CachedFunction('name', {updater: spy});
 
-	assert.equal(await testItem.getCached(), undefined);
+	t.assert.strictEqual(await testItem.getCached(), undefined);
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('getCached() with cache', async () => {
+test('getCached() with cache', async t => {
 	createCache(10, {
 		'cache:name': 'Rico',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const testItem = new CachedFunction('name', {updater: spy});
 
-	assert.equal(await testItem.getCached(), 'Rico');
+	t.assert.strictEqual(await testItem.getCached(), 'Rico');
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('getCached() with expired cache', async () => {
+test('getCached() with expired cache', async t => {
 	createCache(-10, {
 		'cache:name': 'Rico',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const testItem = new CachedFunction('name', {updater: spy});
 
-	assert.equal(await testItem.getCached(), undefined);
+	t.assert.strictEqual(await testItem.getCached(), undefined);
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('`updater` with empty cache', async () => {
-	const spy = vi.fn(getUsernameDemo);
+test('`updater` with empty cache', async t => {
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
-	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
+	t.assert.ok(calledWith(storage.get, 'cache:spy:["@anne"]'));
+	t.assert.deepStrictEqual(spy.mock.calls[0]?.arguments, ['@anne']);
 
-	expect(storage.set).toHaveBeenCalledTimes(1);
+	t.assert.strictEqual(storage.set.mock.callCount(), 1);
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'ANNE');
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
-test('`updater` with cache', async () => {
+test('`updater` with cache', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
-	expect(storage.set).not.toHaveBeenCalled();
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.ok(calledWith(storage.get, 'cache:spy:["@anne"]'));
+	t.assert.strictEqual(storage.set.mock.callCount(), 0);
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('`updater` with expired cache', async () => {
+test('`updater` with expired cache', async t => {
 	createCache(-10, {
 		'cache:spy:["@anne"]': 'ONNA-expired-name',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
-	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
+	t.assert.ok(calledWith(storage.get, 'cache:spy:["@anne"]'));
+	t.assert.deepStrictEqual(spy.mock.calls[0]?.arguments, ['@anne']);
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'ANNE');
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
-test('`updater` with empty cache and staleWhileRevalidate', async () => {
+test('`updater` with empty cache and staleWhileRevalidate', async t => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: maxAge},
 		staleWhileRevalidate: {days: staleWhileRevalidate},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
-	expect(storage.set).toHaveBeenCalledTimes(1);
+	t.assert.ok(calledWith(storage.get, 'cache:spy:["@anne"]'));
+	t.assert.strictEqual(storage.set.mock.callCount(), 1);
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.deepEqual(Object.keys(argument), ['cache:spy:["@anne"]']);
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'ANNE');
+	t.assert.deepStrictEqual(Object.keys(argument), ['cache:spy:["@anne"]']);
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'ANNE');
 
 	const expectedExpiration = maxAge + staleWhileRevalidate;
-	assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
-	assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+	t.assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	t.assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
-test('`updater` with fresh cache and staleWhileRevalidate', async () => {
+test('`updater` with fresh cache and staleWhileRevalidate', async t => {
 	createCache(30, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
 	// Cache is still fresh, it should be used
-	expect(spy).not.toHaveBeenCalled();
-	expect(storage.set).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
+	t.assert.strictEqual(storage.set.mock.callCount(), 0);
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
 	// Cache is still fresh, it should never be revalidated
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('`updater` with stale cache and staleWhileRevalidate', async () => {
+test('`updater` with stale cache and staleWhileRevalidate', async t => {
 	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: 1},
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
-	expect(storage.set).not.toHaveBeenCalled();
+	t.assert.ok(calledWith(storage.get, 'cache:spy:["@anne"]'));
+	t.assert.strictEqual(storage.set.mock.callCount(), 0);
 
 	// It shouldn’t be called yet
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
 	// It should be revalidated
-	expect(spy).toHaveBeenCalledOnce();
-	expect(storage.set).toHaveBeenCalledTimes(1);
+	t.assert.strictEqual(spy.mock.callCount(), 1);
+	t.assert.strictEqual(storage.set.mock.callCount(), 1);
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'ANNE');
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
-test('`updater` varies cache by function argument', async () => {
+test('`updater` varies cache by function argument', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
-	assert.equal(await updaterItem.get('@mari'), 'MARI');
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(await updaterItem.get('@mari'), 'MARI');
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 });
 
-test('`updater` accepts custom cache key generator', async () => {
+test('`updater` accepts custom cache key generator', async t => {
 	createCache(10, {
 		'cache:spy:["@anne",1]': 'ANNE,1',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	await updaterItem.get('@anne', 1);
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
 	await updaterItem.get('@anne', 2);
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 
-	assert.equal(storage.get.mock.calls[0][0], 'cache:spy:["@anne",1]');
-	assert.equal(storage.get.mock.calls.at(-1)[0], 'cache:spy:["@anne",2]');
+	t.assert.strictEqual(storage.get.mock.calls[0].arguments[0], 'cache:spy:["@anne",1]');
+	t.assert.strictEqual(storage.get.mock.calls.at(-1).arguments[0], 'cache:spy:["@anne",2]');
 });
 
-test('`updater` accepts custom string-based cache key', async () => {
+test('`updater` accepts custom string-based cache key', async t => {
 	createCache(10, {
 		'cache:CUSTOM:["@anne",1]': 'ANNE,1',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('CUSTOM', {updater: spy});
 
 	await updaterItem.get('@anne', 1);
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
 	await updaterItem.get('@anne', 2);
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 
-	assert.equal(storage.get.mock.calls[0][0], 'cache:CUSTOM:["@anne",1]');
-	assert.equal(storage.get.mock.calls.at(-1)[0], 'cache:CUSTOM:["@anne",2]');
+	t.assert.strictEqual(storage.get.mock.calls[0].arguments[0], 'cache:CUSTOM:["@anne",1]');
+	t.assert.strictEqual(storage.get.mock.calls.at(-1).arguments[0], 'cache:CUSTOM:["@anne",2]');
 });
 
-test('`updater` accepts custom string-based with non-primitive parameters', async () => {
+test('`updater` accepts custom string-based with non-primitive parameters', async t => {
 	createCache(10, {
 		'cache:CUSTOM:["@anne",{"user":[1]}]': 'ANNE,1',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('CUSTOM', {updater: spy});
 
 	await updaterItem.get('@anne', {user: [1]});
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
 	await updaterItem.get('@anne', {user: [2]});
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 
-	assert.equal(storage.get.mock.calls[0][0], 'cache:CUSTOM:["@anne",{"user":[1]}]');
-	assert.equal(storage.get.mock.calls.at(-1)[0], 'cache:CUSTOM:["@anne",{"user":[2]}]');
+	t.assert.strictEqual(storage.get.mock.calls[0].arguments[0], 'cache:CUSTOM:["@anne",{"user":[1]}]');
+	t.assert.strictEqual(storage.get.mock.calls.at(-1).arguments[0], 'cache:CUSTOM:["@anne",{"user":[2]}]');
 });
 
-test('`updater` verifies cache with shouldRevalidate callback', async () => {
+test('`updater` verifies cache with shouldRevalidate callback', async t => {
 	createCache(10, {
 		'cache:@anne': 'anne@',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		shouldRevalidate: value => value.endsWith('@'),
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledWith('cache:spy:["@anne"]');
+	t.assert.ok(calledWith(storage.get, 'cache:spy:["@anne"]'));
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'ANNE');
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'ANNE');
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 });
 
-test('`updater` avoids concurrent function calls', async () => {
-	const spy = vi.fn(getUsernameDemo);
+test('`updater` avoids concurrent function calls', async t => {
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
 	// Parallel calls
 	updaterItem.get('@anne');
 	updaterItem.get('@anne');
 	await updaterItem.get('@anne');
 
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 
 	// Parallel calls
 	updaterItem.get('@new');
 	updaterItem.get('@other');
 	await updaterItem.get('@idk');
 
-	expect(spy).toHaveBeenCalledTimes(4);
+	t.assert.strictEqual(spy.mock.callCount(), 4);
 });
 
-test('`updater` avoids concurrent function calls with complex arguments via cacheKey', async () => {
-	const spy = vi.fn(async (transform, user) => transform(user.name));
+test('`updater` avoids concurrent function calls with complex arguments via cacheKey', async t => {
+	const spy = t.mock.fn(async (transform, user) => transform(user.name));
 
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		cacheKey: ([function_, user]) => JSON.stringify([function_.name, user]),
 	});
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 
 	const cacheMePlease = name => name.slice(1).toUpperCase();
 
@@ -317,7 +316,7 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 
 	await updaterItem.get(cacheMePlease, {name: '@anne'});
 
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 
 	// Parallel calls
 	updaterItem.get(cacheMePlease, {name: '@new'});
@@ -325,11 +324,11 @@ test('`updater` avoids concurrent function calls with complex arguments via cach
 
 	await updaterItem.get(cacheMePlease, {name: '@idk'});
 
-	expect(spy).toHaveBeenCalledTimes(4);
+	t.assert.strictEqual(spy.mock.callCount(), 4);
 });
 
-test('`updater` uses cacheKey at every call, regardless of arguments', async () => {
-	const cacheKey = vi.fn(arguments_ => arguments_.length);
+test('`updater` uses cacheKey at every call, regardless of arguments', async t => {
+	const cacheKey = t.mock.fn(arguments_ => arguments_.length);
 
 	const updaterItem = new CachedFunction('spy', {
 		updater() {},
@@ -339,60 +338,60 @@ test('`updater` uses cacheKey at every call, regardless of arguments', async () 
 	await updaterItem.get();
 	await updaterItem.get();
 
-	expect(cacheKey).toHaveBeenCalledTimes(2);
+	t.assert.strictEqual(cacheKey.mock.callCount(), 2);
 
 	await updaterItem.get('@anne');
 	await updaterItem.get('@anne');
 
-	expect(cacheKey).toHaveBeenCalledTimes(4);
+	t.assert.strictEqual(cacheKey.mock.callCount(), 4);
 });
 
-test('`updater` always loads the data from storage, not memory', async () => {
+test('`updater` always loads the data from storage, not memory', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
-	expect(storage.get).toHaveBeenCalledTimes(1);
-	expect(storage.get).toHaveBeenLastCalledWith('cache:spy:["@anne"]');
+	t.assert.strictEqual(storage.get.mock.callCount(), 1);
+	t.assert.deepStrictEqual(storage.get.mock.calls.at(-1)?.arguments, ['cache:spy:["@anne"]']);
 
 	createCache(10, {
 		'cache:spy:["@anne"]': 'NEW ANNE',
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'NEW ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'NEW ANNE');
 
-	expect(storage.get).toHaveBeenCalledTimes(2);
-	expect(storage.get).toHaveBeenLastCalledWith('cache:spy:["@anne"]');
+	t.assert.strictEqual(storage.get.mock.callCount(), 2);
+	t.assert.deepStrictEqual(storage.get.mock.calls.at(-1)?.arguments, ['cache:spy:["@anne"]']);
 });
 
-test('.getFresh() ignores cached value', async () => {
+test('.getFresh() ignores cached value', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'OVERWRITE_ME',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.getFresh('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.getFresh('@anne'), 'ANNE');
 
-	expect(spy).toHaveBeenNthCalledWith(1, '@anne');
-	expect(storage.get).not.toHaveBeenCalled();
+	t.assert.deepStrictEqual(spy.mock.calls[0]?.arguments, ['@anne']);
+	t.assert.strictEqual(storage.get.mock.callCount(), 0);
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'ANNE');
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'ANNE');
 });
 
-test('.getFresh() stores using maxAge + staleWhileRevalidate', async () => {
+test('.getFresh() stores using maxAge + staleWhileRevalidate', async t => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: maxAge},
@@ -401,39 +400,39 @@ test('.getFresh() stores using maxAge + staleWhileRevalidate', async () => {
 
 	await updaterItem.getFresh('@anne');
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 	const expectedExpiration = maxAge + staleWhileRevalidate;
 
-	assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
-	assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+	t.assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	t.assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
-test('.setCached() throws without arguments', async () => {
-	const spy = vi.fn(getUsernameDemo);
+test('.setCached() throws without arguments', async t => {
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	await expect(updaterItem.setCached()).rejects.toThrow(TypeError);
+	await t.assert.rejects(updaterItem.setCached(), TypeError);
 
-	expect(storage.set).not.toHaveBeenCalled();
+	t.assert.strictEqual(storage.set.mock.callCount(), 0);
 });
 
-test('.setCached() stores the value under the computed key', async () => {
-	const spy = vi.fn(getUsernameDemo);
+test('.setCached() stores the value under the computed key', async t => {
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	await updaterItem.setCached('OVERRIDDEN', '@anne');
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 
-	assert.equal(argument['cache:spy:["@anne"]'].data, 'OVERRIDDEN');
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(argument['cache:spy:["@anne"]'].data, 'OVERRIDDEN');
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('.setCached() stores using maxAge + staleWhileRevalidate', async () => {
+test('.setCached() stores using maxAge + staleWhileRevalidate', async t => {
 	const maxAge = 1;
 	const staleWhileRevalidate = 29;
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: maxAge},
@@ -442,57 +441,57 @@ test('.setCached() stores using maxAge + staleWhileRevalidate', async () => {
 
 	await updaterItem.setCached('OVERRIDDEN', '@anne');
 
-	const argument = storage.set.mock.calls.at(-1)[0];
+	const argument = storage.set.mock.calls.at(-1).arguments[0];
 	const expectedExpiration = maxAge + staleWhileRevalidate;
 
-	assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
-	assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
+	t.assert.ok(argument['cache:spy:["@anne"]'].maxAge > timeInTheFuture({days: expectedExpiration - 0.5}));
+	t.assert.ok(argument['cache:spy:["@anne"]'].maxAge < timeInTheFuture({days: expectedExpiration + 0.5}));
 });
 
-test('.isCached() is false for empty cache and never calls the updater', async () => {
-	const spy = vi.fn(getUsernameDemo);
+test('.isCached() is false for empty cache and never calls the updater', async t => {
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.isCached('@anne'), false);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), false);
 
-	expect(spy).not.toHaveBeenCalled();
-	expect(storage.set).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
+	t.assert.strictEqual(storage.set.mock.callCount(), 0);
 });
 
-test('.isCached() is true for a cached value', async () => {
+test('.isCached() is true for a cached value', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('.isCached() is false for an expired cache', async () => {
+test('.isCached() is false for an expired cache', async t => {
 	createCache(-10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.isCached('@anne'), false);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), false);
 
-	expect(spy).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 0);
 });
 
-test('background revalidation is deduped across overlapping calls', async () => {
+test('background revalidation is deduped across overlapping calls', async t => {
 	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
 	// A slow updater keeps the first revalidation in flight long enough
 	// for the second one's trigger to observe it and dedupe against it.
-	const spy = vi.fn(async () => new Promise(resolve => {
+	const spy = t.mock.fn(async () => new Promise(resolve => {
 		setTimeout(() => resolve('ANNE'), 20);
 	}));
 
@@ -502,25 +501,25 @@ test('background revalidation is deduped across overlapping calls', async () => 
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.deepStrictEqual([await updaterItem.get('@anne'), await updaterItem.get('@anne')], ['ANNE', 'ANNE']);
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
-	expect(spy).toHaveBeenCalledOnce();
-	expect(storage.set).toHaveBeenCalledTimes(1);
+	t.assert.strictEqual(spy.mock.callCount(), 1);
+	t.assert.strictEqual(storage.set.mock.callCount(), 1);
 });
 
-test('background revalidation failure does not crash or wedge the cache', async () => {
+test('background revalidation failure does not crash or wedge the cache', async t => {
 	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn()
-		.mockRejectedValueOnce(new Error('boom'))
-		.mockImplementation(getUsernameDemo);
+	const spy = t.mock.fn(getUsernameDemo);
+	spy.mock.mockImplementationOnce(async () => {
+		throw new Error('boom');
+	}, 0);
 
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
@@ -528,67 +527,67 @@ test('background revalidation failure does not crash or wedge the cache', async 
 		staleWhileRevalidate: {days: 29},
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
 	// The failed revalidation must not have touched the cache
-	expect(spy).toHaveBeenCalledOnce();
-	expect(storage.set).not.toHaveBeenCalled();
+	t.assert.strictEqual(spy.mock.callCount(), 1);
+	t.assert.strictEqual(storage.set.mock.callCount(), 0);
 
 	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
 	// A later call must be able to revalidate again, not be stuck
-	expect(spy).toHaveBeenCalledTimes(2);
-	expect(storage.set).toHaveBeenCalledTimes(1);
+	t.assert.strictEqual(spy.mock.callCount(), 2);
+	t.assert.strictEqual(storage.set.mock.callCount(), 1);
 });
 
-test('`updater` returning undefined caches the entry', async () => {
-	const spy = vi.fn(async () => undefined);
+test('`updater` returning undefined caches the entry', async t => {
+	const spy = t.mock.fn(async () => undefined);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
 	await updaterItem.get('@anne');
 
-	assert.equal(await updaterItem.isCached('@anne'), true);
-	assert.equal(await updaterItem.getCached('@anne'), undefined);
-	expect(spy).toHaveBeenCalledOnce();
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.getCached('@anne'), undefined);
+	t.assert.strictEqual(spy.mock.callCount(), 1);
 });
 
-test('`updater` returning undefined overwrites an existing cache entry', async () => {
+test('`updater` returning undefined overwrites an existing cache entry', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(async () => undefined);
+	const spy = t.mock.fn(async () => undefined);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		shouldRevalidate: () => true,
 	});
 
-	assert.equal(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
 
 	await updaterItem.get('@anne');
 
-	assert.equal(await updaterItem.isCached('@anne'), true);
-	assert.equal(await updaterItem.getCached('@anne'), undefined);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.getCached('@anne'), undefined);
 });
 
-test('background revalidation returning undefined overwrites the stale entry', async () => {
+test('background revalidation returning undefined overwrites the stale entry', async t => {
 	createCache(15, {
 		'cache:spy:["@anne"]': 'ANNE',
 	});
 
-	const spy = vi.fn(async () => undefined);
+	const spy = t.mock.fn(async () => undefined);
 	const updaterItem = new CachedFunction('spy', {
 		updater: spy,
 		maxAge: {days: 1},
@@ -596,53 +595,52 @@ test('background revalidation returning undefined overwrites the stale entry', a
 	});
 
 	// Stale cache is still served synchronously
-	assert.equal(await updaterItem.get('@anne'), 'ANNE');
-	assert.equal(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.get('@anne'), 'ANNE');
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
 
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
-	expect(spy).toHaveBeenCalledOnce();
-	assert.equal(await updaterItem.isCached('@anne'), true);
-	assert.equal(await updaterItem.getCached('@anne'), undefined);
+	t.assert.strictEqual(spy.mock.callCount(), 1);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.getCached('@anne'), undefined);
 });
 
-test('.getFresh() returning undefined overwrites any existing cache entry', async () => {
+test('.getFresh() returning undefined overwrites any existing cache entry', async t => {
 	createCache(10, {
 		'cache:spy:["@anne"]': 'OLD',
 	});
 
-	const spy = vi.fn(async () => undefined);
+	const spy = t.mock.fn(async () => undefined);
 	const updaterItem = new CachedFunction('spy', {updater: spy});
 
-	assert.equal(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
 
 	await updaterItem.getFresh('@anne');
 
-	assert.equal(await updaterItem.isCached('@anne'), true);
-	assert.equal(await updaterItem.getCached('@anne'), undefined);
+	t.assert.strictEqual(await updaterItem.isCached('@anne'), true);
+	t.assert.strictEqual(await updaterItem.getCached('@anne'), undefined);
 });
 
-test('caches undefined values', async () => {
-	const updater = vi.fn().mockResolvedValue(undefined);
+test('caches undefined values', async t => {
+	const updater = t.mock.fn(async () => undefined);
 	const cache = new CachedFunction('test', {updater});
 
-	await expect(cache.get()).resolves.toBeUndefined();
-	await expect(cache.get()).resolves.toBeUndefined();
+	t.assert.deepStrictEqual([await cache.get(), await cache.get()], [undefined, undefined]);
 
-	expect(updater).toHaveBeenCalledTimes(1);
+	t.assert.strictEqual(updater.mock.callCount(), 1);
 });
 
-test('considers cached undefined values as cached', async () => {
-	const updater = vi.fn().mockResolvedValue(undefined);
+test('considers cached undefined values as cached', async t => {
+	const updater = t.mock.fn(async () => undefined);
 	const cache = new CachedFunction('test', {updater});
 
 	await cache.get();
 
-	await expect(cache.isCached()).resolves.toBe(true);
+	t.assert.strictEqual(await cache.isCached(), true);
 
 	await cache.delete();
 
-	await expect(cache.isCached()).resolves.toBe(false);
+	t.assert.strictEqual(await cache.isCached(), false);
 });
