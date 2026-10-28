@@ -20,7 +20,8 @@
 	"scripts": {
 		"build": "tsc",
 		"prepack": "tsc --sourceMap false",
-		"test": "tsc && tsd --typings distribution/index.d.ts && vitest run && xo",
+		"test": "tsc && tsd --typings distribution/index.d.ts && npm run test:unit && xo",
+		"test:unit": "node --import ./setup-tests.js --test",
 		"watch": "tsc --watch"
 	},
 	"files": [
@@ -55,7 +56,6 @@
 		"@types/chrome": "^0.3.6",
 		"tsd": "^0.33.0",
 		"typescript": "^6.0.3",
-		"vitest": "^5.0.5",
 		"xo": "^5.0.1"
 	},
 	"tsd": {

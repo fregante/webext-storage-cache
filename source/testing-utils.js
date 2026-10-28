@@ -1,3 +1,4 @@
+import {isDeepStrictEqual} from 'node:util';
 import toMilliseconds from '@sindresorhus/to-milliseconds';
 
 export function timeInTheFuture(time) {
@@ -13,7 +14,7 @@ export function createCache(daysFromToday, wholeCache) {
 		},
 	]));
 
-	chrome.storage.local.get.mockImplementation(async key => {
+	chrome.storage.local.get.mock.mockImplementation(async key => {
 		if (key === undefined) {
 			return {...store};
 		}
@@ -33,17 +34,27 @@ export function createCache(daysFromToday, wholeCache) {
 		return {};
 	});
 
-	chrome.storage.local.getKeys.mockImplementation(async () => Object.keys(store));
+	chrome.storage.local.getKeys.mock.mockImplementation(async () => Object.keys(store));
 
-	chrome.storage.local.set.mockImplementation(async items => {
+	chrome.storage.local.set.mock.mockImplementation(async items => {
 		Object.assign(store, items);
 	});
 
-	chrome.storage.local.remove.mockImplementation(async keys => {
+	chrome.storage.local.remove.mock.mockImplementation(async keys => {
 		for (const cacheKey of [keys].flat()) {
 			delete store[cacheKey];
 		}
 	});
 
 	return store;
+}
+
+export function resetMocks() {
+	for (const function_ of Object.values(chrome.storage.local)) {
+		function_.mock.resetCalls();
+	}
+}
+
+export function calledWith(function_, ...expected) {
+	return function_.mock.calls.some(call => isDeepStrictEqual(call.arguments, expected));
 }

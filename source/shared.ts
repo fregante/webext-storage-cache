@@ -1,5 +1,5 @@
 import toMilliseconds, {type TimeDescriptor} from '@sindresorhus/to-milliseconds';
-import {type JsonValue} from './type-fest.js';
+import {type JsonValue} from './type-fest.ts';
 
 export type CacheValue = JsonValue | undefined;
 
